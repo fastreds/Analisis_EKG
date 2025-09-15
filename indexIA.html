@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Informes ECG - Versión Mejorada</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; display: flex; flex-wrap: wrap; }
+        #selector { width: 45%; padding: 20px; border-right: 1px solid #ccc; }
+        #report { width: 45%; padding: 20px; }
+        .category { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .category h3 { cursor: pointer; background: #e0e0e0; padding: 10px; margin: 0; border-radius: 5px 5px 0 0; }
+        .options { padding: 10px; display: none; }
+        .suboptions { margin-left: 15px; padding: 5px; border-left: 2px solid #ccc; display: none; }
+        .subsuboptions { margin-left: 30px; padding: 5px; border-left: 2px solid #aaa; display: none; }
+        .nested-category { cursor: pointer; color: #007bff; margin-left: 30px; padding: 5px; }
+        .nested-category:hover { text-decoration: underline; }
+        label { display: block; margin-bottom: 5px; }
+        #report-content { border: 1px solid #ccc; padding: 15px; min-height: 500px; white-space: pre-wrap; background: #f9f9f9; border-radius: 5px; }
+        button { padding: 8px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #search-input { width: 100%; padding: 8px; margin-bottom: 10px; }
+        .custom-input { width: 100px; margin-left: 10px; }
+        .error { color: red; font-size: 12px; }
+    </style>
+    <!-- Librerías externas via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Quill Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div id="selector">
+        <h1>Generador de Informes ECG</h1>
+        <input type="text" id="search-input" placeholder="Buscar categorías o opciones...">
+        <div class="category" data-key="verificacion">
+            <h3>1. Verificación inicial</h3>
+            <div class="options">
+                <label><input type="radio" name="verificacion" value="calibrado"> ECG calibrado correctamente</label>
+                <label><input type="radio" name="verificacion" value="mal_calibrado"> ECG mal calibrado</label>
+            </div>
+        </div>
+        <div class="category" data-key="ritmo">
+            <h3>2. Evaluar ritmo cardíaco</h3>
+            <div class="options">
+                <label><input type="radio" name="ritmo" value="sinusal_normal"> Ritmo sinusal normal</label>
+                <label><input type="radio" name="ritmo" value="arritmias" data-sub="arritmias"> Arritmias</label>
+                <div id="sub_arritmias" class="suboptions">
+                    <label><input type="checkbox" value="fibrilacion_auricular" data-subsub="fibrilacion"> Fibrilación auricular</label>
+                    <div id="subsub_fibrilacion" class="subsuboptions">
+                        <label>Frecuencia ventricular (lpm): <input type="number" class="custom-input" data-for="fibrilacion_auricular_freq"></label>
+                    </div>
+                    <label><input type="checkbox" value="flutter_auricular"> Flutter auricular</label>
+                    <label><input type="checkbox" value="taquicardia_ventricular" data-subsub="taquicardia"> Taquicardia ventricular</label>
+                    <div id="subsub_taquicardia" class="subsuboptions">
+                        <label>Frecuencia (lpm): <input type="number" class="custom-input" data-for="taquicardia_ventricular_freq"></label>
+                    </div>
+                    <label><input type="checkbox" value="bradicardia_sinusal"> Bradicardia sinusal</label>
+                </div>
+                <label><input type="radio" name="ritmo" value="bloqueos" data-sub="bloqueos"> Bloqueos de conducción</label>
+                <div id="sub_bloqueos" class="suboptions">
+                    <label><input type="checkbox" value="av_completo"> AV completo</label>
+                    <label><input type="checkbox" value="bloqueos_rama"> Bloqueos de rama</label>
+                </div>
+            </div>
+        </div>
+        <div class="category" data-key="ondas_p">
+            <h3>3. Analizar ondas P</h3>
+            <div class="options">
+                <label><input type="radio" name="ondas_p" value="normal"> Morfología normal</label>
+                <label><input type="radio" name="ondas_p" value="hipertrofia" data-sub="hipertrofia_p"> Hipertrofia auricular</label>
+                <div id="sub_hipertrofia_p" class="suboptions">
+                    <label><input type="checkbox" value="derecha" data-subsub="hipertrofia_derecha"> Derecha</label>
+                    <div id="subsub_hipertrofia_derecha" class="subsuboptions">
+                        <label>Amplitud (mm): <input type="number" class="custom-input" data-for="hipertrofia_derecha_amp"></label>
+                    </div>
+                    <label><input type="checkbox" value="izquierda"> Izquierda</label>
+                </div>
+                <label><input type="radio" name="ondas_p" value="ausencia"> Ausencia de onda P</label>
+            </div>
+        </div>
+        <div class="category" data-key="pr">
+            <h3>4. Analizar intervalo PR</h3>
+            <div class="options">
+                <label><input type="radio" name="pr" value="normal" data-sub="pr_normal"> Normal</label>
+                <div id="sub_pr_normal" class="suboptions">
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_normal_ms" placeholder="120-200"></label>
+                </div>
+                <label><input type="radio" name="pr" value="corto" data-sub="pr_corto"> PR corto</label>
+                <div id="sub_pr_corto" class="suboptions">
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_corto_ms" placeholder="<120"></label>
+                </div>
+                <label><input type="radio" name="pr" value="prolongado" data-sub="pr_prolongado"> PR prolongado</label>
+                <div id="sub_pr_prolongado" class="suboptions">
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_prolongado_ms" placeholder=">200"></label>
+                </div>
+            </div>
+        </div>
+        <div class="category" data-key="qrs">
+            <h3>5. Evaluar complejos QRS</h3>
+            <div class="options">
+                <label><input type="radio" name="qrs" value="normal" data-sub="qrs_normal"> Normal</label>
+                <div id="sub_qrs_normal" class="suboptions">
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="qrs_normal_ms" placeholder="<120"></label>
+                </div>
+                <label><input type="radio" name="qrs" value="bloqueos_rama" data-sub="bloqueos_qrs"> Bloqueos de rama</label>
+                <div id="sub_bloqueos_qrs" class="suboptions">
+                    <label><input type="checkbox" value="derecha" data-subsub="bloqueo_derecha"> Derecha</label>
+                    <div id="subsub_bloqueo_derecha" class="subsuboptions">
+                        <label>Retraso (ms): <input type="number" class="custom-input" data-for="bloqueo_derecha_ms"></label>
+                        <div class="nested-category" data-include="t">Incluir análisis de onda T</div>
+                    </div>
+                    <label><input type="checkbox" value="izquierda" data-subsub="bloqueo_izquierda"> Izquierda</label>
+                    <div id="subsub_bloqueo_izquierda" class="subsuboptions">
+                        <label>Retraso (ms): <input type="number" class="custom-input" data-for="bloqueo_izquierda_ms"></label>
+                    </div>
+                </div>
+                <label><input type="radio" name="qrs" value="ventricular_ectopico"> Ventricular ectópico</label>
+                <label><input type="radio" name="qrs" value="infarto_previo"> Infarto previo</label>
+            </div>
+        </div>
+        <div class="category" data-key="eje">
+            <h3>6. Analizar eje eléctrico</h3>
+            <div class="options">
+                <label><input type="radio" name="eje" value="normal"> Normal</label>
+                <label><input type="radio" name="eje" value="desviacion" data-sub="desviacion_eje"> Desviación del eje</label>
+                <div id="sub_desviacion_eje" class="suboptions">
+                    <label><input type="checkbox" value="izquierda"> Izquierda</label>
+                    <label><input type="checkbox" value="derecha"> Derecha</label>
+                    <label><input type="checkbox" value="extrema"> Extrema</label>
+                </div>
+                <label><input type="radio" name="eje" value="alteraciones"> Alteraciones por hipertrofia</label>
+            </div>
+        </div>
+        <div class="category" data-key="st">
+            <h3>7. Analizar segmento ST</h3>
+            <div class="options">
+                <label><input type="radio" name="st" value="normal"> Normal</label>
+                <label><input type="radio" name="st" value="infarto_agudo" data-sub="st_infarto"> Infarto agudo (STEMI)</label>
+                <div id="sub_st_infarto" class="suboptions">
+                    <label>Elevación (mm): <input type="number" class="custom-input" data-for="st_infarto_mm" placeholder=">1"></label>
+                </div>
+                <label><input type="radio" name="st" value="isquemia"> Isquemia subendocárdica</label>
+                <label><input type="radio" name="st" value="pericarditis"> Pericarditis</label>
+            </div>
+        </div>
+        <div class="category" data-key="t">
+            <h3>8. Analizar onda T</h3>
+            <div class="options">
+                <label><input type="radio" name="t" value="normal"> Normal</label>
+                <label><input type="radio" name="t" value="isquemia"> Isquemia</label>
+                <label><input type="radio" name="t" value="hiperkalemia"> Hiperkalemia</label>
+                <label><input type="radio" name="t" value="hipokalemia"> Hipokalemia</label>
+            </div>
+        </div>
+        <div class="category" data-key="qt">
+            <h3>9. Analizar intervalo QT</h3>
+            <div class="options">
+                <label><input type="radio" name="qt" value="normal" data-sub="qt_normal"> Normal</label>
+                <div id="sub_qt_normal" class="suboptions">
+                    <label>QTc (ms): <input type="number" class="custom-input" data-for="qt_normal_ms"></label>
+                </div>
+                <label><input type="radio" name="qt" value="prolongado" data-sub="qt_prolongado"> QT prolongado</label>
+                <div id="sub_qt_prolongado" class="suboptions">
+                    <label>QTc (ms): <input type="number" class="custom-input" data-for="qt_prolongado_ms"></label>
+                </div>
+                <label><input type="radio" name="qt" value="corto" data-sub="qt_corto"> QT corto</label>
+                <div id="sub_qt_corto" class="suboptions">
+                    <label>QTc (ms): <input type="number" class="custom-input" data-for="qt_corto_ms"></label>
+                </div>
+            </div>
+        </div>
+        <div class="category" data-key="final">
+            <h3>10. Análisis final y comparación</h3>
+            <div class="options">
+                <label><input type="radio" name="final" value="consistente"> Consistente con síntomas</label>
+                <label><input type="radio" name="final" value="cambios_recientes"> Cambios recientes</label>
+                <label><input type="radio" name="final" value="hallazgos_cronicos" data-sub="cronicos"> Hallazgos crónicos</label>
+                <div id="sub_cronicos" class="suboptions">
+                    <label><input type="checkbox" value="hipertrofias"> Hipertrofias</label>
+                    <label><input type="checkbox" value="bloqueos"> Bloqueos</label>
+                    <label><input type="checkbox" value="secuelas_infarto"> Secuelas de infarto</label>
+                </div>
+            </div>
+        </div>
+        <button onclick="generateSummary()">Generar Resumen Final</button>
+        <button onclick="clearReport()">Limpiar Informe</button>
+    </div>
+<div id="report">
+    <h2>Informe Generado (Editable)</h2>
+    <div id="quill-toolbar"></div>
+    <div id="report-content" style="height: 500px;"></div>
+    <button onclick="exportPDF()">Exportar a PDF</button>
+    <!-- NUEVOS BOTONES -->
+    <button onclick="enviarAIA()">Mejorar Redacción (IA)</button>
+    <button onclick="restaurarOriginal()">Restaurar texto original</button>
+</div>
+
+    <script>
+        // Datos precargados con placeholders para valores personalizados
+        const reportTexts = {
+            verificacion: {
+                calibrado: 'Verificación inicial: ECG calibrado correctamente (amplitud: 10 mm/mV, velocidad: 25 mm/s).',
+                mal_calibrado: 'Verificación inicial: ECG mal calibrado, lo que puede llevar a errores en la medición de ondas y segmentos.'
+            },
+            ritmo: {
+                sinusal_normal: 'Ritmo cardíaco: Ritmo sinusal normal.',
+                arritmias: 'Ritmo cardíaco: Arritmias detectadas.',
+                fibrilacion_auricular: ' - Fibrilación auricular (frecuencia ventricular: [freq] lpm).',
+                flutter_auricular: ' - Flutter auricular.',
+                taquicardia_ventricular: ' - Taquicardia ventricular (frecuencia: [freq] lpm).',
+                bradicardia_sinusal: ' - Bradicardia sinusal.',
+                bloqueos: 'Ritmo cardíaco: Bloqueos de conducción.',
+                av_completo: ' - AV completo.',
+                bloqueos_rama: ' - Bloqueos de rama.'
+            },
+            ondas_p: {
+                normal: 'Ondas P: Morfología normal (duración <120 ms, amplitud <2.5 mm).',
+                hipertrofia: 'Ondas P: Hipertrofia auricular.',
+                derecha: ' - Derecha (amplitud: [amp] mm).',
+                izquierda: ' - Izquierda.',
+                ausencia: 'Ondas P: Ausencia de onda P (posible fibrilación auricular).'
+            },
+            pr: {
+                normal: 'Intervalo PR: Normal ([ms] ms).',
+                corto: 'Intervalo PR: Corto ([ms] ms, síndrome de Wolff-Parkinson-White).',
+                prolongado: 'Intervalo PR: Prolongado ([ms] ms, primer grado de bloqueo AV).'
+            },
+            qrs: {
+                normal: 'Complejos QRS: Normal ([ms] ms).',
+                bloqueos_rama: 'Complejos QRS: Bloqueos de rama.',
+                derecha: ' - Derecha (retraso: [ms] ms).',
+                izquierda: ' - Izquierda (retraso: [ms] ms).',
+                ventricular_ectopico: 'Complejos QRS: Ventricular ectópico.',
+                infarto_previo: 'Complejos QRS: Infarto previo (onda Q patológica).'
+            },
+            eje: {
+                normal: 'Eje eléctrico: Normal.',
+                desviacion: 'Eje eléctrico: Desviación del eje.',
+                izquierda: ' - Izquierda.',
+                derecha: ' - Derecha.',
+                extrema: ' - Extrema.',
+                alteraciones: 'Eje eléctrico: Alteraciones por hipertrofia ventricular o bloqueo de rama.'
+            },
+            st: {
+                normal: 'Segmento ST: Normal.',
+                infarto_agudo: 'Segmento ST: Infarto agudo (STEMI) con elevación [mm] mm.',
+                isquemia: 'Segmento ST: Isquemia subendocárdica (depresión ST).',
+                pericarditis: 'Segmento ST: Pericarditis (elevación ST difusa con PR deprimido).'
+            },
+            t: {
+                normal: 'Onda T: Normal.',
+                isquemia: 'Onda T: Isquemia (inversión T).',
+                hiperkalemia: 'Onda T: Hiperkalemia (ondas T picudas).',
+                hipokalemia: 'Onda T: Hipokalemia (T aplanada o invertida).'
+            },
+            qt: {
+                normal: 'Intervalo QT: Normal (QTc [ms] ms ajustado por fórmula de Bazett).',
+                prolongado: 'Intervalo QT: Prolongado (QTc [ms] ms, riesgo de torsade de pointes).',
+                corto: 'Intervalo QT: Corto (QTc [ms] ms, hipercalcemia, síndrome de QT corto).'
+            },
+            final: {
+                consistente: 'Análisis final: Consistente con síntomas del paciente.',
+                cambios_recientes: 'Análisis final: Cambios recientes que indican evento agudo.',
+                hallazgos_cronicos: 'Análisis final: Hallazgos crónicos.',
+                hipertrofias: ' - Hipertrofias.',
+                bloqueos: ' - Bloqueos.',
+                secuelas_infarto: ' - Secuelas de infarto.'
+            }
+        };
+
+        // Toggle categorías y subopciones
+        $('.category h3').click(function() {
+            $(this).next('.options').slideToggle();
+        });
+
+        // Toggle subopciones para radios con data-sub
+        $('input[type="radio"][data-sub]').change(function() {
+            $('.suboptions').hide();
+            if (this.checked) {
+                $('#sub_' + $(this).attr('data-sub')).show();
+            }
+        });
+
+        // Toggle subsubopciones para checkboxes con data-subsub
+        $('input[type="checkbox"][data-subsub]').change(function() {
+            let subsubId = '#subsub_' + $(this).attr('data-subsub');
+            $(subsubId).toggle(this.checked);
+        });
+
+        // Manejo de categorías incluidas (recursividad)
+        $(document).on('click', '.nested-category', function() {
+            let includeKey = $(this).data('include');
+            let targetCategory = $(`.category[data-key="${includeKey}"]`).clone(true);
+            let uniqueId = Date.now();
+            targetCategory.find('input[type="radio"]').attr('name', includeKey + '_' + uniqueId);
+            targetCategory.find('.options').show(); // Mostrar opciones al clonar
+            $(this).after(targetCategory);
+            // Re-bind eventos para la categoría clonada
+            targetCategory.find('h3').off('click').on('click', function() {
+                $(this).next('.options').slideToggle();
+            });
+            targetCategory.find('input[type="radio"][data-sub]').off('change').on('change', function() {
+                targetCategory.find('.suboptions').hide();
+                if (this.checked) {
+                    targetCategory.find('#sub_' + $(this).attr('data-sub')).show();
+                }
+            });
+            targetCategory.find('input').off('change input').on('change input', updateReport);
+        });
+
+        // Inicializar Quill
+        var quill = new Quill('#report-content', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, false] }],
+                    ['bold', 'italic', 'underline'],
+                    ['link', 'blockquote', 'code-block'],
+                    [{ list: 'ordered' }, { list: 'bullet' }]
+                ]
+            }
+        });
+
+        // Actualizar informe en tiempo real
+        function updateReport() {
+            let content = '';
+            Object.keys(reportTexts).forEach(category => {
+                // Procesar categorías originales y clonadas
+                $(`.category[data-key="${category}"]`).each(function() {
+                    const radioName = $(this).find('input[type="radio"]').attr('name');
+                    const selected = $(this).find(`input[name="${radioName}"]:checked`).val();
+                    if (selected && reportTexts[category][selected]) {
+                        let text = reportTexts[category][selected];
+                        // Reemplazar placeholders con valores de inputs personalizados
+                        const customInput = $(this).find(`.custom-input[data-for="${category}_${selected}_ms"]`).val() || '';
+                        text = text.replace('[ms]', customInput || 'No especificado');
+                        const customAmp = $(this).find(`.custom-input[data-for="${category}_${selected}_amp"]`).val() || '';
+                        text = text.replace('[amp]', customAmp || 'No especificado');
+                        const customMm = $(this).find(`.custom-input[data-for="${category}_${selected}_mm"]`).val() || '';
+                        text = text.replace('[mm]', customMm || 'No especificado');
+                        content += text + '<br>';
+                    }
+                    // Subopciones (checkboxes)
+                    $(this).find(`input[type="checkbox"]:checked`).each(function() {
+                        const val = $(this).val();
+                        if (reportTexts[category] && reportTexts[category][val]) {
+                            let text = reportTexts[category][val];
+                            // Reemplazar placeholders para subopciones
+                            const customFreq = $(this).closest('.category').find(`.custom-input[data-for="${val}_freq"]`).val() || '';
+                            text = text.replace('[freq]', customFreq || 'No especificado');
+                            const customMs = $(this).closest('.category').find(`.custom-input[data-for="bloqueo_${val}_ms"]`).val() || '';
+                            text = text.replace('[ms]', customMs || 'No especificado');
+                            const customAmp = $(this).closest('.category').find(`.custom-input[data-for="hipertrofia_${val}_amp"]`).val() || '';
+                            text = text.replace('[amp]', customAmp || 'No especificado');
+                            content += text + '<br>';
+                        }
+                    });
+                });
+            });
+            quill.root.innerHTML = content;
+        }
+
+        // Actualizar en cambios
+        $('input').on('change input', updateReport);
+
+        // Generar resumen final dinámico
+        function generateSummary() {
+            let summary = '<br><strong>Resumen final:</strong><br>';
+            const ritmo = $('input[name="ritmo"]:checked, input[name^="ritmo_"]:checked').val() || 'No especificado';
+            summary += `Ritmo y frecuencia: ${ritmo}<br>`;
+            const eje = $('input[name="eje"]:checked, input[name^="eje_"]:checked').val() || 'No especificado';
+            summary += `Eje eléctrico: ${eje}<br>`;
+            const prMs = $('.custom-input[data-for^="pr_"]').filter(function() { return $(this).val(); }).val() || 'No especificado';
+            const qrsMs = $('.custom-input[data-for^="qrs_"], .custom-input[data-for^="bloqueo_"]').filter(function() { return $(this).val(); }).val() || 'No especificado';
+            const qtMs = $('.custom-input[data-for^="qt_"]').filter(function() { return $(this).val(); }).val() || 'No especificado';
+            summary += `Intervalos PR, QRS, QT: PR ${prMs} ms, QRS ${qrsMs} ms, QT ${qtMs} ms<br>`;
+            const st = $('input[name="st"]:checked, input[name^="st_"]:checked').val() || 'No especificado';
+            const t = $('input[name="t"]:checked, input[name^="t_"]:checked').val() || 'No especificado';
+            summary += `Segmento ST y onda T: ST ${st}, T ${t}<br>`;
+            const hallazgos = $('input[name="final"]:checked, input[name^="final_"]:checked').val() || 'No especificados';
+            summary += `Hallazgos patológicos: ${hallazgos}<br>`;
+            quill.root.innerHTML += summary;
+        }
+
+        // Limpiar informe
+        function clearReport() {
+            quill.root.innerHTML = '';
+            $('input').prop('checked', false).val('');
+            $('.suboptions, .subsuboptions').hide();
+            $('.category[data-key]:not(:first-child)').each(function() {
+                if ($(this).find('input[name^="t_"]').length) {
+                    $(this).remove(); // Eliminar categorías clonadas
+                }
+            });
+        }
+
+        // Exportar a PDF
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(12);
+            doc.html(quill.root, {
+                callback: function (doc) {
+                    doc.save('informe_ecg.pdf');
+                },
+                x: 10,
+                y: 10,
+                html2canvas: { scale: 0.25 }
+            });
+        }
+
+        // Búsqueda
+        $('#search-input').on('input', function() {
+            const query = $(this).val().toLowerCase();
+            $('.category').each(function() {
+                const text = $(this).text().toLowerCase();
+                $(this).toggle(text.includes(query));
+            });
+        });
+
+        // Validación de inputs numéricos
+        $('.custom-input').on('input', function() {
+            let val = $(this).val();
+            if (val && isNaN(val)) {
+                $(this).addClass('error');
+                $(this).after('<span class="error">Solo números</span>');
+            } else {
+                $(this).removeClass('error');
+                $(this).next('.error').remove();
+            }
+        });
+
+        // --- Variables para guardar estado original ---
+let originalText = "";
+
+// --- Función para enviar texto a Make.com ---
+async function enviarAIA() {
+    // Guarda el texto actual antes de modificar
+    originalText = quill.root.innerHTML;
+
+    const textoActual = quill.getText(); // solo texto plano
+    const API_KEY = "Delta1818!"; // tu clave IA_API_KEY
+    const WEBHOOK_URL = "https://hook.us2.make.com/1u9fnsl7kckgoxns7atu139noyiebcrp";
+
+    try {
+        // Enviar al webhook
+        const response = await fetch(WEBHOOK_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "IA_API_KEY": API_KEY
+            },
+            body: JSON.stringify({ texto: textoActual })
+        });
+
+        if (!response.ok) {
+            throw new Error("Error en la solicitud: " + response.status);
+        }
+
+        // Esperar respuesta del webhook
+        const data = await response.json();
+
+        // Aquí asumo que Make devuelve { "texto_mejorado": "..."} o similar.
+        // Ajusta según el output real de Make.
+        const textoMejorado = data.texto_mejorado || data.resultado || JSON.stringify(data);
+
+        // Reemplazar contenido del editor con la respuesta
+        quill.root.innerHTML = textoMejorado;
+
+        alert("Texto mejorado con IA.");
+    } catch (error) {
+        console.error("Error enviando a Make.com:", error);
+        alert("Ocurrió un error al enviar el texto a la IA.");
+    }
+}
+
+// --- Función para restaurar el texto original ---
+function restaurarOriginal() {
+    if (originalText) {
+        quill.root.innerHTML = originalText;
+        alert("Texto restaurado al original.");
+    } else {
+        alert("No hay texto original guardado.");
+    }
+}
+
+    </script>
+</body>
+</html>
