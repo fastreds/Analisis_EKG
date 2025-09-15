@@ -1,27 +1,116 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Informes ECG - Versión Mejorada</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; display: flex; flex-wrap: wrap; }
-        #selector { width: 45%; padding: 20px; border-right: 1px solid #ccc; }
-        #report { width: 45%; padding: 20px; }
-        .category { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
-        .category h3 { cursor: pointer; background: #e0e0e0; padding: 10px; margin: 0; border-radius: 5px 5px 0 0; }
-        .options { padding: 10px; display: none; }
-        .suboptions { margin-left: 15px; padding: 5px; border-left: 2px solid #ccc; display: none; }
-        .subsuboptions { margin-left: 30px; padding: 5px; border-left: 2px solid #aaa; display: none; }
-        .nested-category { cursor: pointer; color: #007bff; margin-left: 30px; padding: 5px; }
-        .nested-category:hover { text-decoration: underline; }
-        label { display: block; margin-bottom: 5px; }
-        #report-content { border: 1px solid #ccc; padding: 15px; min-height: 500px; white-space: pre-wrap; background: #f9f9f9; border-radius: 5px; }
-        button { padding: 8px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        #search-input { width: 100%; padding: 8px; margin-bottom: 10px; }
-        .custom-input { width: 100px; margin-left: 10px; }
-        .error { color: red; font-size: 12px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        #selector {
+            width: 45%;
+            padding: 20px;
+            border-right: 1px solid #ccc;
+        }
+
+        #report {
+            width: 45%;
+            padding: 20px;
+        }
+
+        .category {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .category h3 {
+            cursor: pointer;
+            background: #e0e0e0;
+            padding: 10px;
+            margin: 0;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .options {
+            padding: 10px;
+            display: none;
+        }
+
+        .suboptions {
+            margin-left: 15px;
+            padding: 5px;
+            border-left: 2px solid #ccc;
+            display: none;
+        }
+
+        .subsuboptions {
+            margin-left: 30px;
+            padding: 5px;
+            border-left: 2px solid #aaa;
+            display: none;
+        }
+
+        .nested-category {
+            cursor: pointer;
+            color: #007bff;
+            margin-left: 30px;
+            padding: 5px;
+        }
+
+        .nested-category:hover {
+            text-decoration: underline;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #report-content {
+            border: 1px solid #ccc;
+            padding: 15px;
+            min-height: 500px;
+            white-space: pre-wrap;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .custom-input {
+            width: 100px;
+            margin-left: 10px;
+        }
+
+        .error {
+            color: red;
+            font-size: 12px;
+        }
     </style>
     <!-- Librerías externas via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -31,6 +120,7 @@
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
+
 <body>
     <div id="selector">
         <h1>Generador de Informes ECG</h1>
@@ -48,18 +138,23 @@
                 <label><input type="radio" name="ritmo" value="sinusal_normal"> Ritmo sinusal normal</label>
                 <label><input type="radio" name="ritmo" value="arritmias" data-sub="arritmias"> Arritmias</label>
                 <div id="sub_arritmias" class="suboptions">
-                    <label><input type="checkbox" value="fibrilacion_auricular" data-subsub="fibrilacion"> Fibrilación auricular</label>
+                    <label><input type="checkbox" value="fibrilacion_auricular" data-subsub="fibrilacion"> Fibrilación
+                        auricular</label>
                     <div id="subsub_fibrilacion" class="subsuboptions">
-                        <label>Frecuencia ventricular (lpm): <input type="number" class="custom-input" data-for="fibrilacion_auricular_freq"></label>
+                        <label>Frecuencia ventricular (lpm): <input type="number" class="custom-input"
+                                data-for="fibrilacion_auricular_freq"></label>
                     </div>
                     <label><input type="checkbox" value="flutter_auricular"> Flutter auricular</label>
-                    <label><input type="checkbox" value="taquicardia_ventricular" data-subsub="taquicardia"> Taquicardia ventricular</label>
+                    <label><input type="checkbox" value="taquicardia_ventricular" data-subsub="taquicardia"> Taquicardia
+                        ventricular</label>
                     <div id="subsub_taquicardia" class="subsuboptions">
-                        <label>Frecuencia (lpm): <input type="number" class="custom-input" data-for="taquicardia_ventricular_freq"></label>
+                        <label>Frecuencia (lpm): <input type="number" class="custom-input"
+                                data-for="taquicardia_ventricular_freq"></label>
                     </div>
                     <label><input type="checkbox" value="bradicardia_sinusal"> Bradicardia sinusal</label>
                 </div>
-                <label><input type="radio" name="ritmo" value="bloqueos" data-sub="bloqueos"> Bloqueos de conducción</label>
+                <label><input type="radio" name="ritmo" value="bloqueos" data-sub="bloqueos"> Bloqueos de
+                    conducción</label>
                 <div id="sub_bloqueos" class="suboptions">
                     <label><input type="checkbox" value="av_completo"> AV completo</label>
                     <label><input type="checkbox" value="bloqueos_rama"> Bloqueos de rama</label>
@@ -70,11 +165,13 @@
             <h3>3. Analizar ondas P</h3>
             <div class="options">
                 <label><input type="radio" name="ondas_p" value="normal"> Morfología normal</label>
-                <label><input type="radio" name="ondas_p" value="hipertrofia" data-sub="hipertrofia_p"> Hipertrofia auricular</label>
+                <label><input type="radio" name="ondas_p" value="hipertrofia" data-sub="hipertrofia_p"> Hipertrofia
+                    auricular</label>
                 <div id="sub_hipertrofia_p" class="suboptions">
                     <label><input type="checkbox" value="derecha" data-subsub="hipertrofia_derecha"> Derecha</label>
                     <div id="subsub_hipertrofia_derecha" class="subsuboptions">
-                        <label>Amplitud (mm): <input type="number" class="custom-input" data-for="hipertrofia_derecha_amp"></label>
+                        <label>Amplitud (mm): <input type="number" class="custom-input"
+                                data-for="hipertrofia_derecha_amp"></label>
                     </div>
                     <label><input type="checkbox" value="izquierda"> Izquierda</label>
                 </div>
@@ -86,15 +183,18 @@
             <div class="options">
                 <label><input type="radio" name="pr" value="normal" data-sub="pr_normal"> Normal</label>
                 <div id="sub_pr_normal" class="suboptions">
-                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_normal_ms" placeholder="120-200"></label>
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_normal_ms"
+                            placeholder="120-200"></label>
                 </div>
                 <label><input type="radio" name="pr" value="corto" data-sub="pr_corto"> PR corto</label>
                 <div id="sub_pr_corto" class="suboptions">
-                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_corto_ms" placeholder="<120"></label>
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_corto_ms"
+                            placeholder="<120"></label>
                 </div>
                 <label><input type="radio" name="pr" value="prolongado" data-sub="pr_prolongado"> PR prolongado</label>
                 <div id="sub_pr_prolongado" class="suboptions">
-                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_prolongado_ms" placeholder=">200"></label>
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="pr_prolongado_ms"
+                            placeholder=">200"></label>
                 </div>
             </div>
         </div>
@@ -103,18 +203,22 @@
             <div class="options">
                 <label><input type="radio" name="qrs" value="normal" data-sub="qrs_normal"> Normal</label>
                 <div id="sub_qrs_normal" class="suboptions">
-                    <label>Duración (ms): <input type="number" class="custom-input" data-for="qrs_normal_ms" placeholder="<120"></label>
+                    <label>Duración (ms): <input type="number" class="custom-input" data-for="qrs_normal_ms"
+                            placeholder="<120"></label>
                 </div>
-                <label><input type="radio" name="qrs" value="bloqueos_rama" data-sub="bloqueos_qrs"> Bloqueos de rama</label>
+                <label><input type="radio" name="qrs" value="bloqueos_rama" data-sub="bloqueos_qrs"> Bloqueos de
+                    rama</label>
                 <div id="sub_bloqueos_qrs" class="suboptions">
                     <label><input type="checkbox" value="derecha" data-subsub="bloqueo_derecha"> Derecha</label>
                     <div id="subsub_bloqueo_derecha" class="subsuboptions">
-                        <label>Retraso (ms): <input type="number" class="custom-input" data-for="bloqueo_derecha_ms"></label>
+                        <label>Retraso (ms): <input type="number" class="custom-input"
+                                data-for="bloqueo_derecha_ms"></label>
                         <div class="nested-category" data-include="t">Incluir análisis de onda T</div>
                     </div>
                     <label><input type="checkbox" value="izquierda" data-subsub="bloqueo_izquierda"> Izquierda</label>
                     <div id="subsub_bloqueo_izquierda" class="subsuboptions">
-                        <label>Retraso (ms): <input type="number" class="custom-input" data-for="bloqueo_izquierda_ms"></label>
+                        <label>Retraso (ms): <input type="number" class="custom-input"
+                                data-for="bloqueo_izquierda_ms"></label>
                     </div>
                 </div>
                 <label><input type="radio" name="qrs" value="ventricular_ectopico"> Ventricular ectópico</label>
@@ -125,7 +229,8 @@
             <h3>6. Analizar eje eléctrico</h3>
             <div class="options">
                 <label><input type="radio" name="eje" value="normal"> Normal</label>
-                <label><input type="radio" name="eje" value="desviacion" data-sub="desviacion_eje"> Desviación del eje</label>
+                <label><input type="radio" name="eje" value="desviacion" data-sub="desviacion_eje"> Desviación del
+                    eje</label>
                 <div id="sub_desviacion_eje" class="suboptions">
                     <label><input type="checkbox" value="izquierda"> Izquierda</label>
                     <label><input type="checkbox" value="derecha"> Derecha</label>
@@ -138,9 +243,11 @@
             <h3>7. Analizar segmento ST</h3>
             <div class="options">
                 <label><input type="radio" name="st" value="normal"> Normal</label>
-                <label><input type="radio" name="st" value="infarto_agudo" data-sub="st_infarto"> Infarto agudo (STEMI)</label>
+                <label><input type="radio" name="st" value="infarto_agudo" data-sub="st_infarto"> Infarto agudo
+                    (STEMI)</label>
                 <div id="sub_st_infarto" class="suboptions">
-                    <label>Elevación (mm): <input type="number" class="custom-input" data-for="st_infarto_mm" placeholder=">1"></label>
+                    <label>Elevación (mm): <input type="number" class="custom-input" data-for="st_infarto_mm"
+                            placeholder=">1"></label>
                 </div>
                 <label><input type="radio" name="st" value="isquemia"> Isquemia subendocárdica</label>
                 <label><input type="radio" name="st" value="pericarditis"> Pericarditis</label>
@@ -177,7 +284,8 @@
             <div class="options">
                 <label><input type="radio" name="final" value="consistente"> Consistente con síntomas</label>
                 <label><input type="radio" name="final" value="cambios_recientes"> Cambios recientes</label>
-                <label><input type="radio" name="final" value="hallazgos_cronicos" data-sub="cronicos"> Hallazgos crónicos</label>
+                <label><input type="radio" name="final" value="hallazgos_cronicos" data-sub="cronicos"> Hallazgos
+                    crónicos</label>
                 <div id="sub_cronicos" class="suboptions">
                     <label><input type="checkbox" value="hipertrofias"> Hipertrofias</label>
                     <label><input type="checkbox" value="bloqueos"> Bloqueos</label>
@@ -188,15 +296,18 @@
         <button onclick="generateSummary()">Generar Resumen Final</button>
         <button onclick="clearReport()">Limpiar Informe</button>
     </div>
-<div id="report">
-    <h2>Informe Generado (Editable)</h2>
-    <div id="quill-toolbar"></div>
-    <div id="report-content" style="height: 500px;"></div>
-    <button onclick="exportPDF()">Exportar a PDF</button>
-    <!-- NUEVOS BOTONES -->
-    <button onclick="enviarAIA()">Mejorar Redacción (IA)</button>
-    <button onclick="restaurarOriginal()">Restaurar texto original</button>
-</div>
+    <div id="report">
+        <h2>Informe Generado (Editable)</h2>
+        <div id="quill-toolbar"></div>
+        <div id="report-content" style="height: 500px;"></div>
+        <button onclick="exportPDF()">Exportar a PDF</button>
+        <div style="margin-top:10px;">
+            <button onclick="sendToDeepSeek()">Enviar a DeepSeek</button>
+            <button onclick="restoreOriginal()">Restaurar Original</button>
+            <button onclick="beautifyReport()">Embellecer Reporte</button>
+        </div>
+
+    </div>
 
     <script>
         // Datos precargados con placeholders para valores personalizados
@@ -272,12 +383,12 @@
         };
 
         // Toggle categorías y subopciones
-        $('.category h3').click(function() {
+        $('.category h3').click(function () {
             $(this).next('.options').slideToggle();
         });
 
         // Toggle subopciones para radios con data-sub
-        $('input[type="radio"][data-sub]').change(function() {
+        $('input[type="radio"][data-sub]').change(function () {
             $('.suboptions').hide();
             if (this.checked) {
                 $('#sub_' + $(this).attr('data-sub')).show();
@@ -285,13 +396,13 @@
         });
 
         // Toggle subsubopciones para checkboxes con data-subsub
-        $('input[type="checkbox"][data-subsub]').change(function() {
+        $('input[type="checkbox"][data-subsub]').change(function () {
             let subsubId = '#subsub_' + $(this).attr('data-subsub');
             $(subsubId).toggle(this.checked);
         });
 
         // Manejo de categorías incluidas (recursividad)
-        $(document).on('click', '.nested-category', function() {
+        $(document).on('click', '.nested-category', function () {
             let includeKey = $(this).data('include');
             let targetCategory = $(`.category[data-key="${includeKey}"]`).clone(true);
             let uniqueId = Date.now();
@@ -299,10 +410,10 @@
             targetCategory.find('.options').show(); // Mostrar opciones al clonar
             $(this).after(targetCategory);
             // Re-bind eventos para la categoría clonada
-            targetCategory.find('h3').off('click').on('click', function() {
+            targetCategory.find('h3').off('click').on('click', function () {
                 $(this).next('.options').slideToggle();
             });
-            targetCategory.find('input[type="radio"][data-sub]').off('change').on('change', function() {
+            targetCategory.find('input[type="radio"][data-sub]').off('change').on('change', function () {
                 targetCategory.find('.suboptions').hide();
                 if (this.checked) {
                     targetCategory.find('#sub_' + $(this).attr('data-sub')).show();
@@ -329,7 +440,7 @@
             let content = '';
             Object.keys(reportTexts).forEach(category => {
                 // Procesar categorías originales y clonadas
-                $(`.category[data-key="${category}"]`).each(function() {
+                $(`.category[data-key="${category}"]`).each(function () {
                     const radioName = $(this).find('input[type="radio"]').attr('name');
                     const selected = $(this).find(`input[name="${radioName}"]:checked`).val();
                     if (selected && reportTexts[category][selected]) {
@@ -344,7 +455,7 @@
                         content += text + '<br>';
                     }
                     // Subopciones (checkboxes)
-                    $(this).find(`input[type="checkbox"]:checked`).each(function() {
+                    $(this).find(`input[type="checkbox"]:checked`).each(function () {
                         const val = $(this).val();
                         if (reportTexts[category] && reportTexts[category][val]) {
                             let text = reportTexts[category][val];
@@ -373,9 +484,9 @@
             summary += `Ritmo y frecuencia: ${ritmo}<br>`;
             const eje = $('input[name="eje"]:checked, input[name^="eje_"]:checked').val() || 'No especificado';
             summary += `Eje eléctrico: ${eje}<br>`;
-            const prMs = $('.custom-input[data-for^="pr_"]').filter(function() { return $(this).val(); }).val() || 'No especificado';
-            const qrsMs = $('.custom-input[data-for^="qrs_"], .custom-input[data-for^="bloqueo_"]').filter(function() { return $(this).val(); }).val() || 'No especificado';
-            const qtMs = $('.custom-input[data-for^="qt_"]').filter(function() { return $(this).val(); }).val() || 'No especificado';
+            const prMs = $('.custom-input[data-for^="pr_"]').filter(function () { return $(this).val(); }).val() || 'No especificado';
+            const qrsMs = $('.custom-input[data-for^="qrs_"], .custom-input[data-for^="bloqueo_"]').filter(function () { return $(this).val(); }).val() || 'No especificado';
+            const qtMs = $('.custom-input[data-for^="qt_"]').filter(function () { return $(this).val(); }).val() || 'No especificado';
             summary += `Intervalos PR, QRS, QT: PR ${prMs} ms, QRS ${qrsMs} ms, QT ${qtMs} ms<br>`;
             const st = $('input[name="st"]:checked, input[name^="st_"]:checked').val() || 'No especificado';
             const t = $('input[name="t"]:checked, input[name^="t_"]:checked').val() || 'No especificado';
@@ -390,7 +501,7 @@
             quill.root.innerHTML = '';
             $('input').prop('checked', false).val('');
             $('.suboptions, .subsuboptions').hide();
-            $('.category[data-key]:not(:first-child)').each(function() {
+            $('.category[data-key]:not(:first-child)').each(function () {
                 if ($(this).find('input[name^="t_"]').length) {
                     $(this).remove(); // Eliminar categorías clonadas
                 }
@@ -413,16 +524,16 @@
         }
 
         // Búsqueda
-        $('#search-input').on('input', function() {
+        $('#search-input').on('input', function () {
             const query = $(this).val().toLowerCase();
-            $('.category').each(function() {
+            $('.category').each(function () {
                 const text = $(this).text().toLowerCase();
                 $(this).toggle(text.includes(query));
             });
         });
 
         // Validación de inputs numéricos
-        $('.custom-input').on('input', function() {
+        $('.custom-input').on('input', function () {
             let val = $(this).val();
             if (val && isNaN(val)) {
                 $(this).addClass('error');
@@ -433,60 +544,133 @@
             }
         });
 
-        // --- Variables para guardar estado original ---
-let originalText = "";
 
-// --- Función para enviar texto a Make.com ---
-async function enviarAIA() {
-    // Guarda el texto actual antes de modificar
-    originalText = quill.root.innerHTML;
+        ///////// Integración con DeepSeek /////////
 
-    const textoActual = quill.getText(); // solo texto plano
-    const API_KEY = "Delta1818!"; // tu clave IA_API_KEY
-    const WEBHOOK_URL = "https://hook.us2.make.com/1u9fnsl7kckgoxns7atu139noyiebcrp";
+        // Guardará el texto original antes de enviar a DeepSeek
+        let originalText = '';
 
-    try {
-        // Enviar al webhook
-        const response = await fetch(WEBHOOK_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "IA_API_KEY": API_KEY
-            },
-            body: JSON.stringify({ texto: textoActual })
-        });
+        async function sendToDeepSeek() {
+            // Toma el contenido actual del editor
+            const currentText = quill.root.innerText.trim();
+            if (!currentText) {
+                alert('El informe está vacío.');
+                return;
+            }
+            // Guarda original
+            originalText = currentText;
 
-        if (!response.ok) {
-            throw new Error("Error en la solicitud: " + response.status);
+            // Pregunta instrucciones al usuario
+            const instrucciones = prompt(
+                'Indique instrucciones para DeepSeek (ej: generar reporte profesional sin modificar parámetros técnicos):',
+                'Generar reporte profesional sin alterar parámetros técnicos'
+            );
+            if (!instrucciones) return;
+
+            // Combina instrucciones con el texto del informe
+            const promptTexto = `
+      Instrucciones: ${instrucciones}
+      Texto del informe:
+      ${currentText}
+    `;
+
+            // Llamada a la API DeepSeek
+            try {
+                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer sk-616d25d7415749758682ca825523dbee'
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [
+                            { role: 'system', content: 'Eres un asistente médico redactando informes profesionales de ECG.' },
+                            { role: 'user', content: promptTexto }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en la API DeepSeek');
+                }
+
+                const data = await response.json();
+                const textoGenerado = data.choices[0].message.content;
+
+                // Reemplaza el texto en el editor
+                quill.root.innerHTML = `<p>${textoGenerado.replace(/\n/g, '<br>')}</p>`;
+            } catch (err) {
+                console.error(err);
+                alert('Ocurrió un error al enviar a DeepSeek. Revisa la consola.');
+            }
         }
 
-        // Esperar respuesta del webhook
-        const data = await response.json();
+        function restoreOriginal() {
+            if (!originalText) {
+                alert('No hay texto original almacenado.');
+                return;
+            }
+            quill.root.innerHTML = `<p>${originalText.replace(/\n/g, '<br>')}</p>`;
+        }
 
-        // Aquí asumo que Make devuelve { "texto_mejorado": "..."} o similar.
-        // Ajusta según el output real de Make.
-        const textoMejorado = data.texto_mejorado || data.resultado || JSON.stringify(data);
 
-        // Reemplazar contenido del editor con la respuesta
-        quill.root.innerHTML = textoMejorado;
 
-        alert("Texto mejorado con IA.");
-    } catch (error) {
-        console.error("Error enviando a Make.com:", error);
-        alert("Ocurrió un error al enviar el texto a la IA.");
-    }
-}
 
-// --- Función para restaurar el texto original ---
-function restaurarOriginal() {
-    if (originalText) {
-        quill.root.innerHTML = originalText;
-        alert("Texto restaurado al original.");
-    } else {
-        alert("No hay texto original guardado.");
-    }
-}
+        //// embellecer reporte ////
+
+  function beautifyReport() {
+    // Obtener el texto actual
+    let text = quill.root.innerText;
+
+    // Paso 1: limpiar espacios extra
+    text = text.trim();
+
+    // Paso 2: reemplazar títulos tipo **TÍTULO:**
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); 
+
+    // Paso 3: detectar títulos con : al final y convertir a <h3>
+    text = text.replace(/(<strong>.*?:<\/strong>)/g, '<h3 style="margin-top:1em;">$1</h3>');
+
+    // Paso 4: listas con guiones
+    // Busca secciones que empiecen con - texto
+    const listItems = text.split('\n').map(line => {
+      if (line.trim().startsWith('-')) {
+        return `<li>${line.trim().substring(1).trim()}</li>`;
+      } else {
+        return line;
+      }
+    }).join('\n');
+
+    // Paso 5: agrupar <li> en <ul>
+    let formatted = listItems.replace(/(?:<li>[\s\S]*?<\/li>)+/g, match => {
+      return `<ul style="margin-left:20px; line-height:1.6;">${match}</ul>`;
+    });
+
+    // Paso 6: reemplazar saltos de línea por <p>
+    formatted = formatted
+      .split('\n')
+      .map(line => {
+        if (!line.startsWith('<') && line.trim() !== '') {
+          return `<p style="margin-bottom:0.5em; line-height:1.6;">${line}</p>`;
+        }
+        return line;
+      })
+      .join('');
+
+    // Inyectar HTML embellecido al editor
+    quill.root.innerHTML = formatted;
+
+    // Ajustar estilo del editor para que se vea mejor
+    quill.root.style.fontFamily = 'Arial, sans-serif';
+    quill.root.style.fontSize = '14px';
+    quill.root.style.lineHeight = '1.6';
+    quill.root.style.padding = '10px';
+  }
+
+
 
     </script>
 </body>
+
 </html>
