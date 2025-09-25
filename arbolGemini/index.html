@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Gráfico de Angio-TAC Coronario</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Reporte Interactivo del Árbol Coronario</h1>
+
+    <div class="report-container">
+        <div id="coronary-map-container">
+            <img src="arbol_coronario_base.png" alt="Árbol Coronario" id="coronary-image">
+            </div>
+
+        <div class="control-panel">
+            <h2>Añadir Hallazgo</h2>
+            <form id="finding-form">
+                <label for="artery-select">Arteria Afectada:</label>
+                <select id="artery-select" name="artery">
+                    <option value="DAI">Descendente Anterior (DAI)</option>
+                    <option value="ACx">Circunfleja (ACx)</option>
+                    <option value="ACD">Coronaria Derecha (ACD)</option>
+                    <option value="TCI">Tronco Coronario Izquierdo (TCI)</option>
+                    </select>
+
+                <label for="cads-rads-select">Grado (CAD-RADS):</label>
+                <select id="cads-rads-select" name="cads-rads">
+                    <option value="1">CAD-RADS 1 (1-24%)</option>
+                    <option value="2" selected>CAD-RADS 2 (25-49%)</option>
+                    <option value="3">CAD-RADS 3 (50-69%)</option>
+                    <option value="4">CAD-RADS 4 (70-99%)</option>
+                    <option value="5">CAD-RADS 5 (100%)</option>
+                </select>
+
+                <p>Haz clic en la imagen para marcar la ubicación exacta.</p>
+                <input type="hidden" id="coord-x" name="coord-x">
+                <input type="hidden" id="coord-y" name="coord-y">
+
+                <button type="submit">Añadir al Reporte</button>
+            </form>
+
+            <div id="report-summary">
+                <h2>Resumen de Hallazgos</h2>
+                <ul id="findings-list">
+                    </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

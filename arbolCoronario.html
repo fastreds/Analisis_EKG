@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Gráfico AngioTAC - Árbol Coronario (CAD-RADS 2.0)</title>
+    <style>
+        /* Estilos generales: Agradable, minimalista, responsive */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* Degradado suave */
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #2c3e50; /* Azul marino oscuro */
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra sutil */
+        }
+        #controls {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra elevada */
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            font-size: 14px;
+            transition: all 0.3s ease; /* Animación suave */
+        }
+        select:focus, button:hover {
+            border-color: #3498db; /* Azul highlight */
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        button {
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        #diagram-container {
+            position: relative;
+            width: 80vw; /* Responsive */
+            max-width: 600px;
+            height: 400px;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15); /* Sombra dramática */
+            background: white;
+        }
+        #background {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Mantiene proporciones */
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair; /* Cursor para clics */
+        }
+        /* Marcadores: Círculos con degradado por grado */
+        .marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease; /* Animación al hover */
+        }
+        .marker:hover {
+            transform: scale(1.2);
+        }
+        /* Colores por CAD-RADS (agradables: verde-amarillo-rojo) */
+        .cad-0-1 { background: linear-gradient(45deg, #27ae60, #2ecc71); } /* Verde suave */
+        .cad-2 { background: linear-gradient(45deg, #f39c12, #e67e22); } /* Naranja para leve */
+        .cad-3 { background: linear-gradient(45deg, #e74c3c, #c0392b); } /* Rojo medio */
+        .cad-4-5 { background: linear-gradient(45deg, #8e44ad, #9b59b6); } /* Púrpura para severo */
+        #legend {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+        }
+        #export {
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reporte Gráfico AngioTAC: Árbol Coronario con CAD-RADS 2.0</h1>
+    <p style="text-align: center; color: #7f8c8d;">Cliquea en la imagen para marcar obstrucciones. Selecciona grado y ajusta.</p>
+    
+    <div id="controls">
+        <label>Grado CAD-RADS:</label>
+        <select id="cad-grade">
+            <option value="0">0 (Ninguna)</option>
+            <option value="1">1 (Mínima 1-24%)</option>
+            <option value="2" selected>2 (Leve 25-49%)</option>
+            <option value="3">3 (Moderada 50-69%)</option>
+            <option value="4">4 (Severa 70-99%)</option>
+            <option value="5">5 (Oclusión total)</option>
+        </select>
+        <button onclick="addMarker()">Agregar Marcador</button>
+        <button onclick="clearMarkers()">Limpiar Todo</button>
+        <button onclick="exportImage()">Exportar como PNG</button>
+    </div>
+    
+    <div id="diagram-container">
+        <img id="background" src="https://upload.wikimedia.org/wikipedia/commons/1/18/Coronary_arteries.svg" alt="Árbol Coronario" onload="initCanvas()">
+        <canvas id="overlay"></canvas>
+    </div>
+    
+    <div id="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(45deg, #27ae60, #2ecc71);"></div>
+            <span>0-1: Mínima/Ninguna</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(45deg, #f39c12, #e67e22);"></div>
+            <span>2: Leve (Ej. CAD-RADS 2)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(45deg, #e74c3c, #c0392b);"></div>
+            <span>3: Moderada</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(45deg, #8e44ad, #9b59b6);"></div>
+            <span>4-5: Severa/Oclusión</span>
+        </div>
+    </div>
+    
+    <div id="export"></div>
+
+    <script>
+        let canvas, ctx, container, markers = []; // Variables globales para estado
+
+        function initCanvas() {
+            canvas = document.getElementById('overlay');
+            ctx = canvas.getContext('2d');
+            container = document.getElementById('diagram-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Evento de clic para posicionar marcador
+            canvas.addEventListener('click', handleClick);
+            
+            // Redimensionar canvas en resize
+            window.addEventListener('resize', () => {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                redrawMarkers();
+            });
+        }
+
+        function handleClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            addMarkerAt(x, y);
+        }
+
+        function addMarkerAt(x, y) {
+            const grade = document.getElementById('cad-grade').value;
+            const marker = {
+                x: x,
+                y: y,
+                grade: grade,
+                id: Date.now() // Único para identificar
+            };
+            markers.push(marker);
+            drawMarker(marker);
+            updateLegend(); // Actualiza visual si es necesario
+        }
+
+        function drawMarker(marker) {
+            // Limpia canvas y redibuja todos (para superposiciones)
+            redrawMarkers();
+        }
+
+        function redrawMarkers() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            markers.forEach(marker => {
+                ctx.beginPath();
+                ctx.arc(marker.x, marker.y, 10, 0, 2 * Math.PI); // Círculo de 20px diámetro
+                // Color por grado (agradable degradado simulado con fillStyle)
+                let color;
+                if (marker.grade <= 1) color = '#2ecc71';
+                else if (marker.grade == 2) color = '#f39c12';
+                else if (marker.grade == 3) color = '#e74c3c';
+                else color = '#9b59b6';
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // Etiqueta con grado (texto centrado)
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(marker.grade, marker.x, marker.y);
+            });
+        }
+
+        function addMarker() {
+            // Para agregar sin clic: usa centro aproximado (ajusta manualmente)
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            addMarkerAt(centerX, centerY);
+        }
+
+        function clearMarkers() {
+            markers = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function exportImage() {
+            const link = document.createElement('a');
+            html2canvas(document.getElementById('diagram-container')).then(canvas => {
+                link.download = 'reporte-coronario-cad2.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+            // Nota: Requiere librería html2canvas (agrega <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script> en <head> si no está)
+        }
+
+        // Inicializa al cargar imagen
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('background').complete) {
+                initCanvas();
+            }
+        });
+    </script>
+    <!-- Librería para export (opcional, agrega en <head> si usas export) -->
+    <!-- <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script> -->
+</body>
+</html>
