@@ -1,0 +1,241 @@
+{
+    "reportStructure": {
+        "sections": [
+            {
+                "title": "Datos del Paciente",
+                "fields": [
+                    { "name": "nombre", "label": "Nombre", "type": "text" },
+                    { "name": "identificacion", "label": "Identificación", "type": "text" },
+                    { "name": "genero", "label": "Género", "type": "select", "options": ["MASCULINO", "FEMENINA"] },
+                    { "name": "edad", "label": "Edad (Años)", "type": "number" },
+                    { "name": "peso", "label": "Peso (Kg)", "type": "number" },
+                    { "name": "talla", "label": "Talla (CM)", "type": "number" },
+                    { "name": "area_sc", "label": "Área SC (m²)", "type": "number" },
+                    { "name": "fecha_estudio", "label": "Fecha del Estudio", "type": "date" },
+                    { "name": "medico_refiere", "label": "Médico que Refiere", "type": "text" }
+                ]
+            },
+            {
+                "title": "Métodos del Estudio",
+                "fields": [
+                    { "name": "tomografo", "label": "Tomógrafo", "type": "text", "default": "Canon Aquilion® / 160 cortes" },
+                    { "name": "tiempo_rotacion", "label": "Tiempo de Rotación", "type": "text", "default": "0.5/seg" },
+                    { "name": "ecg_gating", "label": "ECG-gating", "type": "text", "default": "Retrospectivo (variabilidad FC respiratoria marcada)" },
+                    { "name": "medio_contraste", "label": "Medio Contraste", "type": "text", "default": "Ultravist 370" },
+                    { "name": "volumen_contraste", "label": "Volumen de Medio Contraste (ml)", "type": "number", "default": 85 },
+                    { "name": "velocidad_infusion", "label": "Velocidad de Infusión (ml/s)", "type": "number", "default": 5 },
+                    { "name": "ritmo_estudio", "label": "Ritmo durante el Estudio", "type": "text", "default": "Ritmo bradicardia sinusal" }
+                ]
+            },
+            {
+                "title": "Motivo de Estudio y Generalidades",
+                "fields": [
+                    { "name": "motivo", "label": "Descripción de la Referencia", "type": "textarea" },
+                    { "name": "consentimiento", "label": "Consentimiento Informado", "type": "checkbox", "labelText": "Firmado" },
+                    { "name": "tolerancia", "label": "Tolerancia al Estudio", "type": "text", "default": "Buena tolerancia al estudio, sin reacciones adversas al medio contraste." },
+                    { "name": "fc", "label": "FC durante el Estudio", "type": "text", "default": "Paciente con FC de 45-55 lpm durante el estudio. Se utilizó una dosis de nitroglicerina sublingual." },
+                    { "name": "analisis", "label": "Análisis de Imágenes", "type": "text", "default": "Análisis de imágenes fue por medio de estación de trabajo Vitrea®, todas las mediciones finales incluyendo cortes multiplanares y reconstrucción 3D." },
+                    { "name": "calidad", "label": "Calidad de Estudio", "type": "select", "options": ["Buena", "Aceptable", "Limitada"] }
+                ]
+            },
+            {
+                "title": "Anatomía Cardiovascular",
+                "fields": [
+                    { "name": "venas_cavas", "label": "Venas Cavas", "type": "text", "default": "Ambas no dilatadas drenando en la aurícula derecha" },
+                    { "name": "auricula_derecha", "label": "Aurícula Derecha", "type": "text", "default": "No dilatada" },
+                    { "name": "septum_interauricular", "label": "Septum Interauricular", "type": "text", "default": "No se visualizan defectos" },
+                    { "name": "seno_coronario", "label": "Seno Coronario", "type": "text", "default": "Drenando a la AD en forma habitual sin dilatación o anomalías" },
+                    { "name": "valvula_tricuspide", "label": "Válvula Tricúspide", "type": "text", "default": "No se visualizan defectos por este método" },
+                    { "name": "ventriculo_derecho", "label": "Ventrículo Derecho", "type": "text", "default": "No dilatado ni hipertrófico" },
+                    { "name": "arteria_pulmonar", "label": "Arteria Pulmonar", "type": "text", "default": "Diámetro Normal" },
+                    { "name": "venas_pulmonares", "label": "Venas Pulmonares", "type": "text", "default": "Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas" },
+                    { "name": "auricula_izquierda", "label": "Aurícula Izquierda", "type": "text", "default": "No se observan trombos en la orejuela izquierda, ni masas o lesiones intracardiacas." },
+                    { "name": "ventriculo_izquierdo", "label": "Ventrículo Izquierdo", "type": "text", "default": "No dilatado con hipertrofia concéntrica leve. Motilidad global y regional conservada. FEVI normal 70%." },
+                    { "name": "hallazgos_extracardiacos", "label": "Hallazgos Extracardiacos", "type": "text", "default": "Hernia hiatal pequeña" }
+                ]
+            },
+            {
+                "title": "Válvula Aórtica",
+                "fields": [
+                    { "name": "cuspides", "label": "Cúspides", "type": "text", "default": "3 cúspides de conformación Normal" },
+                    { "name": "calcificaciones_valvula", "label": "Calcificaciones", "type": "text" },
+                    { "name": "morfologia_anillo", "label": "Morfología del Anillo Aórtico", "type": "select", "options": ["Elíptica", "Circular"] },
+                    { "name": "diametro_menor_anillo", "label": "Diámetro Menor del Anillo (mm)", "type": "number" },
+                    { "name": "diametro_mayor_anillo", "label": "Diámetro Mayor del Anillo (mm)", "type": "number" }
+                ]
+            },
+            {
+                "title": "Diámetros de la Aorta",
+                "fields": [
+                    { "name": "senos_valsalva_diametro", "label": "Senos de Valsalva (mm)", "type": "number" },
+                    { "name": "senos_valsalva_indexado", "label": "Senos de Valsalva Indexado (mm/m² SC)", "type": "number" },
+                    { "name": "senos_valsalva_observaciones", "label": "Observaciones Senos de Valsalva", "type": "text", "default": "NORMAL" },
+                    { "name": "union_sinotubular_diametro", "label": "Unión Sinotubular (mm)", "type": "number" },
+                    { "name": "union_sinotubular_indexado", "label": "Unión Sinotubular Indexado (mm/m² SC)", "type": "number" },
+                    { "name": "union_sinotubular_observaciones", "label": "Observaciones Unión Sinotubular", "type": "text", "default": "NORMAL" },
+                    { "name": "tubular_ascendente_diametro", "label": "Porción Tubular Ascendente (mm)", "type": "number" },
+                    { "name": "tubular_ascendente_indexado", "label": "Porción Tubular Ascendente Indexado (mm/m² SC)", "type": "number" },
+                    { "name": "tubular_ascendente_observaciones", "label": "Observaciones Porción Tubular Ascendente", "type": "text", "default": "NORMAL (medición a 40 mm del anillo aórtico)" }
+                ]
+            },
+            {
+                "title": "Score de Calcio Coronario",
+                "fields": [
+                    { "name": "calcio_total", "label": "Total (Agatston)", "type": "number", "default": 0 },
+                    { "name": "calcio_tci", "label": "TCI", "type": "number", "default": 0 },
+                    { "name": "calcio_ada", "label": "ADA", "type": "number", "default": 0 },
+                    { "name": "calcio_acd", "label": "ACD", "type": "number", "default": 0 },
+                    { "name": "calcio_acx", "label": "ACX", "type": "number", "default": 0 }
+                ]
+            },
+            {
+                "title": "Arteriografía Coronaria No Invasiva - Arteria Coronaria Izquierda",
+                "fields": [
+                    { "name": "tci_longitud", "label": "Tronco Coronario Izquierdo - Longitud (mm)", "type": "number", "default": 13 },
+                    { "name": "tci_nacimiento", "label": "Nacimiento", "type": "text", "default": "0% POR DIÁMETRO 0% POR ÁREA LUMINAL MÍNIMA" },
+                    { "name": "tci_ateromatosis", "label": "Ateromatosis", "type": "text" },
+                    { "name": "tci_compromiso_luminal", "label": "Compromiso Luminal", "type": "text" },
+                    { "name": "tci_obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                    { "name": "tci_termina_en", "label": "Termina en", "type": "text" },
+                    { "name": "tci_artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                ],
+                "repeatableGroups": [
+                    {
+                        "groupName": "ada_segments",
+                        "title": "Arteria Descendente Anterior (ADA) - Segmentos",
+                        "repeatable": true,
+                        "fields": [
+                            { "name": "segmento", "label": "Segmento", "type": "select", "options": ["Proximal", "Medio", "Distal"] },
+                            { "name": "calibre_desarrollo", "label": "Calibre y Desarrollo", "type": "text" },
+                            { "name": "ateromatosis", "label": "Ateromatosis", "type": "text" },
+                            { "name": "compromiso_luminal", "label": "Compromiso Luminal", "type": "text", "default": "0%" },
+                            { "name": "obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                            { "name": "puente_intramiocardico", "label": "Puente Intramiocárdico", "type": "text" },
+                            { "name": "artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                        ]
+                    },
+                    {
+                        "groupName": "ada_ramas",
+                        "title": "Ramas de la ADA",
+                        "repeatable": true,
+                        "fields": [
+                            { "name": "rama", "label": "Rama", "type": "select", "options": ["Primera Rama Diagonal", "Segunda Rama Diagonal", "Tercera Rama Diagonal"] },
+                            { "name": "origen", "label": "Origen", "type": "text" },
+                            { "name": "calibre_desarrollo", "label": "Calibre y Desarrollo", "type": "text" },
+                            { "name": "ateromatosis", "label": "Ateromatosis", "type": "text", "default": "0%" },
+                            { "name": "compromiso_luminal", "label": "Compromiso Luminal", "type": "text" },
+                            { "name": "obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                            { "name": "artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                        ]
+                    },
+                    {
+                        "groupName": "ramus_intermedio",
+                        "title": "Arteria del Ramus Intermedio",
+                        "repeatable": false,
+                        "fields": [
+                            { "name": "calibre_desarrollo", "label": "Calibre y Desarrollo", "type": "text" },
+                            { "name": "ateromatosis", "label": "Ateromatosis", "type": "text" },
+                            { "name": "compromiso_luminal", "label": "Compromiso Luminal", "type": "text", "default": "0%" },
+                            { "name": "obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                            { "name": "artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                        ]
+                    },
+                    {
+                        "groupName": "acx_segments",
+                        "title": "Arteria Circunfleja (ACX) - Segmentos",
+                        "repeatable": true,
+                        "fields": [
+                            { "name": "segmento", "label": "Segmento", "type": "select", "options": ["Proximal", "Medio", "Distal"] },
+                            { "name": "calibre_desarrollo", "label": "Calibre y Desarrollo", "type": "text" },
+                            { "name": "ateromatosis", "label": "Ateromatosis", "type": "text", "default": "0%" },
+                            { "name": "compromiso_luminal", "label": "Compromiso Luminal", "type": "text" },
+                            { "name": "obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                            { "name": "artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                        ]
+                    },
+                    {
+                        "groupName": "acx_ramas",
+                        "title": "Ramas de la ACX",
+                        "repeatable": true,
+                        "fields": [
+                            { "name": "rama", "label": "Rama", "type": "select", "options": ["Primera Rama Marginal Obtusa", "Segunda Rama Marginal Obtusa"] },
+                            { "name": "calibre_desarrollo", "label": "Calibre y Desarrollo", "type": "text" },
+                            { "name": "ateromatosis", "label": "Ateromatosis", "type": "text", "default": "0%" },
+                            { "name": "compromiso_luminal", "label": "Compromiso Luminal", "type": "text" },
+                            { "name": "obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                            { "name": "artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "Arteriografía Coronaria No Invasiva - Arteria Coronaria Derecha",
+                "fields": [
+                    { "name": "acd_dominancia", "label": "Dominancia", "type": "select", "options": ["Dominante", "No Dominante", "Co-Dominante"] },
+                    { "name": "acd_ostium", "label": "Ostium y Nacimiento", "type": "text", "default": "Normal. Trayecto normal" }
+                ],
+                "repeatableGroups": [
+                    {
+                        "groupName": "acd_segments",
+                        "title": "Arteria Coronaria Derecha (ACD) - Segmentos",
+                        "repeatable": true,
+                        "fields": [
+                            { "name": "segmento", "label": "Segmento", "type": "select", "options": ["Proximal", "Medio", "Distal"] },
+                            { "name": "ateromatosis", "label": "Ateromatosis", "type": "text", "default": "0%" },
+                            { "name": "compromiso_luminal", "label": "Compromiso Luminal", "type": "text" },
+                            { "name": "obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                            { "name": "artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                        ]
+                    },
+                    {
+                        "groupName": "acd_ramas",
+                        "title": "Ramas de la Arteria Coronaria Derecha",
+                        "repeatable": true,
+                        "fields": [
+                            { "name": "rama", "label": "Rama", "type": "select", "options": ["Arteria Conal y Arteria para el Nodo AV", "Rama Marginal Aguda", "Rama Interventricular Posterior", "Rama Posterolateral"] },
+                            { "name": "origen", "label": "Origen", "type": "text" },
+                            { "name": "calibre_desarrollo", "label": "Calibre y Desarrollo", "type": "text" },
+                            { "name": "ateromatosis", "label": "Ateromatosis", "type": "text", "default": "0%" },
+                            { "name": "compromiso_luminal", "label": "Compromiso Luminal", "type": "text" },
+                            { "name": "obstruccion", "label": "% de Obstrucción", "type": "number", "default": 0, "suggestComment": true },
+                            { "name": "artefacto", "label": "Presencia de Artefacto", "type": "text" }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "Conclusiones Angio TC Cardiaco Multidetector",
+                "fields": [
+                    { 
+                        "name": "conclusiones", 
+                        "label": "Conclusiones Generales", 
+                        "type": "textarea",
+                        "default": "• Implantación normal de las Arterias Coronarias.\n• El Tronco Coronario Izquierdo no presenta ateromatosis.\n• La Arteria Descendente Anterior es un vaso que no presenta ateromatosis.\n• La Arteria del Ramus Intermedio es un vaso que no presenta ateromatosis.\n• La Arteria Circunfleja es un vaso no dominante que no presenta ateromatosis.\n• La Arteria Coronaria Derecha es un vaso dominante que presenta ateromatosis mixta y compromiso luminal moderado a nivel proximal.\n• Puente Miocárdico a nivel del tercio medio/proximal/distal de la ADA.\n• Ventrículo Izquierdo no dilatado con hipertrofia concéntrica leve. Motilidad global y regional conservada. FEVI normal 70%.\n• Ventrículo Derecho no dilatado ni hipertrófico.\n• Aorta Torácica sin dilatación ni ateromatosis.\n• Aorta Torácica con dilatación, en ningún caso en rango aneurismático con ateromatosis moderada.\n• Drenaje Venoso sistémico y pulmonar normal.\n• Concordancia AV y VA, sin otros defectos congénitos evaluables por este método."
+                    },
+                    { 
+                        "name": "cad_rads", 
+                        "label": "CAD-RADS", 
+                        "type": "select", 
+                        "options": ["CAD-RADS:0", "CAD-RADS:1", "CAD-RADS:2", "CAD-RADS:3", "CAD-RADS:4a", "CAD-RADS:4b", "CAD-RADS:5"],
+                        "descriptions": {
+                            "CAD-RADS:0": "según la clasificación del documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556.",
+                            "CAD-RADS:1": "según la clasificación del documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556.). Con este resultado se recomienda el control óptimo de factores de riesgo modificables generadores de progresión de placa.",
+                            "CAD-RADS:2": "según la clasificación del documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556. Con este resultado se recomienda el control óptimo de factores de riesgo modificables generadores de progresión de placa.",
+                            "CAD-RADS:3": "según la clasificación del documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556. Con este resultado se recomienda el control óptimo de factores de riesgo modificables generadores de progresión de placa y la correlación clínica y funcional.",
+                            "CAD-RADS:4a": "según la clasificación del documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556. Con este resultado se recomienda el control óptimo de factores de riesgo modificables generadores de progresión de placa y la correlación clínica y funcional.",
+                            "CAD-RADS:4b": "según la clasificación del documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556. Con este resultado se recomienda el control óptimo de factores de riesgo modificables generadores de progresión de placa y la correlación clínica y funcional.",
+                            "CAD-RADS:5": "según la clasificación del documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556. Con este resultado se recomienda el control óptimo de factores de riesgo modificables generadores de progresión de placa y la correlación clínica y funcional."
+                        }
+                    },
+                    { 
+                        "name": "cad_rads_display", 
+                        "label": "CAD-RADS Calculado", 
+                        "type": "text", 
+                        "readonly": true,
+                        "description": "Clasificación según documento de consenso de expertos SCCT, ACR, NASCI y ACC (JCardiovasc Comput Tomogr. 2022 (16) 537-556)"
+                    }
+                ]
+            }
+        ]
+    }
+}

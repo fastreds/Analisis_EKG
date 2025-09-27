@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Reporte Angio-TAC Cardiaco</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; }
+        .form-section { background-color: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .preview-section { background-color: white; border-radius: 8px; padding: 20px; height: 100%; font-size: 14px; line-height: 1.6; }
+        .cad-rads-display { font-weight: bold; padding: 16px; border-radius: 8px; text-align: center; margin-top: 16px; transition: background-color 0.3s ease; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Generador de Reporte Angio-TAC Cardiaco</h1>
+            <p class="text-gray-600">Complete el formulario para generar el informe y calcular el CAD-RADS automáticamente.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+                <div class="flex space-x-2 mb-4">
+                    <button id="preload-normal-btn" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors">Cargar Escenario Normal</button>
+                    <button id="preload-severe-btn" class="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 transition-colors">Cargar Escenario Severo</button>
+                </div>
+                <div id="form-container"></div>
+            </div>
+
+            <div class="sticky top-8 self-start">
+                <div class="form-section">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Vista Previa del Informe</h2>
+                    <div id="preview-container" class="preview-section prose max-w-none">
+                        <p class="text-gray-500">La vista previa del informe aparecerá aquí...</p>
+                    </div>
+                    
+                    <div id="cad-rads-result">
+                        <h3 class="text-lg font-bold mt-4">CAD-RADS Calculado</h3>
+                        <div id="cad-rads-display" class="cad-rads-display bg-gray-200 text-gray-800">
+                            Aún no calculado
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <button id="save-btn" class="bg-blue-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors">Guardar Progreso</button>
+                        <button id="clear-btn" class="bg-gray-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors">Limpiar Formulario</button>
+                    </div>
+                    <button id="generate-pdf-btn" class="w-full mt-4 bg-purple-600 text-white font-bold py-4 px-4 rounded-lg hover:bg-purple-700 transition-colors text-lg">Generar PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // --- 1. ESTRUCTURA DEL REPORTE EN FORMATO JSON ---
+    const reportStructure = [
+        {
+            title: "Datos del Paciente",
+            fields: [
+                { id: 'paciente_nombre', label: 'Nombre', type: 'text', placeholder: 'Nombre completo' },
+                { id: 'paciente_id', label: 'Identificación', type: 'text', placeholder: 'Cédula o ID' },
+                { id: 'paciente_genero', label: 'Género', type: 'select', options: ['Masculino', 'Femenino'] },
+                { id: 'paciente_edad', label: 'Edad (años)', type: 'number', placeholder: 'Ej: 55' },
+                { id: 'paciente_peso', label: 'Peso (Kg)', type: 'number', placeholder: 'Ej: 70' },
+                { id: 'paciente_talla', label: 'Talla (cm)', type: 'number', placeholder: 'Ej: 175' },
+                { id: 'paciente_fecha', label: 'Fecha del estudio', type: 'date' },
+                { id: 'paciente_medico', label: 'Médico que refiere', type: 'text', placeholder: 'Dr. Apellido' },
+            ]
+        },
+        {
+            title: "Arterias Coronarias",
+            type: "repeatableGroup",
+            id: "arterias",
+            template: [
+                { id: 'nombre', label: 'Vaso', type: 'text', readonly: true },
+                { id: 'dominancia', label: 'Dominancia', type: 'select', options: ['No aplica', 'Dominante', 'No dominante', 'Codominante'], condition: (item) => ['ACD', 'ACX'].includes(item.nombre.split(' ')[0]) },
+                { id: 'ateromatosis', label: 'Ateromatosis', type: 'select', options: ['Sin lesiones', 'Leve no calcificada', 'Leve mixta', 'Moderada calcificada', 'Moderada mixta', 'Severa calcificada', 'Severa mixta'] },
+                { id: 'compromiso_luminal', label: 'Compromiso Luminal', type: 'select', options: ['Ninguno', 'Leve', 'Moderado', 'Severo'] },
+                { id: 'obstruccion', label: '% Obstrucción', type: 'number', placeholder: '0-100', min: 0, max: 100 }
+            ],
+            items: [
+                { nombre: 'Tronco Coronario Izquierdo (TCI)' },
+                { nombre: 'Descendente Anterior (DA) - Proximal' },
+                { nombre: 'Descendente Anterior (DA) - Medio' },
+                { nombre: 'Descendente Anterior (DA) - Distal' },
+                { nombre: 'Arteria Circunfleja (ACX) - Proximal' },
+                { nombre: 'Arteria Circunfleja (ACX) - Medio' },
+                { nombre: 'Arteria Coronaria Derecha (ACD) - Proximal' },
+                { nombre: 'Arteria Coronaria Derecha (ACD) - Medio' },
+                { nombre: 'Arteria Coronaria Derecha (ACD) - Distal' },
+            ]
+        },
+        {
+            title: "Conclusiones",
+            fields: [
+                { id: 'conclusiones_texto', label: 'Resumen de Conclusiones', type: 'textarea', rows: 10, placeholder: 'Las conclusiones se generarán automáticamente aquí...' }
+            ]
+        }
+    ];
+
+    // --- 2. LÓGICA DE LA APLICACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const formContainer = document.getElementById('form-container');
+        const previewContainer = document.getElementById('preview-container');
+        const cadRadsDisplay = document.getElementById('cad-rads-display');
+
+        // --- RENDERIZADO DEL FORMULARIO ---
+        function renderForm() {
+            reportStructure.forEach(section => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'form-section';
+                
+                const titleEl = document.createElement('h2');
+                titleEl.className = 'text-xl font-bold mb-4 border-b pb-2';
+                titleEl.textContent = section.title;
+                sectionEl.appendChild(titleEl);
+
+                if (section.fields) {
+                    section.fields.forEach(field => {
+                        sectionEl.appendChild(createField(field));
+                    });
+                } else if (section.type === 'repeatableGroup') {
+                    const groupContainer = document.createElement('div');
+                    groupContainer.id = section.id;
+                    section.items.forEach((item, index) => {
+                        const itemGroup = document.createElement('div');
+                        itemGroup.className = 'mb-6 p-4 border rounded-lg';
+                        section.template.forEach(fieldTemplate => {
+                            if (fieldTemplate.condition && !fieldTemplate.condition(item)) return;
+
+                            const fieldData = { ...fieldTemplate, id: `${section.id}_${index}_${fieldTemplate.id}` };
+                            if (item[fieldTemplate.id] !== undefined) {
+                                fieldData.defaultValue = item[fieldTemplate.id];
+                            }
+                            itemGroup.appendChild(createField(fieldData));
+                        });
+                        groupContainer.appendChild(itemGroup);
+                    });
+                    sectionEl.appendChild(groupContainer);
+                }
+                formContainer.appendChild(sectionEl);
+            });
+        }
+
+        function createField(field) {
+            const container = document.createElement('div');
+            container.className = 'mb-4';
+
+            const label = document.createElement('label');
+            label.className = 'block text-gray-700 font-bold mb-2';
+            label.setAttribute('for', field.id);
+            label.textContent = field.label;
+            container.appendChild(label);
+
+            let input;
+            switch (field.type) {
+                case 'select':
+                    input = document.createElement('select');
+                    field.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        input.appendChild(option);
+                    });
+                    break;
+                case 'textarea':
+                    input = document.createElement('textarea');
+                    input.rows = field.rows || 5;
+                    break;
+                default:
+                    input = document.createElement('input');
+                    input.type = field.type;
+                    if (field.placeholder) input.placeholder = field.placeholder;
+                    if (field.readonly) input.readOnly = true;
+            }
+
+            input.id = field.id;
+            input.name = field.id;
+            input.className = 'w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500';
+            if (field.readonly) {
+                input.classList.add('bg-gray-100');
+            }
+            if (field.defaultValue) {
+                input.value = field.defaultValue;
+            }
+            container.appendChild(input);
+            return container;
+        }
+
+        // --- LÓGICA DE ACTUALIZACIÓN ---
+        function getFormData() {
+            const data = {};
+            reportStructure.forEach(section => {
+                if (section.fields) {
+                    section.fields.forEach(field => {
+                        data[field.id] = document.getElementById(field.id).value;
+                    });
+                } else if (section.type === 'repeatableGroup') {
+                    data[section.id] = section.items.map((item, index) => {
+                        const itemData = { ...item };
+                        section.template.forEach(fieldTemplate => {
+                            const el = document.getElementById(`${section.id}_${index}_${fieldTemplate.id}`);
+                            if(el) itemData[fieldTemplate.id] = el.value;
+                        });
+                        return itemData;
+                    });
+                }
+            });
+            return data;
+        }
+        
+        function updateAll() {
+            const data = getFormData();
+            updatePreview(data);
+            calculateCadRads(data);
+        }
+
+        function updatePreview(data) {
+            let html = `<h3>Datos del Paciente</h3>`;
+            html += `<p><strong>Nombre:</strong> ${data.paciente_nombre || '...'}<br>`;
+            html += `<strong>Edad:</strong> ${data.paciente_edad || '...'} años<br>`;
+            html += `<strong>Fecha:</strong> ${data.paciente_fecha || '...'}</p>`;
+            
+            html += `<h3 class="mt-4">Hallazgos Coronarios</h3>`;
+            data.arterias.forEach(arteria => {
+                if (arteria.obstruccion > 0) {
+                    html += `<p><strong>${arteria.nombre}:</strong> Ateromatosis ${arteria.ateromatosis.toLowerCase()} que causa un compromiso luminal ${arteria.compromiso_luminal.toLowerCase()} del <strong>${arteria.obstruccion}%.</strong></p>`;
+                }
+            });
+
+            // Auto-generate conclusions
+            const { conclusionsText } = generateConclusions(data);
+            document.getElementById('conclusiones_texto').value = conclusionsText;
+            html += `<h3 class="mt-4">Conclusiones</h3><p>${conclusionsText.replace(/\n/g, '<br>')}</p>`;
+
+            previewContainer.innerHTML = html;
+        }
+
+        function calculateCadRads(data) {
+            let maxStenosis = 0;
+            let isTCI_Affected = false;
+            let affectedVessels = new Set();
+
+            data.arterias.forEach(arteria => {
+                const obstruction = parseInt(arteria.obstruccion || 0, 10);
+                if (obstruction > maxStenosis) {
+                    maxStenosis = obstruction;
+                }
+                if (obstruction >= 50) {
+                    if (arteria.nombre.includes('TCI')) isTCI_Affected = true;
+                    // Simplistic vessel count
+                    const vesselName = arteria.nombre.split(' ')[0];
+                    if (['DA', 'ACX', 'ACD'].includes(vesselName)) {
+                        affectedVessels.add(vesselName);
+                    }
+                }
+            });
+            
+            let cadRads = 'N/A';
+            let color = 'bg-gray-200';
+            
+            if (maxStenosis === 0) { cadRads = 'CAD-RADS 0'; color = 'bg-gray-400'; }
+            else if (maxStenosis >= 1 && maxStenosis <= 24) { cadRads = 'CAD-RADS 1'; color = 'bg-green-500'; }
+            else if (maxStenosis >= 25 && maxStenosis <= 49) { cadRads = 'CAD-RADS 2'; color = 'bg-yellow-400'; }
+            else if (maxStenosis >= 50 && maxStenosis <= 69) { cadRads = 'CAD-RADS 3'; color = 'bg-orange-500'; }
+            else if (maxStenosis >= 70 && maxStenosis <= 99) {
+                 cadRads = 'CAD-RADS 4A'; // Default to 4A
+                 if (affectedVessels.size >= 3 || isTCI_Affected) {
+                     cadRads = 'CAD-RADS 4B';
+                 }
+                 color = 'bg-red-500';
+            }
+            else if (maxStenosis === 100) { cadRads = 'CAD-RADS 5'; color = 'bg-red-700'; }
+            
+            cadRadsDisplay.textContent = cadRads;
+            cadRadsDisplay.className = `cad-rads-display ${color} text-white`;
+        }
+        
+        function generateConclusions(data) {
+            let conclusionsText = "Implantación normal de las Arterias Coronarias.\n";
+            let significantFindings = 0;
+            
+            data.arterias.forEach(arteria => {
+                const obstruccion = parseInt(arteria.obstruccion || 0);
+                if (obstruccion > 0) {
+                     significantFindings++;
+                     const ateromatosisTipo = arteria.ateromatosis !== 'Sin lesiones' ? `ateromatosis ${arteria.ateromatosis.toLowerCase()}` : '';
+                     conclusionsText += `La arteria ${arteria.nombre} presenta ${ateromatosisTipo} con compromiso luminal ${arteria.compromiso_luminal.toLowerCase()} (${obstruccion}%).\n`;
+                }
+            });
+            
+            if (significantFindings === 0) {
+                conclusionsText += "Ausencia de placas de ateroma en el árbol coronario evaluado.\n";
+            }
+            
+            const cadRadsText = cadRadsDisplay.textContent;
+            conclusionsText += `\nClasificación: ${cadRadsText}.`;
+
+            return { conclusionsText };
+        }
+
+        // --- MANEJO DE EVENTOS ---
+        formContainer.addEventListener('input', updateAll);
+
+        document.getElementById('preload-normal-btn').addEventListener('click', () => {
+            loadScenario('normal');
+        });
+        document.getElementById('preload-severe-btn').addEventListener('click', () => {
+            loadScenario('severe');
+        });
+        document.getElementById('save-btn').addEventListener('click', () => {
+            localStorage.setItem('angioTacReportData', JSON.stringify(getFormData()));
+            alert('Progreso guardado en el navegador.');
+        });
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres limpiar el formulario?')) {
+                formContainer.querySelector('form')?.reset();
+                localStorage.removeItem('angioTacReportData');
+                renderForm(); // Re-render to clear repeatable groups correctly
+                updateAll();
+            }
+        });
+        document.getElementById('generate-pdf-btn').addEventListener('click', () => {
+            const element = document.getElementById('preview-container');
+            const opt = {
+                margin:       1,
+                filename:     'Reporte_AngioTAC.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        });
+        
+        function loadData(data) {
+             reportStructure.forEach(section => {
+                if (section.fields) {
+                    section.fields.forEach(field => {
+                        if (data[field.id]) document.getElementById(field.id).value = data[field.id];
+                    });
+                } else if (section.type === 'repeatableGroup') {
+                    data[section.id]?.forEach((item, index) => {
+                         section.template.forEach(fieldTemplate => {
+                            const el = document.getElementById(`${section.id}_${index}_${fieldTemplate.id}`);
+                            if(el && item[fieldTemplate.id] !== undefined) el.value = item[fieldTemplate.id];
+                        });
+                    });
+                }
+            });
+            updateAll();
+        }
+
+        // --- ESCENARIOS PREDEFINIDOS ---
+        function loadScenario(type) {
+            const normalScenario = {
+                paciente_nombre: "Paciente Ejemplo",
+                arterias: reportStructure.find(s => s.id === 'arterias').items.map(item => ({
+                    ...item, ateromatosis: 'Sin lesiones', compromiso_luminal: 'Ninguno', obstruccion: '0'
+                }))
+            };
+            
+            const severeScenario = {
+                paciente_nombre: "Paciente Ejemplo Severo",
+                arterias: [
+                    { nombre: 'Tronco Coronario Izquierdo (TCI)', ateromatosis: 'Leve no calcificada', compromiso_luminal: 'Leve', obstruccion: '20' },
+                    { nombre: 'Descendente Anterior (DA) - Proximal', ateromatosis: 'Severa calcificada', compromiso_luminal: 'Severo', obstruccion: '80' },
+                    { nombre: 'Descendente Anterior (DA) - Medio', ateromatosis: 'Moderada mixta', compromiso_luminal: 'Moderado', obstruccion: '60' },
+                    { nombre: 'Descendente Anterior (DA) - Distal', ateromatosis: 'Leve no calcificada', compromiso_luminal: 'Leve', obstruccion: '10' },
+                    { nombre: 'Arteria Circunfleja (ACX) - Proximal', ateromatosis: 'Sin lesiones', compromiso_luminal: 'Ninguno', obstruccion: '0' },
+                    { nombre: 'Arteria Circunfleja (ACX) - Medio', ateromatosis: 'Sin lesiones', compromiso_luminal: 'Ninguno', obstruccion: '0' },
+                    { nombre: 'Arteria Coronaria Derecha (ACD) - Proximal', ateromatosis: 'Severa mixta', compromiso_luminal: 'Severo', obstruccion: '90' },
+                    { nombre: 'Arteria Coronaria Derecha (ACD) - Medio', ateromatosis: 'Sin lesiones', compromiso_luminal: 'Ninguno', obstruccion: '0' },
+                    { nombre: 'Arteria Coronaria Derecha (ACD) - Distal', ateromatosis: 'Sin lesiones', compromiso_luminal: 'Ninguno', obstruccion: '0' },
+                ]
+            };
+            
+            const data = type === 'normal' ? normalScenario : severeScenario;
+            loadData(data);
+        }
+
+        // --- INICIALIZACIÓN ---
+        renderForm();
+        const savedData = localStorage.getItem('angioTacReportData');
+        if (savedData) {
+            loadData(JSON.parse(savedData));
+        } else {
+            updateAll(); // Initial call
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Angio-TAC Cardiaco Optimizado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* Estilos personalizados para mejorar la interfaz */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; }
+        .form-section { background-color: white; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .tab-button { transition: all 0.2s ease-in-out; }
+        .tab-button.active { color: #2563eb; border-color: #2563eb; }
+        .repeatable-item { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; }
+        .preview-pane { position: sticky; top: 2rem; align-self: flex-start; }
+        .prose h2 { font-size: 1.25rem; }
+        .prose p { margin: 0.5em 0; }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-screen-2xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Reporte Dinámico de Angio-TAC Cardiaco</h1>
+            <p class="mt-2 text-lg text-gray-600">Formulario optimizado con vista previa en tiempo real y cálculo automático de CAD-RADS.</p>
+        </header>
+        
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div>
+                <div class="tabs mb-4 bg-white rounded-lg shadow-sm p-2">
+                    <ul class="flex flex-wrap border-b border-gray-200">
+                        </ul>
+                </div>
+                <div id="tab-contents">
+                    </div>
+            </div>
+
+            <div class="preview-pane">
+                <div class="form-section">
+                    <h2 class="text-2xl font-bold mb-4 border-b pb-2">Acciones y Vista Previa</h2>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <button id="preload-normal" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all text-base">Cargar Normal</button>
+                        <button id="preload-severe" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 transition-all text-base">Cargar Severo</button>
+                    </div>
+                    <button id="generate-pdf" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-all text-base">Generar PDF</button>
+
+                    <div id="cad-rads-container" class="mt-6 text-center">
+                        <h3 class="text-xl font-bold">CAD-RADS Calculado</h3>
+                        <div id="cad-rads-display" class="mt-2 p-4 rounded-lg text-2xl font-black transition-colors duration-300">
+                            -
+                        </div>
+                    </div>
+                    
+                    <div id="preview" class="mt-6 border-t pt-4 max-h-[60vh] overflow-y-auto prose max-w-none">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const reportStructure = {
+            sections: [
+                {
+                    title: "Datos del Paciente",
+                    id: "paciente",
+                    fields: [
+                        { name: "nombre", label: "Nombre", type: "text" },
+                        { name: "identificacion", label: "Identificación", type: "text" },
+                        { name: "genero", label: "Género", type: "select", options: ["MASCULINO", "FEMENINA"] },
+                        { name: "edad", label: "Edad (Años)", type: "number" },
+                        { name: "peso", label: "Peso (Kg)", type: "number" },
+                        { name: "talla", label: "Talla (CM)", type: "number" },
+                        { name: "area_sc", label: "Área SC (m²)", type: "number", readonly: true },
+                        { name: "fecha_estudio", label: "Fecha del Estudio", type: "date", default: new Date().toISOString().split('T')[0] },
+                        { name: "medico_refiere", label: "Médico que Refiere", type: "text" }
+                    ]
+                },
+                {
+                    title: "Arteriografía",
+                    id: "arteriografia",
+                    fields: [
+                        { name: "tci_obstruccion", label: "TCI - % Obstrucción", type: "number", default: 0, suggestComment: true },
+                        { name: "acd_dominancia", label: "ACD - Dominancia", type: "select", options: ["Dominante", "No Dominante", "Co-Dominante"] }
+                    ],
+                    repeatableGroups: [
+                        {
+                            groupName: "ada_segments", title: "Segmentos - Descendente Anterior (DA)",
+                            fields: [
+                                { name: "segmento", label: "Segmento", type: "select", options: ["Proximal", "Medio", "Distal"] },
+                                { name: "ateromatosis", label: "Ateromatosis", type: "text" },
+                                { name: "obstruccion", label: "% de Obstrucción", type: "number", default: 0, suggestComment: true }
+                            ]
+                        },
+                        {
+                            groupName: "acx_segments", title: "Segmentos - Circunfleja (ACX)",
+                            fields: [
+                                { name: "segmento", label: "Segmento", type: "select", options: ["Proximal", "Medio", "Distal"] },
+                                { name: "ateromatosis", label: "Ateromatosis", type: "text" },
+                                { name: "obstruccion", label: "% de Obstrucción", type: "number", default: 0, suggestComment: true }
+                            ]
+                        },
+                        {
+                            groupName: "acd_segments", title: "Segmentos - Coronaria Derecha (ACD)",
+                            fields: [
+                                { name: "segmento", label: "Segmento", type: "select", options: ["Proximal", "Medio", "Distal"] },
+                                { name: "ateromatosis", label: "Ateromatosis", type: "text" },
+                                { name: "obstruccion", label: "% de Obstrucción", type: "number", default: 0, suggestComment: true }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "Conclusiones",
+                    id: "conclusiones",
+                    fields: [
+                        { name: "texto", label: "Conclusiones Generales", type: "textarea", rows: 10 }
+                    ]
+                }
+            ]
+        };
+
+        let formData = {};
+
+        const tabContainer = document.querySelector('.tabs ul');
+        const contentContainer = document.getElementById('tab-contents');
+
+        function renderForm() {
+            tabContainer.innerHTML = '';
+            contentContainer.innerHTML = '';
+            
+            reportStructure.sections.forEach((section, index) => {
+                // Crear botón de pestaña
+                const tabLi = document.createElement('li');
+                tabLi.className = 'mr-1';
+                const tabBtn = document.createElement('button');
+                tabBtn.className = `tab-button inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
+                if (index === 0) tabBtn.classList.add('active');
+                tabBtn.textContent = section.title;
+                tabBtn.onclick = () => showTab(section.id);
+                tabBtn.dataset.tabId = section.id;
+                tabLi.appendChild(tabBtn);
+                tabContainer.appendChild(tabLi);
+
+                // Crear contenido de la pestaña
+                const contentDiv = document.createElement('div');
+                contentDiv.id = `content-${section.id}`;
+                contentDiv.className = `form-section tab-content ${index !== 0 ? 'hidden' : ''}`;
+                
+                // Renderizar campos simples
+                if (section.fields) {
+                    section.fields.forEach(field => contentDiv.appendChild(createField(field, section.id)));
+                }
+
+                // Renderizar grupos repetibles
+                if (section.repeatableGroups) {
+                    section.repeatableGroups.forEach(group => contentDiv.appendChild(createRepeatableGroup(group, section.id)));
+                }
+                
+                contentContainer.appendChild(contentDiv);
+            });
+            
+            initializeFormData();
+            loadData();
+        }
+        
+        function createField(field, sectionId) {
+            const id = `${sectionId}-${field.name}`;
+            const container = document.createElement('div');
+            container.className = 'mb-4';
+            let inputHtml = '';
+            const labelHtml = `<label for="${id}" class="block text-sm font-medium text-gray-700 mb-1">${field.label}</label>`;
+
+            switch(field.type) {
+                case 'select':
+                    const options = field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+                    inputHtml = `<select id="${id}" name="${id}" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">${options}</select>`;
+                    break;
+                case 'textarea':
+                    inputHtml = `<textarea id="${id}" name="${id}" rows="${field.rows || 5}" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>`;
+                    break;
+                default:
+                    inputHtml = `<input type="${field.type}" id="${id}" name="${id}" ${field.readonly ? 'readonly' : ''} class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${field.readonly ? 'bg-gray-100' : ''}">`;
+            }
+            container.innerHTML = labelHtml + inputHtml;
+            return container;
+        }
+
+        function createRepeatableGroup(group, sectionId) {
+            const container = document.createElement('div');
+            container.className = 'mt-6';
+            container.innerHTML = `
+                <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-2">${group.title}</h3>
+                <div id="container-${sectionId}-${group.groupName}" class="space-y-4"></div>
+                <button type="button" class="mt-2 bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300 transition-colors">+ Añadir</button>
+            `;
+            container.querySelector('button').onclick = () => addInstance(group, sectionId);
+            return container;
+        }
+
+        function addInstance(group, sectionId, instanceData = {}) {
+            const container = document.getElementById(`container-${sectionId}-${group.groupName}`);
+            const index = container.children.length;
+            const instanceId = `${sectionId}-${group.groupName}-${index}`;
+            const instanceDiv = document.createElement('div');
+            instanceDiv.className = 'repeatable-item grid grid-cols-1 sm:grid-cols-3 gap-4 items-end';
+            
+            let fieldsHtml = '';
+            group.fields.forEach(field => {
+                fieldsHtml += `<div class="w-full">${createField(field, instanceId).innerHTML}</div>`;
+            });
+
+            instanceDiv.innerHTML = fieldsHtml;
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = `&times;`;
+            removeBtn.className = 'h-10 w-10 bg-red-100 text-red-700 rounded-full hover:bg-red-200 font-black';
+            removeBtn.onclick = () => {
+                instanceDiv.remove();
+                updateAll();
+            };
+            instanceDiv.appendChild(removeBtn);
+            container.appendChild(instanceDiv);
+            
+            // Populate with data if provided
+            Object.keys(instanceData).forEach(key => {
+                const el = document.getElementById(`${instanceId}-${key}`);
+                if(el) el.value = instanceData[key];
+            });
+
+        }
+
+        function initializeFormData() {
+            formData = {};
+            reportStructure.sections.forEach(s => {
+                formData[s.id] = {};
+                if (s.fields) s.fields.forEach(f => formData[s.id][f.name] = f.default || '');
+                if (s.repeatableGroups) s.repeatableGroups.forEach(g => formData[s.id][g.groupName] = []);
+            });
+        }
+
+        function collectAndSaveData() {
+            const data = {};
+            reportStructure.sections.forEach(s => {
+                data[s.id] = {};
+                if(s.fields) s.fields.forEach(f => data[s.id][f.name] = document.getElementById(`${s.id}-${f.name}`).value);
+                if(s.repeatableGroups) s.repeatableGroups.forEach(g => {
+                    data[s.id][g.groupName] = [];
+                    const container = document.getElementById(`container-${s.id}-${g.groupName}`);
+                    if (container) {
+                        Array.from(container.children).forEach((instanceDiv, index) => {
+                            const instanceData = {};
+                            g.fields.forEach(f => {
+                                const el = instanceDiv.querySelector(`[id$="${f.name}"]`);
+                                if (el) instanceData[f.name] = el.value;
+                            });
+                            data[s.id][g.groupName].push(instanceData);
+                        });
+                    }
+                });
+            });
+            formData = data;
+            localStorage.setItem('angioTacReport', JSON.stringify(formData));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('angioTacReport');
+            const data = saved ? JSON.parse(saved) : null;
+            if (!data) {
+                // Add one default instance for each repeatable group
+                reportStructure.sections.forEach(s => {
+                    if(s.repeatableGroups) s.repeatableGroups.forEach(g => addInstance(g, s.id));
+                });
+                return;
+            }
+
+            formData = data;
+            reportStructure.sections.forEach(s => {
+                if(s.fields) s.fields.forEach(f => document.getElementById(`${s.id}-${f.name}`).value = data[s.id][f.name] || '');
+                if(s.repeatableGroups) s.repeatableGroups.forEach(g => {
+                    const groupData = data[s.id][g.groupName] || [];
+                    groupData.forEach(instanceData => addInstance(g, s.id, instanceData));
+                });
+            });
+            updateAll();
+        }
+
+        function calculateAreaSC() {
+            const peso = parseFloat(formData.paciente.peso) || 0;
+            const talla = parseFloat(formData.paciente.talla) || 0;
+            if (peso > 0 && talla > 0) {
+                const area = 0.007184 * Math.pow(peso, 0.425) * Math.pow(talla, 0.725);
+                document.getElementById('paciente-area_sc').value = area.toFixed(2);
+                formData.paciente.area_sc = area.toFixed(2);
+            }
+        }
+        
+        function updateAll() {
+            collectAndSaveData();
+            calculateAreaSC();
+            calculateCADRADS();
+            updatePreview();
+        }
+
+        function calculateCADRADS() {
+            let maxStenosis = 0;
+            let affectedVessels = new Set();
+            let isTCIAffected = false;
+            
+            const tciStenosis = parseInt(formData.arteriografia?.tci_obstruccion || 0);
+            if(tciStenosis > maxStenosis) maxStenosis = tciStenosis;
+            if(tciStenosis >= 50) isTCIAffected = true;
+
+            const groups = formData.arteriografia || {};
+            for (const groupName in groups) {
+                if(Array.isArray(groups[groupName])) {
+                    groups[groupName].forEach(item => {
+                        const stenosis = parseInt(item.obstruccion || 0);
+                        if (stenosis > maxStenosis) maxStenosis = stenosis;
+                        if (stenosis >= 50) {
+                            if (groupName.includes('ada')) affectedVessels.add('DA');
+                            if (groupName.includes('acx')) affectedVessels.add('ACX');
+                            if (groupName.includes('acd')) affectedVessels.add('ACD');
+                        }
+                    });
+                }
+            }
+
+            let cadRads = '0'; let color = 'bg-gray-400'; let textColor = 'text-white';
+            if (maxStenosis >= 1 && maxStenosis <= 24) { cadRads = '1'; color = 'bg-green-500'; }
+            else if (maxStenosis >= 25 && maxStenosis <= 49) { cadRads = '2'; color = 'bg-yellow-400'; textColor = 'text-black'; }
+            else if (maxStenosis >= 50 && maxStenosis <= 69) { cadRads = '3'; color = 'bg-orange-500'; }
+            else if (maxStenosis >= 70 && maxStenosis <= 99) {
+                cadRads = (isTCIAffected || affectedVessels.size >= 3) ? '4B' : '4A';
+                color = 'bg-red-600';
+            } else if (maxStenosis === 100) { cadRads = '5'; color = 'bg-black'; }
+
+            const display = document.getElementById('cad-rads-display');
+            display.textContent = `CAD-RADS ${cadRads}`;
+            display.className = `mt-2 p-4 rounded-lg text-2xl font-black transition-colors duration-300 ${color} ${textColor}`;
+            
+            // Auto-generate conclusion text
+            const conclusionField = document.getElementById('conclusiones-texto');
+            let conclusionText = `Hallazgos consistentes con CAD-RADS ${cadRads}. `;
+            if(maxStenosis >= 50) {
+                conclusionText += `Se recomienda control de factores de riesgo y correlación clínica/funcional.`;
+            } else if (maxStenosis > 0) {
+                conclusionText += `Se recomienda control óptimo de factores de riesgo para evitar progresión.`;
+            } else {
+                conclusionText = `Estudio sin evidencia de enfermedad coronaria aterosclerótica.`;
+            }
+            if(conclusionField.value === '') conclusionField.value = conclusionText;
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('preview');
+            let html = `<h2>Datos del Paciente</h2>`;
+            const p = formData.paciente || {};
+            html += `<p><strong>Nombre:</strong> ${p.nombre || '-'}<br><strong>Edad:</strong> ${p.edad || '-'} años<br><strong>Área SC:</strong> ${p.area_sc || '-'} m²</p>`;
+
+            html += `<h2 class="mt-4">Hallazgos Coronarios</h2>`;
+            const a = formData.arteriografia || {};
+            if(a.tci_obstruccion > 0) html += `<p><strong>TCI:</strong> Estenosis del ${a.tci_obstruccion}%.</p>`;
+            
+            reportStructure.sections.find(s => s.id === 'arteriografia').repeatableGroups.forEach(g => {
+                const groupData = a[g.groupName] || [];
+                if (groupData.some(item => item.obstruccion > 0)) {
+                    html += `<h3>${g.title}</h3>`;
+                    groupData.forEach(item => {
+                        if (item.obstruccion > 0) {
+                            html += `<p><strong>${item.segmento}:</strong> ${item.ateromatosis} (${item.obstruccion}% de estenosis).</p>`;
+                        }
+                    });
+                }
+            });
+            
+            html += `<h2 class="mt-4">Conclusión</h2><p>${(formData.conclusiones?.texto || '').replace(/\n/g, '<br>')}</p>`;
+            preview.innerHTML = html;
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-tab-id="${tabId}"]`).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        }
+
+        // --- Eventos ---
+        contentContainer.addEventListener('input', updateAll);
+        document.getElementById('preload-normal').onclick = () => {
+            initializeFormData();
+            document.querySelectorAll('.repeatable-item').forEach(el => el.remove());
+            loadData();
+            updateAll();
+        };
+        document.getElementById('preload-severe').onclick = () => {
+            const data = {
+                arteriografia: {
+                    tci_obstruccion: 55,
+                    ada_segments: [{segmento: "Proximal", ateromatosis: "Placa mixta severa", obstruccion: "85"}],
+                    acx_segments: [{segmento: "Medio", ateromatosis: "Placa calcificada moderada", obstruccion: "60"}],
+                    acd_segments: [{segmento: "Distal", ateromatosis: "Placa blanda severa", obstruccion: "90"}]
+                }
+            };
+            initializeFormData();
+            document.querySelectorAll('.repeatable-item').forEach(el => el.remove());
+            // Partial load of severe data
+            formData.arteriografia.tci_obstruccion = data.arteriografia.tci_obstruccion;
+            document.getElementById('arteriografia-tci_obstruccion').value = data.arteriografia.tci_obstruccion;
+            addInstance(reportStructure.sections[1].repeatableGroups[0], 'arteriografia', data.arteriografia.ada_segments[0]);
+            addInstance(reportStructure.sections[1].repeatableGroups[1], 'arteriografia', data.arteriografia.acx_segments[0]);
+            addInstance(reportStructure.sections[1].repeatableGroups[2], 'arteriografia', data.arteriografia.acd_segments[0]);
+            updateAll();
+        };
+        document.getElementById('generate-pdf').onclick = () => {
+            const element = document.getElementById('preview');
+            html2pdf().from(element).set({
+                margin: 0.5,
+                filename: `Reporte_${formData.paciente.nombre || 'paciente'}.pdf`,
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            }).save();
+        };
+        
+        // --- Inicialización ---
+        renderForm();
+    });
+    </script>
+</body>
+</html>
