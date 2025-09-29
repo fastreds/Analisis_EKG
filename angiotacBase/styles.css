@@ -1,0 +1,18 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.form-section {
+    transition: max-height 0.5s ease-in-out;
+    overflow: hidden;
+}
+
+.form-section.collapsed {
+    max-height: 0;
+}
+
+.report-placeholder::before {
+    content: "El reporte se generará aquí a medida que completes el formulario...";
+    color: #9ca3af;
+    font-style: italic;
+}

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Reportes Dinámicos de AngioTAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        .form-section {
+            transition: max-height 0.5s ease-in-out;
+            overflow: hidden;
+        }
+
+        .form-section.collapsed {
+            max-height: 0;
+        }
+
+        .report-placeholder::before {
+            content: "El reporte se generará aquí a medida que completes el formulario...";
+            color: #9ca3af;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl lg:text-4xl font-bold text-gray-700">Generador de Reportes AngioTAC</h1>
+            <p class="text-gray-500 mt-2">Una herramienta intuitiva para la creación de informes cardiovasculares detallados.</p>
+        </header>
+
+        <div id="case-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-3">Casos de Ejemplo y Guardado</h2>
+            <div class="flex flex-wrap gap-3 items-center">
+                <button data-case="case1" class="case-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">Cargar Caso 1 (Normal)</button>
+                <button data-case="case2" class="case-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">Cargar Caso 2 (Patológico)</button>
+                <button id="load-saved-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">Cargar Estudio Guardado</button>
+                <button id="save-study-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Guardar Estudio</button>
+            </div>
+        </div>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Columna del Formulario -->
+            <div id="form-container" class="bg-white p-6 rounded-2xl shadow-lg">
+                <!-- El formulario se generará aquí -->
+            </div>
+
+            <!-- Columna del Reporte -->
+            <div class="sticky top-8 self-start">
+                <div id="report-preview-container" class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold text-gray-700">Vista Previa del Reporte</h2>
+                        <button id="copy-report-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                            Copiar
+                        </button>
+                    </div>
+                    <div id="report-output" class="prose max-w-none bg-gray-50 p-4 rounded-lg h-[80vh] overflow-y-auto report-placeholder">
+                        <!-- El reporte generado se mostrará aquí -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        const reportStructure = [{
+            title: "Datos del Paciente",
+            id: "datos_paciente",
+            fields: [{
+                id: 'nombre',
+                label: 'Nombre',
+                type: 'text',
+                placeholder: 'Nombre completo del paciente'
+            }, {
+                id: 'id_paciente',
+                label: 'Identificación',
+                type: 'text',
+                placeholder: 'Cédula o ID'
+            }, {
+                id: 'edad',
+                label: 'Edad',
+                type: 'number',
+                placeholder: 'Años'
+            }, {
+                id: 'genero',
+                label: 'Género',
+                type: 'select',
+                options: ['Masculino', 'Femenino', 'Otro']
+            }, {
+                id: 'fecha_estudio',
+                label: 'Fecha del Estudio',
+                type: 'date'
+            }, {
+                id: 'medico_referente',
+                label: 'Médico Referente',
+                type: 'text',
+                placeholder: 'Dr(a). Apellido'
+            }]
+        }, {
+            "title": "Información Clínica",
+            "id": "informacion_clinica",
+            "fields": [{
+                "id": "indicacion",
+                "label": "Indicación del Estudio",
+                "type": "textarea",
+                "placeholder": "Ej: Dolor torácico atípico, evaluación de riesgo cardiovascular...",
+                "rows": 3
+            }, {
+                "id": "factores_riesgo",
+                "label": "Factores de Riesgo Cardiovascular",
+                "type": "checkbox",
+                "options": ["Hipertensión arterial", "Diabetes mellitus", "Dislipidemia", "Tabaquismo", "Historia familiar de enfermedad coronaria", "Obesidad", "Sedentarismo"]
+            }]
+        }, {
+            "title": "Métodos del Estudio",
+            "id": "protocolo_estudio",
+            "fields": [{
+                "id": "equipo",
+                "label": "Tomógrafo",
+                "type": "select",
+                "options": ["Canon Aquilion 160 cortes", "Siemens Somatom", "GE Revolution", "Philips Ingenuity", "Canon Aquilion ONE 320"]
+            }, {
+                "id": "tiempo_rotacion",
+                "label": "Tiempo de rotación",
+                "type": "select",
+                "options": ["0.28/seg", "0.35/seg", "0.5/seg", "0.7/seg"]
+            }, {
+                "id": "adquisicion",
+                "label": "ECG-gating para Corazón y Aorta torácica",
+                "type": "select",
+                "options": ["Retrospectivo", "Prospectivo", "Sin ECG"]
+            }, {
+                "id": "ecg_gating_detalles",
+                "label": "Detalles de ECG-gating",
+                "type": "text",
+                "placeholder": "Ej: variabilidad FC respiratoria marcada"
+            }, {
+                "id": "medio_contraste",
+                "label": "Medio contraste",
+                "type": "select",
+                "options": ["Ultravist 370", "Omnipaque 350", "Visipaque 320", "Optiray 350", "Isovue 370"]
+            }, {
+                "id": "contraste_iv",
+                "label": "Volumen de medio contraste",
+                "type": "text",
+                "placeholder": "Ej: 85 ml"
+            }, {
+                "id": "velocidad_infusion",
+                "label": "Velocidad de infusión de medio contraste",
+                "type": "select",
+                "options": ["4 ml/s", "5 ml/s", "6 ml/s"]
+            }, {
+                "id": "ritmo_estudio",
+                "label": "Ritmo durante el estudio",
+                "type": "select",
+                "options": ["Ritmo sinusal normal", "Ritmo bradicardia sinusal", "Taquicardia sinusal", "Fibrilación auricular"]
+            }, {
+                "id": "calidad_imagen",
+                "label": "Calidad de la Imagen",
+                "type": "select",
+                "options": ["Excelente", "Buena", "Diagnóstica", "Limitada por artefactos", "No diagnóstica"]
+            }]
+        }, {
+            "title": "Motivo de estudio y generalidades",
+            "id": "motivo_generalidades",
+            "fields": [{
+                "id": "descripcion_referencia",
+                "label": "DESCRIPCIÓN DE LA REFERENCIA",
+                "type": "textarea",
+                "rows": 3
+            }, {
+                "id": "consentimiento_informado",
+                "label": "Consentimiento informado",
+                "type": "textarea",
+                "placeholder": "Después de explicar al paciente los riesgos potenciales y los beneficios que obtendrá del estudio y siguiendo en todo momento los principios éticos respectivos y normados, se firma el consentimiento informado para realizar el estudio.",
+                "rows": 3
+            }, {
+                "id": "tolerancia_estudio",
+                "label": "Tolerancia al estudio",
+                "type": "select",
+                "options": ["Buena tolerancia, sin reacciones adversas al medio contraste", "Reacciones leves (urticaria, náuseas)", "Reacciones moderadas (vómitos, broncoespasmo)", "Reacciones severas (anafilaxia)"]
+            }, {
+                "id": "fc_durante_estudio",
+                "label": "FC durante el estudio",
+                "type": "text",
+                "placeholder": "Ej: 45-55 lpm"
+            }, {
+                "id": "medicamentos_usados",
+                "label": "Medicamentos usados",
+                "type": "checkbox",
+                "options": ["Nitroglicerina sublingual", "Beta-bloqueadores"]
+            }, {
+                "id": "analisis_imagenes",
+                "label": "Análisis de imágenes",
+                "type": "select",
+                "options": ["Vitrea", "Syngo.via", "IntelliSpace Portal", "Circle CVI", "Medis Suite", "CardIQ"]
+            }]
+        }, {
+            "title": "Anatomía cardiovascular",
+            "id": "anatomia_cardiovascular",
+            "fields": [{
+                "id": "venas_cavas",
+                "label": "Venas cavas",
+                "type": "select",
+                "options": ["Ambas no dilatadas drenando en la aurícula derecha", "Dilatada superior o inferior", "Azygos continuation of IVC", "Persistent left SVC draining to coronary sinus", "Thrombus", "Stenosis o compresión"]
+            }, {
+                "id": "auricula_derecha",
+                "label": "Aurícula derecha",
+                "type": "select",
+                "options": ["No dilatada", "Dilatada", "Thrombus", "Myxoma o masa", "Hipertrofia"]
+            }, {
+                "id": "septum_interauricular",
+                "label": "Septum interauricular",
+                "type": "select",
+                "options": ["No se visualizan defectos", "Defecto septal atrial", "Patent foramen ovale", "Aneurisma septal", "Hipertrofia lipomatosa"]
+            }, {
+                "id": "seno_coronario",
+                "label": "Seno coronario",
+                "type": "select",
+                "options": ["Drenando a la AD en forma habitual sin dilatación o anomalías", "Dilatado", "Drenaje anómalo", "Obstrucción o compresión"]
+            }, {
+                "id": "valvula_tricuspide",
+                "label": "Válvula tricúspide",
+                "type": "select",
+                "options": ["No se visualizan defectos por este método", "Regurgitación funcional", "Estenosis", "Vegetaciones", "Calcificación"]
+            }, {
+                "id": "ventriculo_derecho",
+                "label": "Ventrículo derecho",
+                "type": "select",
+                "options": ["No dilatado ni hipertrófico", "Dilatado", "Hipertrófico", "Disfunción o hipocinesia", "Infiltración adiposa", "Thrombus"]
+            }, {
+                "id": "arteria_pulmonar",
+                "label": "Arteria pulmonar",
+                "type": "select",
+                "options": ["Diámetro Normal", "Dilatada (>34 mm)", "Estenosis", "Tromboembolismo", "Aneurisma"]
+            }, {
+                "id": "venas_pulmonares",
+                "label": "Venas pulmonares",
+                "type": "select",
+                "options": ["Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas", "Drenaje anómalo (PAPVR/TAPVR)", "Estenosis u oclusión", "Dilatadas", "Síndrome de Scimitar"]
+            }, {
+                "id": "auricula_izquierda",
+                "label": "Aurícula izquierda",
+                "type": "select",
+                "options": ["No se observan trombos en la orejuela izquierda, ni masas o lesiones intracardiacas", "Dilatada", "Thrombus en orejuela", "Myxoma o masa", "Cor triatriatum"]
+            }, {
+                "id": "ventriculo_izquierdo_size",
+                "label": "Tamaño Ventrículo izquierdo",
+                "type": "select",
+                "options": ["No dilatado", "Dilatado"]
+            }, {
+                "id": "ventriculo_izquierdo_hipertrofia",
+                "label": "Hipertrofia Ventrículo izquierdo",
+                "type": "select",
+                "options": ["Ninguna", "Concéntrica leve", "Concéntrica moderada", "Concéntrica severa", "Excéntrica", "Asimétrica"]
+            }, {
+                "id": "ventriculo_izquierdo_motilidad",
+                "label": "Motilidad Ventrículo izquierdo",
+                "type": "select",
+                "options": ["Global y regional conservada", "Hipocinesia global", "Hipocinesia regional", "Acinesia"]
+            }, {
+                "id": "ventriculo_izquierdo_fevi",
+                "label": "FEVI Ventrículo izquierdo",
+                "type": "select",
+                "options": ["Normal (>55%)", "Levemente reducida (45-54%)", "Moderadamente reducida (30-44%)", "Severamente reducida (<30%)"]
+            }, {
+                "id": "hallazgos_extracardiacos",
+                "label": "Hallazgos extracardiacos",
+                "type": "select",
+                "options": ["Ninguno", "Hernia hiatal pequeña", "Calcificaciones aórticas", "Lesiones pulmonares", "Dilatación aórtica", "Otras anomalías torácicas"]
+            }]
+        }, {
+            "title": "Válvula Aórtica y Diámetros de la Aorta",
+            "id": "valvula_aortica_diametros_aorta",
+            "fields": [{
+                "id": "cuspidies",
+                "label": "Cúspides",
+                "type": "select",
+                "options": ["3 cúspides de conformación Normal", "2 cúspides (bicúspide R-L)", "2 cúspides (bicúspide R-N)", "2 cúspides (bicúspide L-N)", "4 cúspides (quadricúspide)", "1 cúspide (unicúspide)", "3 cúspides con fusión parcial", "3 cúspides con desigualdad en tamaño", "Cúspides izquierda coronaria, derecha coronaria y no coronaria", "Cúspides izquierda, derecha y posterior", "Variaciones menores en tamaño de cúspides"]
+            }, {
+                "id": "calcificaciones",
+                "label": "Calcificaciones",
+                "type": "select",
+                "options": ["NO PRESENTA", "Leve (<400 AU)", "Moderada (400-1300 AU en mujeres, 1000-2000 AU en hombres)", "Severa (>1300 AU en mujeres, >2000 AU en hombres)", "Pesada (sugiere estenosis severa)", "Calcificación asociada a regurgitación", "Calcificación en cúspides individuales", "Calcificación anular", "Calcificación extendida a raíz aórtica", "Ninguna visible por método"]
+            }, {
+                "id": "morfologia_anillo",
+                "label": "Morfología del Anillo aórtico",
+                "type": "select",
+                "options": ["Elíptica", "Circular", "Oval", "Asimétrica", "Coroniforme", "Diamante", "Triangular", "Irregular", "Cambios conformacionales durante ciclo cardíaco", "Más circular en <40 años", "Más oval en >40 años", "Vertical u horizontal"]
+            }, {
+                "id": "diametro_menor_anillo",
+                "label": "Diámetro menor del anillo (mm)",
+                "type": "select",
+                "options": ["15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40"]
+            }, {
+                "id": "diametro_mayor_anillo",
+                "label": "Diámetro mayor del anillo (mm)",
+                "type": "select",
+                "options": ["15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40"]
+            }, {
+                "id": "senos_valsalva_diametro",
+                "label": "Diámetro Senos de Valsalva (mm)",
+                "type": "select",
+                "options": ["20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50"]
+            }, {
+                "id": "senos_valsalva_indexado",
+                "label": "Diámetro indexado Senos de Valsalva (mm/m2 SC)",
+                "type": "select",
+                "options": ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"]
+            }, {
+                "id": "senos_valsalva_referencia",
+                "label": "Valores de referencia Indexados Senos de Valsalva (mm/m2 SC)",
+                "type": "select",
+                "options": ["16±2 (15-18)", "14±2 (13-15)", "18±2 (17-19)", "30.51 mm/m2 promedio", "<20 mm/m2 normal", "22.77 mm/m2 annulus", "15-18", "13-17", "28.2 ± 3.2"]
+            }, {
+                "id": "senos_valsalva_aneurismatico",
+                "label": "Referencia de rango aneurismático Senos de Valsalva (mm/m2 SC)",
+                "type": "select",
+                "options": ["24", "21", "25", ">2.1 cm/m2", ">2.75 cm/m2", ">2.9 cm/m2", "4.5-5.0 cm", ">40 mm absoluto"]
+            }, {
+                "id": "senos_valsalva_observaciones",
+                "label": "Observaciones Senos de Valsalva",
+                "type": "select",
+                "options": ["NORMAL", "DILATADO", "ANEURISMÁTICO", "CALCIFICADO", "ECTASIA", "SINUSOIDAL", "MAYOR EN HOMBRES", "MENOR EN MUJERES", "RELACIONADO CON EDAD", "SIN CAMBIOS"]
+            }, {
+                "id": "union_sinotubular_diametro",
+                "label": "Diámetro Unión sinotubular (mm)",
+                "type": "select",
+                "options": ["20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"]
+            }, {
+                "id": "union_sinotubular_indexado",
+                "label": "Diámetro indexado Unión sinotubular (mm/m2 SC)",
+                "type": "select",
+                "options": ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"]
+            }, {
+                "id": "union_sinotubular_referencia",
+                "label": "Valores de referencia Indexados Unión sinotubular (mm/m2 SC)",
+                "type": "select",
+                "options": ["14±2 (13-15)", "13±2", "15±2", "28.2 ± 3.2", "<30 mm absoluto", "14-17", "21.6 ± 1.6 basal", "35.1 ± 4.8 STJ"]
+            }, {
+                "id": "union_sinotubular_aneurismatico",
+                "label": "Referencia de rango aneurismático Unión sinotubular (mm/m2 SC)",
+                "type": "select",
+                "options": ["21", "24", "25", ">2.1 cm/m2", ">2.75 cm/m2", ">40 mm", ">5.0 cm"]
+            }, {
+                "id": "union_sinotubular_observaciones",
+                "label": "Observaciones Unión sinotubular",
+                "type": "select",
+                "options": ["NORMAL", "DILATADO", "ANEURISMÁTICO", "FUNCIONALMENTE DILATADO >30 mm", "RELACIONADO CON BSA", "SIN DILATACIÓN", "MAYOR EN ATLETAS", "MENOR EN MUJERES"]
+            }, {
+                "id": "porcion_tubular_ascendente_diametro",
+                "label": "Diámetro Porción tubular ascendente (mm)",
+                "type": "select",
+                "options": ["20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50"]
+            }, {
+                "id": "porcion_tubular_ascendente_indexado",
+                "label": "Diámetro indexado Porción tubular ascendente (mm/m2 SC)",
+                "type": "select",
+                "options": ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28"]
+            }, {
+                "id": "porcion_tubular_ascendente_referencia",
+                "label": "Valores de referencia Indexados Porción tubular ascendente (mm/m2 SC)",
+                "type": "select",
+                "options": ["14±2 (13-17)", "13±2", "17±2", "28.30 mm/m2 promedio", "<2.1 cm/m2", "<40 mm absoluto", "33 ± 4 mm", "3.0 cm ± 0.5"]
+            }, {
+                "id": "porcion_tubular_ascendente_aneurismatico",
+                "label": "Referencia de rango aneurismático Porción tubular ascendente (mm/m2 SC)",
+                "type": "select",
+                "options": ["24", "21", "25", ">2.1 cm/m2", ">4 cm absoluto", ">4.5 cm", ">5.0 cm", ">2.75 cm/m2"]
+            }, {
+                "id": "porcion_tubular_ascendente_observaciones",
+                "label": "Observaciones Porción tubular ascendente",
+                "type": "select",
+                "options": ["NORMAL", "DILATADO (>35 mm)", "ANEURISMÁTICO (>45 mm)", "MEDICIÓN A 40 MM DEL ANILLO", "SIN DILATACIÓN", "RELACIONADO CON EDAD Y SEXO", "MAYOR EN HOMBRES", "ECTASIA", "DISSECCIÓN POSIBLE"]
+            }]
+        }, {
+            title: "Score de Calcio (Agatston)",
+            id: "score_calcio",
+            fields: [{
+                id: 'tci',
+                label: 'TCI',
+                type: 'number',
+                placeholder: '0',
+                class: 'score-input'
+            }, {
+                id: 'da',
+                label: 'DA',
+                type: 'number',
+                placeholder: '0',
+                class: 'score-input'
+            }, {
+                id: 'cx',
+                label: 'CX',
+                type: 'number',
+                placeholder: '0',
+                class: 'score-input'
+            }, {
+                id: 'cd',
+                label: 'CD',
+                type: 'number',
+                placeholder: '0',
+                class: 'score-input'
+            }, {
+                id: 'total',
+                label: 'Score Total',
+                type: 'number',
+                placeholder: 'Calculado',
+                readonly: true
+            }, {
+                id: 'percentil',
+                label: 'Percentil para Edad y Género',
+                type: 'select',
+                options: ['<25', '25-50', '50-75', '>75', '>90']
+            }]
+        }, {
+            title: "Arterias Coronarias",
+            type: "repeatableGroup",
+            id: "arterias_coronarias",
+            template: [{
+                id: 'nombre',
+                label: 'Vaso Sanguíneo',
+                type: 'text',
+                readonly: true
+            }, {
+                id: 'dominancia',
+                label: 'Dominancia',
+                type: 'select',
+                options: ['No aplica', 'Dominante', 'No dominante', 'Codominante'],
+                condition: (item) => ['Arteria Coronaria Derecha (CD)', 'Arteria Circunfleja (CX)'].includes(item.nombre)
+            }, {
+                id: 'descripcion_general',
+                label: 'Descripción General',
+                type: 'select',
+                options: ['Normal, sin evidencia de placa', 'Presenta placa ateromatosa', 'Anomalía de origen/trayecto', 'Ocluida crónicamente']
+            }, ],
+            plaqueTemplate: [{
+                id: 'tipo_placa',
+                label: 'Tipo de Placa',
+                type: 'select',
+                options: ['No calcificada', 'Calcificada', 'Mixta (predominio no calcificado)', 'Mixta (predominio calcificado)']
+            }, {
+                id: 'localizacion',
+                label: 'Localización',
+                type: 'select',
+                options: ['Ostial', 'Proximal', 'Medio', 'Distal', 'Bifurcación']
+            }, {
+                id: 'longitud',
+                label: 'Longitud (mm)',
+                type: 'number',
+                placeholder: 'Ej: 10'
+            }, {
+                id: 'remodelado',
+                label: 'Remodelado Vascular',
+                type: 'select',
+                options: ['No aplica', 'Positivo', 'Negativo', 'Ausente']
+            }, {
+                id: 'estenosis_severidad',
+                label: 'Severidad de Estenosis',
+                type: 'select',
+                options: ['Sin estenosis (0%)', 'Mínima (1-24%)', 'Leve (25-49%)', 'Moderna (50-69%)', 'Severa (70-99%)', 'Oclusión total (100%)']
+            }, {
+                id: 'estenosis_porcentaje',
+                label: '% Estenosis',
+                type: 'number',
+                placeholder: '0-100'
+            }, {
+                id: 'lipidico_porcentaje',
+                label: '% lipidico',
+                type: 'number',
+                placeholder: '0-100'
+            }, {
+                id: 'calcico_porcentaje',
+                label: '% calcico',
+                type: 'number',
+                placeholder: '0-100'
+            }, {
+                id: 'ulcerada_porcentaje',
+                label: '% ulcerada',
+                type: 'number',
+                placeholder: '0-100'
+            }],
+            items: [{
+                nombre: 'Tronco Coronario Izquierdo (TCI)',
+                placas: []
+            }, {
+                nombre: 'Arteria Descendente Anterior (DA)',
+                placas: []
+            }, {
+                nombre: 'Arteria Circunfleja (CX)',
+                placas: []
+            }, {
+                nombre: 'Arteria Coronaria Derecha (CD)',
+                placas: []
+            }, {
+                nombre: 'Ramo Intermedio',
+                placas: []
+            }, {
+                nombre: 'Ramos Diagonales',
+                placas: []
+            }, {
+                nombre: 'Ramos Marginales Obtusos',
+                placas: []
+            }, {
+                nombre: 'Arteria Descendente Posterior (DP)',
+                placas: []
+            }, {
+                nombre: 'Ramos Posterolaterales (PL)',
+                placas: []
+            }]
+        }, {
+            title: "Evaluación Extracardiaca",
+            id: "evaluacion_extracardiaca",
+            fields: [{
+                id: 'hallazgos',
+                label: 'Hallazgos Significativos',
+                type: 'checkbox',
+                options: ['Sin hallazgos patológicos significativos', 'Aneurisma/dilatación de aorta torácica', 'Nódulos pulmonares', 'Embolismo pulmonar', 'Derrame pericárdico', 'Derrame pleural', 'Hernia hiatal', 'Linfadenopatías mediastinales']
+            }]
+        }, {
+            title: "Comentarios Adicionales",
+            id: "comentarios_adicionales",
+            fields: [{
+                id: 'texto',
+                label: 'Comentarios',
+                type: 'textarea',
+                placeholder: 'Añadir cualquier comentario relevante no cubierto en otras secciones...',
+                rows: 4
+            }]
+        }, {
+            title: "Conclusión",
+            id: "conclusion",
+            fields: [{
+                id: 'texto_conclusion',
+                label: 'Texto de la Conclusión',
+                type: 'textarea',
+                placeholder: 'La conclusión se puede autocompletar o escribir manualmente...',
+                rows: 8
+            }, {
+                id: 'autogenerate_conclusion',
+                label: 'Autogenerar Conclusión',
+                type: 'button'
+            }]
+        }];
+
+        const sampleCases = {
+            case1: { // Caso Normal
+                datos_paciente: {
+                    nombre: 'Juan Pérez',
+                    id_paciente: '1-1234-5678',
+                    edad: '55',
+                    genero: 'Masculino',
+                    fecha_estudio: '2025-09-28',
+                    medico_referente: 'Dr. A. Nito'
+                },
+                informacion_clinica: {
+                    indicacion: 'Dolor torácico atípico',
+                    factores_riesgo: ['Dislipidemia']
+                },
+                score_calcio: {
+                    tci: '0',
+                    da: '0',
+                    cx: '0',
+                    cd: '0',
+                    total: '0',
+                    percentil: '<25'
+                },
+                arterias_coronarias: {
+                    items: reportStructure.find(s => s.id === 'arterias_coronarias').items.map(item => ({
+                        nombre: item.nombre,
+                        dominancia: (item.nombre.includes('CD')) ? 'Dominante' : 'No aplica',
+                        descripcion_general: 'Normal, sin evidencia de placa',
+                        placas: []
+                    }))
+                },
+                //... agregar otros campos con valores normales
+            },
+            case2: { // Caso Patológico
+                datos_paciente: {
+                    nombre: 'Ana Rodríguez',
+                    id_paciente: '9-8765-4321',
+                    edad: '68',
+                    genero: 'Femenino',
+                    fecha_estudio: '2025-09-27',
+                    medico_referente: 'Dra. I. Lomas'
+                },
+                informacion_clinica: {
+                    indicacion: 'Evaluación preoperatoria de cirugía no cardiaca',
+                    factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Tabaquismo']
+                },
+                score_calcio: {
+                    tci: '15',
+                    da: '350',
+                    cx: '120',
+                    cd: '250',
+                    total: '735',
+                    percentil: '>90'
+                },
+                arterias_coronarias: {
+                    items: [
+                        { nombre: 'Tronco Coronario Izquierdo (TCI)', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Calcificada', localizacion: 'Ostial', estenosis_severidad: 'Leve (25-49%)' }] },
+                        { nombre: 'Arteria Descendente Anterior (DA)', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Mixta (predominio calcificado)', localizacion: 'Proximal', estenosis_severidad: 'Severa (70-99%)', estenosis_porcentaje: '80' }] },
+                        { nombre: 'Arteria Circunfleja (CX)', dominancia: 'No dominante', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Calcificada', localizacion: 'Medio', estenosis_severidad: 'Moderna (50-69%)' }] },
+                        { nombre: 'Arteria Coronaria Derecha (CD)', dominancia: 'Dominante', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Calcificada', localizacion: 'Distal', estenosis_severidad: 'Leve (25-49%)' }] },
+                         ...reportStructure.find(s => s.id === 'arterias_coronarias').items.slice(4).map(item => ({...item, descripcion_general: 'Normal, sin evidencia de placa', placas: [] }))
+                    ]
+                },
+                 anatomia_cardiovascular: {
+                    ventriculo_izquierdo_fevi: "Levemente reducida (45-54%)"
+                 },
+                 valvula_aortica_diametros_aorta: {
+                    porcion_tubular_ascendente_observaciones: "DILATADO (>35 mm)",
+                    porcion_tubular_ascendente_diametro: "42"
+                 }
+                //...
+            }
+        };
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const formContainer = document.getElementById('form-container');
+            const reportOutput = document.getElementById('report-output');
+            const copyBtn = document.getElementById('copy-report-btn');
+            const saveBtn = document.getElementById('save-study-btn');
+
+            let formData = {};
+
+            const updateReport = () => {
+                const data = gatherData();
+                let html = '';
+                let hasContent = false;
+
+                reportStructure.forEach(section => {
+                    const sectionData = data[section.id];
+                    let sectionHtml = '';
+                    let sectionHasContent = false;
+
+                    if (section.type === 'repeatableGroup') {
+                        if(sectionData && sectionData.items) {
+                            sectionData.items.forEach(item => {
+                                let itemHtml = `<h4>${item.nombre}</h4><ul>`;
+                                let itemHasContent = false;
+                                Object.entries(item).forEach(([key, value]) => {
+                                    if (key !== 'nombre' && key !== 'placas' && value) {
+                                        const fieldLabel = section.template.find(f => f.id === key)?.label;
+                                        itemHtml += `<li><strong>${fieldLabel}:</strong> ${value}</li>`;
+                                        itemHasContent = true;
+                                    }
+                                });
+
+                                if (item.placas && item.placas.length > 0) {
+                                    itemHtml += `<h5>Placas Ateromatosas:</h5>`;
+                                    item.placas.forEach((plaque, index) => {
+                                        itemHtml += `<div class="plaque-report"><strong>Placa #${index + 1}:</strong><ul>`;
+                                        Object.entries(plaque).forEach(([key, value]) => {
+                                            if (value) {
+                                                const fieldLabel = section.plaqueTemplate.find(f => f.id === key)?.label;
+                                                itemHtml += `<li><strong>${fieldLabel}:</strong> ${value}</li>`;
+                                                itemHasContent = true;
+                                            }
+                                        });
+                                        itemHtml += `</ul></div>`;
+                                    });
+                                }
+                                itemHtml += `</ul>`;
+                                if (itemHasContent) {
+                                    sectionHtml += itemHtml;
+                                    sectionHasContent = true;
+                                }
+                            });
+                        }
+                    } else {
+                        if(sectionData) {
+                            Object.entries(sectionData).forEach(([key, value]) => {
+                                if ((value && value.length !== 0) || (key === 'total' && value !== '')) {
+                                    const fieldLabel = section.fields.find(f => f.id === key)?.label;
+                                    if (fieldLabel) {
+                                        if (Array.isArray(value)) {
+                                            sectionHtml += `<p><strong>${fieldLabel}:</strong> ${value.join(', ')}</p>`;
+                                        } else {
+                                            sectionHtml += `<p><strong>${fieldLabel}:</strong> ${value}</p>`;
+                                        }
+                                        sectionHasContent = true;
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    if (sectionHasContent) {
+                        html += `<h3>${section.title}</h3>${sectionHtml}`;
+                        hasContent = true;
+                    }
+                });
+                
+                reportOutput.innerHTML = html;
+                if (hasContent) {
+                    reportOutput.classList.remove('report-placeholder');
+                } else {
+                    reportOutput.classList.add('report-placeholder');
+                }
+            };
+
+            const generateConclusion = () => {
+                const data = formData;
+                let conclusion = "Estudio de angiotomografía coronaria muestra los siguientes hallazgos:\n\n";
+                
+                const scoreData = data.score_calcio;
+                if (scoreData && scoreData.total) {
+                    const score = scoreData.total;
+                    conclusion += `- Score de calcio coronario total de ${score} (Agatston), lo que indica `;
+                    if (score == 0) conclusion += "ausencia de placa coronaria calcificada. ";
+                    else if (score >= 1 && score <= 10) conclusion += "placa mínima. ";
+                    else if (score >= 11 && score <= 100) conclusion += "placa leve. ";
+                    else if (score >= 101 && score <= 400) conclusion += "placa moderada. ";
+                    else conclusion += "placa severa. ";
+                    conclusion += `Percentil ${scoreData.percentil} para edad y género.\n`;
+                }
+
+                const arteriasData = data.arterias_coronarias;
+                if (arteriasData && arteriasData.items) {
+                    const estenosisSevera = [];
+                    arteriasData.items.forEach(item => {
+                        if(item.placas) {
+                            item.placas.forEach(placa => {
+                                if (placa.estenosis_severidad && (placa.estenosis_severidad.includes('Moderna') || placa.estenosis_severidad.includes('Severa') || placa.estenosis_severidad.includes('Oclusión'))) {
+                                    estenosisSevera.push(`Estenosis ${placa.estenosis_severidad} en ${item.nombre}, segmento ${placa.localizacion}.`);
+                                }
+                            });
+                        }
+                    });
+
+                    if (estenosisSevera.length > 0) {
+                        conclusion += "- Se observa enfermedad coronaria obstructiva con las siguientes lesiones:\n"
+                        estenosisSevera.forEach(lesion => {
+                            conclusion += `  - ${lesion}\n`;
+                        });
+                    } else {
+                        conclusion += "- No se observa enfermedad arterial coronaria obstructiva significativa.\n"
+                    }
+                }
+                
+                const anatomiaData = data.anatomia_cardiovascular;
+                if (anatomiaData && anatomiaData.ventriculo_izquierdo_fevi) {
+                    conclusion += `- Fracción de eyección del ventrículo izquierdo (FEVI) estimada como ${anatomiaData.ventriculo_izquierdo_fevi}.\n`;
+                }
+
+                const aortaData = data.valvula_aortica_diametros_aorta;
+                if (aortaData && aortaData.porcion_tubular_ascendente_observaciones && aortaData.porcion_tubular_ascendente_observaciones !== 'NORMAL' && aortaData.porcion_tubular_ascendente_observaciones !== 'SIN DILATACIÓN') {
+                     conclusion += `- Aorta ascendente con ${aortaData.porcion_tubular_ascendente_observaciones.toLowerCase()} (${aortaData.porcion_tubular_ascendente_diametro} mm).\n`;
+                }
+
+                const extraData = data.evaluacion_extracardiaca;
+                if(extraData && extraData.hallazgos && extraData.hallazgos.length > 0 && extraData.hallazgos[0] !== 'Sin hallazgos patológicos significativos') {
+                    conclusion += `- Hallazgos extracardíacos relevantes: ${extraData.hallazgos.join(', ')}.\n`;
+                }
+                
+                document.getElementById('conclusion-texto_conclusion').value = conclusion;
+                updateReport();
+            };
+
+            const updateCalciumScore = () => {
+                const tci = parseFloat(document.getElementById('score_calcio-tci')?.value) || 0;
+                const da = parseFloat(document.getElementById('score_calcio-da')?.value) || 0;
+                const cx = parseFloat(document.getElementById('score_calcio-cx')?.value) || 0;
+                const cd = parseFloat(document.getElementById('score_calcio-cd')?.value) || 0;
+                const total = tci + da + cx + cd;
+                const totalInput = document.getElementById('score_calcio-total');
+                if (totalInput) {
+                    totalInput.value = total;
+                }
+                updateReport();
+            };
+
+            const createField = (field, sectionId, itemIndex = null, plaqueIndex = null) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'mb-4';
+
+                const label = document.createElement('label');
+                label.textContent = field.label;
+                label.className = 'block text-sm font-medium text-gray-600 mb-1';
+                wrapper.appendChild(label);
+
+                let dataId = itemIndex !== null ?
+                    (plaqueIndex !== null ?
+                        `${sectionId}-${itemIndex}-placas-${plaqueIndex}-${field.id}` :
+                        `${sectionId}-${itemIndex}-${field.id}`) :
+                    `${sectionId}-${field.id}`;
+
+
+                switch (field.type) {
+                    case 'text':
+                    case 'number':
+                    case 'date':
+                        const input = document.createElement('input');
+                        input.type = field.type;
+                        input.id = dataId;
+                        input.placeholder = field.placeholder || '';
+                        input.readOnly = field.readonly || false;
+                        input.className = `w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${field.readonly ? 'bg-gray-100' : ''} ${field.class || ''}`;
+                        if (field.class === 'score-input') {
+                            input.addEventListener('input', updateCalciumScore);
+                        }
+                        wrapper.appendChild(input);
+                        break;
+
+                    case 'textarea':
+                        const textarea = document.createElement('textarea');
+                        textarea.id = dataId;
+                        textarea.placeholder = field.placeholder || '';
+                        textarea.rows = field.rows || 3;
+                        textarea.className = 'w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
+                        wrapper.appendChild(textarea);
+                        break;
+
+                    case 'select':
+                        const select = document.createElement('select');
+                        select.id = dataId;
+                        select.className = 'w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
+                        const defaultOption = document.createElement('option');
+                        defaultOption.textContent = `--- Seleccionar ${field.label} ---`;
+                        defaultOption.value = "";
+                        select.appendChild(defaultOption);
+                        field.options.forEach(opt => {
+                            const option = document.createElement('option');
+                            option.value = opt;
+                            option.textContent = opt;
+                            select.appendChild(option);
+                        });
+                        wrapper.appendChild(select);
+                        break;
+
+                    case 'checkbox':
+                        const checkboxContainer = document.createElement('div');
+                        checkboxContainer.className = 'grid grid-cols-2 gap-2';
+                        field.options.forEach(opt => {
+                            const checkWrapper = document.createElement('div');
+                            checkWrapper.className = 'flex items-center';
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.id = `${dataId}-${opt.replace(/\s+/g, '-')}`;
+                            checkbox.value = opt;
+                            checkbox.className = 'h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500';
+                            const checkLabel = document.createElement('label');
+                            checkLabel.htmlFor = checkbox.id;
+                            checkLabel.textContent = opt;
+                            checkLabel.className = 'ml-2 block text-sm text-gray-700';
+                            checkWrapper.appendChild(checkbox);
+                            checkWrapper.appendChild(checkLabel);
+                            checkboxContainer.appendChild(checkWrapper);
+                        });
+                        wrapper.appendChild(checkboxContainer);
+                        break;
+
+                    case 'button':
+                        const button = document.createElement('button');
+                        button.id = dataId;
+                        button.textContent = field.label;
+                        button.type = 'button';
+                        button.className = 'w-full mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-300';
+                        if (field.id === 'autogenerate_conclusion') {
+                            button.addEventListener('click', generateConclusion);
+                        }
+                        wrapper.appendChild(button);
+                        break;
+                }
+                return wrapper;
+            };
+
+            const createRepeatableGroup = (section) => {
+                const sectionContainer = document.createElement('div');
+
+                section.items.forEach((item, itemIndex) => {
+                    const itemContainer = document.createElement('div');
+                    itemContainer.className = 'mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50';
+                    itemContainer.id = `item-${section.id}-${itemIndex}`;
+
+                    const itemHeader = document.createElement('h4');
+                    itemHeader.className = 'text-md font-semibold text-gray-700 mb-3';
+                    itemHeader.textContent = item.nombre;
+                    itemContainer.appendChild(itemHeader);
+
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+
+                    section.template.forEach(field => {
+                        // Conditional field rendering
+                        if (field.condition && !field.condition(item)) {
+                            return;
+                        }
+                        const fieldEl = createField(field, section.id, itemIndex);
+                        grid.appendChild(fieldEl);
+                    });
+                    itemContainer.appendChild(grid);
+
+                    // Plaque section
+                    const plaquesContainer = document.createElement('div');
+                    plaquesContainer.id = `plaques-container-${section.id}-${itemIndex}`;
+                    plaquesContainer.className = 'mt-4';
+                    itemContainer.appendChild(plaquesContainer);
+
+                    const addPlaqueBtn = document.createElement('button');
+                    addPlaqueBtn.textContent = 'Añadir Placa';
+                    addPlaqueBtn.className = 'mt-2 bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600';
+                    addPlaqueBtn.onclick = () => addPlaque(section.id, itemIndex);
+                    itemContainer.appendChild(addPlaqueBtn);
+
+                    sectionContainer.appendChild(itemContainer);
+                });
+                return sectionContainer;
+            }
+
+            const addPlaque = (sectionId, itemIndex) => {
+                const section = reportStructure.find(s => s.id === sectionId);
+                const item = section.items[itemIndex];
+                if(!item.placas) item.placas = [];
+                const plaqueIndex = item.placas.length;
+                item.placas.push({}); // Add empty plaque data
+
+                const plaquesContainer = document.getElementById(`plaques-container-${sectionId}-${itemIndex}`);
+                const plaqueDiv = document.createElement('div');
+                plaqueDiv.className = 'p-3 mt-3 border border-blue-200 rounded-md relative bg-white';
+                plaqueDiv.id = `plaque-${sectionId}-${itemIndex}-${plaqueIndex}`;
+
+                const plaqueHeader = document.createElement('h5');
+                plaqueHeader.textContent = `Detalle Placa #${plaqueIndex + 1}`;
+                plaqueHeader.className = 'font-semibold text-blue-800 mb-2';
+                plaqueDiv.appendChild(plaqueHeader);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = '×';
+                removeBtn.className = 'absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl';
+                removeBtn.onclick = () => {
+                    item.placas.splice(plaqueIndex, 1);
+                    plaqueDiv.remove();
+                    updateReport();
+                };
+                plaqueDiv.appendChild(removeBtn);
+
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-4';
+                section.plaqueTemplate.forEach(field => {
+                    const fieldEl = createField(field, sectionId, itemIndex, plaqueIndex);
+                    grid.appendChild(fieldEl);
+                });
+                plaqueDiv.appendChild(grid);
+                plaquesContainer.appendChild(plaqueDiv);
+
+                plaqueDiv.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', updateReport));
+                return plaqueDiv;
+            };
+
+            reportStructure.forEach((section, index) => {
+                const sectionWrapper = document.createElement('div');
+                sectionWrapper.className = 'mb-4 border border-gray-200 rounded-lg';
+
+                const header = document.createElement('h3');
+                header.className = 'text-xl font-semibold p-4 cursor-pointer bg-gray-100 hover:bg-gray-200 rounded-t-lg flex justify-between items-center';
+                header.textContent = section.title;
+
+                const arrow = document.createElement('span');
+                arrow.innerHTML = '&#9660;'; // Down arrow
+                header.appendChild(arrow);
+
+                sectionWrapper.appendChild(header);
+
+                const sectionContent = document.createElement('div');
+                sectionContent.className = 'p-4 form-section';
+                if (index > 0) {
+                    sectionContent.classList.add('collapsed');
+                    arrow.style.transform = 'rotate(-90deg)';
+                }
+
+                header.addEventListener('click', () => {
+                    sectionContent.classList.toggle('collapsed');
+                    arrow.style.transform = sectionContent.classList.contains('collapsed') ? 'rotate(-90deg)' : 'rotate(0deg)';
+                });
+
+
+                if (section.type === 'repeatableGroup') {
+                    sectionContent.appendChild(createRepeatableGroup(section));
+                } else {
+                    section.fields.forEach(field => {
+                        sectionContent.appendChild(createField(field, section.id));
+                    });
+                }
+                sectionWrapper.appendChild(sectionContent);
+                formContainer.appendChild(sectionWrapper);
+            });
+
+            const gatherData = () => {
+                formData = {};
+                reportStructure.forEach(section => {
+                    formData[section.id] = {};
+                    if (section.type === 'repeatableGroup') {
+                        formData[section.id].items = [];
+                        section.items.forEach((item, itemIndex) => {
+                            const itemData = {
+                                nombre: item.nombre
+                            };
+                            section.template.forEach(field => {
+                                if (field.condition && !field.condition(item)) return;
+                                const el = document.getElementById(`${section.id}-${itemIndex}-${field.id}`);
+                                if (el) itemData[field.id] = el.value;
+                            });
+
+                            itemData.placas = [];
+                            if(item.placas){
+                                item.placas.forEach((plaque, plaqueIndex) => {
+                                    const plaqueData = {};
+                                    section.plaqueTemplate.forEach(field => {
+                                        const el = document.getElementById(`${section.id}-${itemIndex}-placas-${plaqueIndex}-${field.id}`);
+                                        if (el) plaqueData[field.id] = el.value;
+                                    });
+                                    itemData.placas.push(plaqueData);
+                                });
+                            }
+                            formData[section.id].items.push(itemData);
+                        });
+                    } else {
+                        section.fields.forEach(field => {
+                            if (field.type === 'checkbox') {
+                                formData[section.id][field.id] = [];
+                                field.options.forEach(opt => {
+                                    const checkbox = document.getElementById(`${section.id}-${field.id}-${opt.replace(/\s+/g, '-')}`);
+                                    if (checkbox && checkbox.checked) {
+                                        formData[section.id][field.id].push(opt);
+                                    }
+                                });
+                            } else if (field.type !== 'button') {
+                                const el = document.getElementById(`${section.id}-${field.id}`);
+                                if (el) {
+                                    formData[section.id][field.id] = el.value;
+                                }
+                            }
+                        });
+                    }
+                });
+                return formData;
+            };
+
+            const loadCase = (caseData) => {
+                // Reset form
+                formContainer.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], textarea').forEach(el => el.value = '');
+                formContainer.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+                formContainer.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+                formContainer.querySelectorAll('[id^="plaques-container"]').forEach(el => el.innerHTML = '');
+
+                reportStructure.forEach(section => {
+                    const sectionData = caseData[section.id];
+                    if (!sectionData) return;
+
+                    if (section.type === 'repeatableGroup') {
+                        if(sectionData.items){
+                            sectionData.items.forEach((itemData, itemIndex) => {
+                                const originalItem = section.items[itemIndex];
+                                if (!originalItem) return;
+
+                                section.template.forEach(field => {
+                                    const el = document.getElementById(`${section.id}-${itemIndex}-${field.id}`);
+                                    if(el && itemData[field.id] !== undefined) el.value = itemData[field.id];
+                                });
+
+                                if(itemData.placas) {
+                                    originalItem.placas = []; // Clear internal data before adding new ones
+                                    itemData.placas.forEach(plaqueData => {
+                                        const plaqueDiv = addPlaque(section.id, itemIndex);
+                                        const plaqueIndex = originalItem.placas.length - 1;
+                                        section.plaqueTemplate.forEach(field => {
+                                            const el = plaqueDiv.querySelector(`#${section.id}-${itemIndex}-placas-${plaqueIndex}-${field.id}`);
+                                            if (el && plaqueData[field.id] !== undefined) el.value = plaqueData[field.id];
+                                        });
+                                    });
+                                }
+                            });
+                        }
+                    } else {
+                        section.fields.forEach(field => {
+                             const value = sectionData[field.id];
+                             if(value === undefined) return;
+                             
+                             if (field.type === 'checkbox') {
+                                 value.forEach(opt => {
+                                     const checkbox = document.getElementById(`${section.id}-${field.id}-${opt.replace(/\s+/g, '-')}`);
+                                     if(checkbox) checkbox.checked = true;
+                                 });
+                             } else if(field.type !== 'button') {
+                                 const el = document.getElementById(`${section.id}-${field.id}`);
+                                 if(el) el.value = value;
+                             }
+                        });
+                    }
+                });
+
+                updateReport();
+            }
+            
+            copyBtn.addEventListener('click', () => {
+                const textToCopy = reportOutput.innerText;
+                 if (navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        copyBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Copiado!`;
+                        setTimeout(() => {
+                            copyBtn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                            Copiar`;
+                        }, 2000);
+                    });
+                } else { // Fallback for older browsers
+                    const textArea = document.createElement("textarea");
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                         copyBtn.textContent = 'Copiado!';
+                         setTimeout(() => copyBtn.textContent = 'Copiar', 2000);
+                    } catch (err) {
+                        console.error('Fallback copy failed', err);
+                    }
+                    document.body.removeChild(textArea);
+                }
+            });
+
+            document.querySelectorAll('.case-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const caseKey = e.target.dataset.case;
+                    if(sampleCases[caseKey]) {
+                        loadCase(sampleCases[caseKey]);
+                    }
+                });
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const currentData = gatherData();
+                localStorage.setItem('savedAngioTACStudy', JSON.stringify(currentData));
+                saveBtn.textContent = '¡Guardado!';
+                setTimeout(() => {
+                    saveBtn.textContent = 'Guardar Estudio';
+                }, 2000);
+            });
+
+            document.getElementById('load-saved-btn').addEventListener('click', () => {
+                const savedData = localStorage.getItem('savedAngioTACStudy');
+                if(savedData) {
+                    loadCase(JSON.parse(savedData));
+                } else {
+                    alert('No hay ningún estudio guardado.');
+                }
+            });
+
+
+            formContainer.addEventListener('input', updateReport);
+        });
+    </script>
+
+</body>
+
+</html>
+

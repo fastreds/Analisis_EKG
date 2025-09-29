@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Informe AngioTC Cardíaco</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- D3 for SVG manipulations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --verde: #10B981;
+            --amarillo: #F59E0B;
+            --naranja: #F97316;
+            --rojo: #EF4444;
+            --azul: #3B82F6;
+            --gris-fondo: #F9FAFB;
+            --gris-borde: #E5E7EB;
+            --texto-principal: #1F2937;
+            --texto-secundario: #6B7280;
+            --font-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            margin: 0;
+            background: var(--gris-fondo);
+            color: var(--texto-principal);
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--gris-borde);
+            background: #fff;
+        }
+
+        .logo {
+            width: 74px;
+            height: 74px;
+            border-radius: 12px;
+            background: var(--azul);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        h1, h2, h3 {
+            color: var(--texto-principal);
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 22px;
+            margin: 0
+        }
+
+        .card,
+        .card-flat {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            border: 1px solid var(--gris-borde);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+        }
+
+        .left {
+            flex: 1;
+            min-width: 320px
+        }
+
+        .right {
+            width: 520px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        table td,
+        table th {
+            padding: 8px;
+            border-bottom: 1px solid var(--gris-borde);
+            font-size: 13px;
+            text-align: left;
+        }
+        table th {
+            color: var(--texto-secundario);
+            font-weight: 500;
+        }
+
+        .small {
+            font-size: 13px;
+            color: var(--texto-secundario);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: var(--azul);
+            color: #fff;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        button {
+            background: var(--azul);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            background-color: #2563EB;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: #fff
+            }
+
+            header,
+            .no-print {
+                display: none
+            }
+
+            main {
+                display: block !important;
+            }
+
+            .right {
+                width: 40% !important;
+                float: right;
+            }
+
+            .left {
+                width: 58% !important;
+                float: left;
+            }
+
+            .card, .card-flat {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+
+            .page-break {
+                page-break-before: always
+            }
+        }
+
+        /* Coronary schematic */
+        .coronary-wrap {
+            background: #fff;
+            padding: 8px;
+            border-radius: 8px
+        }
+
+        svg.heart {
+            width: 100%;
+            height: 360px
+        }
+
+        .legend {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px
+        }
+
+        .legend .item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 13px
+        }
+
+        .legend .sw {
+            width: 18px;
+            height: 12px;
+            border-radius: 3px
+        }
+
+        footer {
+            padding: 18px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            border-top: 1px solid var(--gris-borde);
+            clear: both;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">UCR</div>
+        <div style="flex:1">
+            <h1>Informe de AngioTC Cardíaco</h1>
+            <div class="small" id="report-date"></div>
+        </div>
+        <div class="controls no-print">
+            <button onclick="window.print()">Imprimir</button>
+            <button id="download-btn">Descargar HTML</button>
+        </div>
+    </header>
+
+    <main style="padding:18px;display:flex;gap:18px;align-items:flex-start">
+        <section class="left">
+            <div class="card" style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                    <div>
+                        <div class="badge">Paciente</div>
+                        <h2 style="margin:8px 0 6px"><span id="patient-name"></span> <span class="small" id="patient-id"></span></h2>
+                        <div class="small" id="patient-details"></div>
+                        <div style="margin-top:8px" class="small">Indicación: <span id="patient-indication"></span><br> Médico referente: <span id="patient-doctor"></span></div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="small">Factores de Riesgo</div>
+                        <div id="risk-factors" style="margin-top:6px"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card grid" style="align-items:center;margin-bottom:12px">
+                <div>
+                    <h3 style="margin:6px 0">Función Ventricular</h3>
+                    <canvas id="feviChart" width="300" height="180"></canvas>
+                    <div class="small" style="margin-top:6px">FEVI Ventrículo izquierdo: <strong id="fevi-text"></strong></div>
+                </div>
+                <div>
+                    <h3 style="margin:6px 0">Aorta</h3>
+                    <div class="small">Diámetro porción tubular ascendente: <strong id="aorta-diameter"></strong></div>
+                    <div style="margin-top:12px">
+                        <div style="height:14px;background:var(--gris-borde);border-radius:8px;overflow:hidden">
+                            <div id="aortaBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--amarillo),var(--rojo))"></div>
+                        </div>
+                        <div class="small" style="margin-top:6px">Interpretación: <strong id="aorta-interpretation"></strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom:12px">
+                <h3 style="margin:6px 0">Score de Calcio (Agatston)</h3>
+                <div style="display:flex;gap:12px;align-items:center">
+                    <div style="flex:1">
+                        <canvas id="calcioBar" height="100"></canvas>
+                    </div>
+                    <div style="width:160px;text-align:center">
+                        <div class="small">Score Total</div>
+                        <div id="calcium-score-total" style="font-size:28px;font-weight:700;"></div>
+                        <div class="small">Percentil para edad/género: <strong id="calcium-percentile"></strong></div>
+                    </div>
+                </div>
+                <div style="margin-top:12px">
+                    <canvas id="calcioPie" height="120"></canvas>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom:12px">
+                <h3 style="margin:6px 0">Estenosis por Segmento (nivel de severidad)</h3>
+                <canvas id="stenosisLine" height="120"></canvas>
+                <div class="small" style="margin-top:8px">Leyenda: Verde (Normal) • Amarillo (25-49%) • Naranja (50-69%) • Rojo (≥70%)</div>
+            </div>
+
+            <div class="card-flat">
+                <h3 style="margin:6px 0">Detalles por Arteria</h3>
+                <table id="arteries-table">
+                    <thead>
+                        <tr>
+                            <th>Arteria</th>
+                            <th>Placa</th>
+                            <th>Localización</th>
+                            <th>Estenosis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        <aside class="right">
+            <div class="card coronary-wrap" style="margin-bottom:12px">
+                <h3 style="margin:6px 0">Mapa Coronario (esquemático)</h3>
+                <div id="coronarySVG"></div>
+                <div class="legend" style="margin-top:8px">
+                    <div class="item">
+                        <div class="sw" style="background:var(--verde)"></div> Normal
+                    </div>
+                    <div class="item">
+                        <div class="sw" style="background:var(--amarillo)"></div> 25-49%
+                    </div>
+                    <div class="item">
+                        <div class="sw" style="background:var(--naranja)"></div> 50-69%
+                    </div>
+                    <div class="item">
+                        <div class="sw" style="background:var(--rojo)"></div> ≥70%
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-flat" style="margin-bottom:12px">
+                <h3 style="margin:6px 0">CAD-RADS™ 2.0</h3>
+                <div><strong>Score:</strong> <span id="cad-rads-score"></span></div>
+                <div class="small"><strong>Modificadores:</strong> <span id="cad-rads-modifiers"></span></div>
+                <p class="small" id="cad-rads-description" style="margin-top:8px;"></p>
+            </div>
+
+            <div class="card-flat">
+                <h3 style="margin:6px 0">Conclusión</h3>
+                <p class="small" id="conclusion-text"></p>
+            </div>
+
+            <div class="card-flat" style="margin-top:12px">
+                <h3 style="margin:6px 0">Hallazgos Extracardíacos</h3>
+                <p class="small" id="extracardiac-findings"></p>
+            </div>
+
+
+        </aside>
+    </main>
+
+    <footer>
+        Informe generado automáticamente — Centro de Imágenes • Universidad • Informe orientativo, confirmar con clínico responsable
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = JSON.parse(localStorage.getItem('savedAngioTACStudy'));
+            if (!data) {
+                document.body.innerHTML = '<h1>No se encontraron datos para generar el informe.</h1>';
+                return;
+            }
+
+            // --- Populate Patient Info ---
+            const patient = data.datos_paciente;
+            const clinical = data.informacion_clinica;
+            const study = data.protocolo_estudio;
+
+            document.title = `Informe AngioTC Cardíaco — ${patient.nombre}`;
+            document.getElementById('patient-name').textContent = patient.nombre;
+            document.getElementById('patient-id').textContent = `(ID: ${patient.id_paciente})`;
+            document.getElementById('patient-details').textContent = `${patient.edad} años • ${patient.genero}`;
+            document.getElementById('report-date').textContent = `Fecha del estudio: ${new Date(study.fecha_estudio).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+            document.getElementById('patient-indication').textContent = clinical.indicacion;
+            document.getElementById('patient-doctor').textContent = study.medico_referente;
+
+            const riskFactorsDiv = document.getElementById('risk-factors');
+            if (clinical.factores_riesgo && clinical.factores_riesgo.length > 0) {
+                clinical.factores_riesgo.forEach(factor => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `${factor.split(' ')[0]}: <strong>Sí</strong>`;
+                    riskFactorsDiv.appendChild(div);
+                });
+            } else {
+                riskFactorsDiv.innerHTML = '<div>Ninguno reportado</div>';
+            }
+
+
+            // --- AORTA BAR ---
+            const aorta = data.valvula_aortica_diametros_aorta;
+            if (aorta && aorta.porcion_tubular_ascendente_diametro) {
+                const val = parseInt(aorta.porcion_tubular_ascendente_diametro, 10);
+                const pct = Math.min(100, Math.round((val / 60) * 100));
+                document.getElementById('aortaBar').style.width = pct + '%';
+                document.getElementById('aorta-diameter').textContent = `${val} mm`;
+                const interpretation = aorta.porcion_tubular_ascendente_observaciones;
+                const interpretationEl = document.getElementById('aorta-interpretation');
+                interpretationEl.textContent = interpretation;
+                if (interpretation.includes('DILATADO') || interpretation.includes('ANEURISMÁTICO')) {
+                    interpretationEl.style.color = 'var(--rojo)';
+                }
+            }
+
+
+            // --- FEVI CHART ---
+            const feviText = data.anatomia_cardiovascular?.ventriculo_izquierdo_fevi || '';
+            let feviValue = 55; // Default to normal
+            if (feviText.includes('Levemente')) {
+                feviValue = 50;
+            } else if (feviText.includes('Moderadamente')) {
+                feviValue = 40;
+            } else if (feviText.includes('Severamente')) {
+                feviValue = 25;
+            }
+            document.getElementById('fevi-text').textContent = feviText;
+            new Chart(document.getElementById('feviChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['FEVI', 'Resto'],
+                    datasets: [{
+                        data: [feviValue, 100 - feviValue],
+                        backgroundColor: [feviValue >= 55 ? getComputedStyle(document.documentElement).getPropertyValue('--verde') : (feviValue >= 45 ? getComputedStyle(document.documentElement).getPropertyValue('--amarillo') : getComputedStyle(document.documentElement).getPropertyValue('--rojo')), '#eee'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    circumference: 180,
+                    rotation: 270,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                }
+            });
+
+
+            // --- CALCIUM SCORE CHARTS ---
+            const calcium = data.score_calcio;
+            if (calcium) {
+                const totalScoreEl = document.getElementById('calcium-score-total');
+                totalScoreEl.textContent = calcium.total;
+                if (calcium.total > 400) totalScoreEl.style.color = 'var(--rojo)';
+                else if (calcium.total > 100) totalScoreEl.style.color = 'var(--naranja)';
+                else if (calcium.total > 0) totalScoreEl.style.color = 'var(--amarillo)';
+                else totalScoreEl.style.color = 'var(--verde)';
+
+                document.getElementById('calcium-percentile').textContent = calcium.percentil;
+
+                new Chart(document.getElementById('calcioBar').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['TCI', 'DA', 'CX', 'CD'],
+                        datasets: [{
+                            label: 'Score Agatston',
+                            data: [calcium.tci, calcium.da, calcium.cx, calcium.cd],
+                            backgroundColor: (context) => {
+                                const v = context.dataset.data[context.dataIndex];
+                                if (v < 100) return getComputedStyle(document.documentElement).getPropertyValue('--verde');
+                                if (v < 400) return getComputedStyle(document.documentElement).getPropertyValue('--amarillo');
+                                return getComputedStyle(document.documentElement).getPropertyValue('--rojo')
+                            },
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+
+                new Chart(document.getElementById('calcioPie').getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['DA', 'CD', 'CX', 'TCI'],
+                        datasets: [{
+                            data: [calcium.da, calcium.cd, calcium.cx, calcium.tci],
+                            backgroundColor: [getComputedStyle(document.documentElement).getPropertyValue('--rojo'), getComputedStyle(document.documentElement).getPropertyValue('--naranja'), getComputedStyle(document.documentElement).getPropertyValue('--amarillo'), getComputedStyle(document.documentElement).getPropertyValue('--verde')]
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+
+            // --- STENOSIS & ARTERIES DATA ---
+            const arteries = data.arterias_coronarias?.items || [];
+            const stenosisData = [];
+            const tableBody = document.querySelector("#arteries-table tbody");
+            const severityToValue = {
+                'Sin estenosis (0%)': 0,
+                'Mínima (1-24%)': 10,
+                'Leve (25-49%)': 35,
+                'Moderna (50-69%)': 60,
+                'Severa (70-99%)': 85,
+                'Oclusión total (100%)': 100
+            };
+            const getColorFor = (v) => {
+                if (v >= 70) return 'var(--rojo)';
+                if (v >= 50) return 'var(--naranja)';
+                if (v >= 25) return 'var(--amarillo)';
+                return 'var(--verde)';
+            };
+
+            arteries.forEach(art => {
+                if (art.placas && art.placas.length > 0) {
+                    art.placas.forEach(plaque => {
+                        const row = tableBody.insertRow();
+                        row.insertCell().textContent = art.nombre;
+                        row.insertCell().textContent = plaque.tipo_placa;
+                        row.insertCell().textContent = plaque.localizacion;
+                        const stenosisCell = row.insertCell();
+                        let stenosisText = plaque.estenosis_porcentaje ? `${plaque.estenosis_porcentaje}%` : plaque.estenosis_severidad;
+                        stenosisCell.textContent = stenosisText;
+                        let stenosisValue = plaque.estenosis_porcentaje || severityToValue[plaque.estenosis_severidad] || 0;
+                        stenosisCell.style.color = getColorFor(stenosisValue);
+                        if (stenosisValue > 0) stenosisData.push({
+                            arteria: art.nombre.match(/\((.*?)\)/)[1],
+                            value: stenosisValue
+                        });
+                    });
+                } else {
+                    const row = tableBody.insertRow();
+                    row.insertCell().textContent = art.nombre;
+                    row.insertCell().textContent = 'N/A';
+                    row.insertCell().textContent = 'N/A';
+                    row.insertCell().textContent = art.descripcion_general;
+                }
+            });
+
+            // --- Stenosis line chart ---
+            if (stenosisData.length > 0) {
+                new Chart(document.getElementById('stenosisLine').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: stenosisData.map(d => d.arteria),
+                        datasets: [{
+                            label: '% Estenosis',
+                            data: stenosisData.map(d => d.value),
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            borderColor: '#444',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- Coronary SVG schematic using D3 ---
+            const svgData = [{
+                id: 'TCI',
+                points: [
+                    [240, 80],
+                    [240, 120]
+                ]
+            }, {
+                id: 'DA',
+                points: [
+                    [240, 120],
+                    [240, 200],
+                    [240, 280]
+                ]
+            }, {
+                id: 'CX',
+                points: [
+                    [240, 120],
+                    [180, 160],
+                    [120, 200]
+                ]
+            }, {
+                id: 'CD',
+                points: [
+                    [240, 140],
+                    [300, 180],
+                    [340, 220]
+                ]
+            }].map(seg => {
+                const artery = arteries.find(a => a.nombre.includes(seg.id));
+                let maxStenosis = 0;
+                if (artery && artery.placas && artery.placas.length > 0) {
+                    artery.placas.forEach(p => {
+                        let currentStenosis = p.estenosis_porcentaje || severityToValue[p.estenosis_severidad] || 0;
+                        if (currentStenosis > maxStenosis) maxStenosis = currentStenosis;
+                    });
+                }
+                seg.sten = maxStenosis;
+                return seg;
+            });
+
+            const svg = d3.select('#coronarySVG').append('svg').attr('class', 'heart').attr('viewBox', `0 0 480 360`);
+            svg.append('path').attr('d', 'M240 60 C 280 20, 360 40, 360 110 C 360 190, 240 300, 240 300 C 240 300, 120 190, 120 110 C 120 40, 200 20, 240 60 Z').attr('fill', '#fff').attr('stroke', '#eee');
+
+            svgData.forEach(s => {
+                svg.append('path').attr('d', 'M' + s.points.map(p => p.join(',')).join(' L ')).attr('fill', 'none').attr('stroke', getColorFor(s.sten)).attr('stroke-width', Math.max(6, (s.sten / 100) * 18)).attr('stroke-linecap', 'round');
+                const lp = s.points[Math.floor(s.points.length / 2)];
+                svg.append('text').attr('x', lp[0] + 8).attr('y', lp[1] - 6).text(`${s.id} ${s.sten}%`).attr('font-size', 12).attr('fill', '#222');
+            });
+
+
+            // --- CAD-RADS & Conclusion ---
+            const cadRads = data.cad_rads;
+            if (cadRads) {
+                document.getElementById('cad-rads-score').textContent = cadRads.score || 'N/A';
+                document.getElementById('cad-rads-modifiers').textContent = cadRads.modifiers?.join(', ') || 'Ninguno';
+                document.getElementById('cad-rads-description').textContent = cadRads.description || '';
+            }
+
+            document.getElementById('conclusion-text').textContent = data.conclusion?.texto_conclusion || 'No se generó conclusión.';
+            document.getElementById('extracardiac-findings').textContent = data.evaluacion_extracardiaca?.hallazgos?.join(', ') || 'Sin hallazgos.';
+
+            // --- Download Button ---
+            document.getElementById('download-btn').addEventListener('click', () => {
+                const html = '<!doctype html>\n' + document.documentElement.outerHTML;
+                const blob = new Blob([html], {
+                    type: 'text/html'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Informe_AngioTC_${patient.nombre.replace(' ','_')}.html`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
+    </script>
+</body>
+
+</html>
+
