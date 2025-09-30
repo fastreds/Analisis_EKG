@@ -1,4 +1,5 @@
-export const sampleCases = {
+import { reportStructure } from './data.js';
+ export const sampleCases = {
     case1: { // Caso Normal
         datos_paciente: {
             nombre: 'Juan Pérez',

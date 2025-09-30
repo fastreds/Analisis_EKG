@@ -2,6 +2,8 @@ import { reportStructure } from './data.js';
 import { sampleCases } from './case.js';
 
 
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const formContainer = document.getElementById('form-container');
     const reportOutput = document.getElementById('report-output');
@@ -645,14 +647,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2000);
     });
 
-    document.getElementById('load-saved-btn').addEventListener('click', () => {
-        const savedData = localStorage.getItem('savedAngioTACStudy');
-        if (savedData) {
-            loadCase(JSON.parse(savedData));
-        } else {
-            alert('No hay ningún estudio guardado.');
-        }
-    });
+    const loadSavedBtn = document.getElementById('load-saved-btn');
+    if (loadSavedBtn) {
+        loadSavedBtn.addEventListener('click', () => {
+            const savedData = localStorage.getItem('savedAngioTACStudy');
+            if (savedData) {
+                loadCase(JSON.parse(savedData));
+            } else {
+                alert('No hay ningún estudio guardado.');
+            }
+        });
+    }
 
     // Botón para guardar y redirigir a informe.html
     const saveInformeBtn = document.getElementById('save-informe-btn');
@@ -670,6 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     });
 
+    // ELIMINAR ESTE BLOQUE REDUNDANTE QUE CAUSA EL ERROR
+    /*
     // Mantener la función de carga existente
     document.getElementById('load-saved-btn').addEventListener('click', () => {
         const savedData = localStorage.getItem('savedAngioTACStudy');
@@ -679,17 +686,23 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('No hay ningún estudio guardado.');
         }
     });
+    */
 
     // FIX: Replaced incorrect/duplicate button logic with the correct one for generating the report.
-    document.getElementById('generate-report-btn').addEventListener('click', () => {
-        const currentData = gatherData();
-        // The key must match what informe.html is expecting.
-        localStorage.setItem('savedAngioTACStudy', JSON.stringify(currentData));
-        window.open('informe.html', '_blank');
-    });
+    const generateReportBtn = document.getElementById('generate-report-btn');
+    if (generateReportBtn) {
+        generateReportBtn.addEventListener('click', () => {
+            const currentData = gatherData();
+            localStorage.setItem('savedAngioTACStudy', JSON.stringify(currentData));
+            window.open('informe.html', '_blank');
+        });
+    }
 
 
+    // FIX: Listen for both 'input' and 'change' events to ensure real-time updates from all field types.
     formContainer.addEventListener('input', updateReport);
+    formContainer.addEventListener('change', updateReport);
+    
     updateReport(); // Initial call to render the form correctly
 });
 

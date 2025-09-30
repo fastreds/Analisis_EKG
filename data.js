@@ -1,4 +1,8 @@
 export const reportStructure = [{
+
+    
+
+
     title: "Datos del Paciente",
     id: "datos_paciente",
     fields: [{
@@ -28,6 +32,12 @@ export const reportStructure = [{
         type: 'number',
         placeholder: '(80) kg',
         detail: 'kg'
+    }, {
+        id: 'talla',
+        label: 'Talla',
+        type: 'number',
+        placeholder: '(170) cm',
+        detail: 'cm'
     }]
 }, {
     "title": "Información Clínica",
@@ -508,5 +518,4 @@ export const reportStructure = [{
         type: 'button'
     }]
 }];
-
 
