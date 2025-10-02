@@ -433,7 +433,7 @@
             const study = data.protocolo_estudio || {};
             const anatomy = data.anatomia_cardiovascular || {};
 
-            document.title = `Informe AngioTC Cardíaco — ${patient.nombre || 'Paciente'}`;
+            document.title = `Informe AngioTAC Cardíaco — ${patient.nombre || 'Paciente'}`;
             document.getElementById('patient-name').textContent = patient.nombre || 'N/A';
             document.getElementById('patient-id').textContent = `(ID: ${patient.id_paciente || 'N/A'})`;
             document.getElementById('patient-details').textContent = `${patient.edad || 'N/A'} años • ${patient.genero || 'N/A'} • ${patient.peso || 'N/A'} kg`;

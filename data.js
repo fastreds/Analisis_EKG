@@ -100,7 +100,8 @@ export const reportStructure = [{
         "id": "contraste_iv",
         "label": "Volumen de medio contraste",
         "type": "text",
-        "placeholder": "Ej: 85 ml"
+        "placeholder": "Ej: 85 ml",
+        "detail": " ml"
     }, {
         "id": "velocidad_infusion",
         "label": "Velocidad de infusión de medio contraste",

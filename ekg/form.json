@@ -1,0 +1,23 @@
+{
+  "title": "Informe de AngioTC Cardíaco",
+  "sections": [
+    {
+      "id": "identificacion",
+      "label": "Identificación del paciente",
+      "fields": [
+        { "id": "nombre", "label": "Nombre", "type": "text" },
+        { "id": "edad", "label": "Edad", "type": "number" },
+        { "id": "sexo", "label": "Sexo", "type": "select", "options": ["Masculino", "Femenino"] }
+      ]
+    },
+    {
+      "id": "hallazgos",
+      "label": "Hallazgos principales",
+      "fields": [
+        { "id": "score_calcio", "label": "Score de calcio", "type": "number" },
+        { "id": "arterias", "label": "Arterias evaluadas", "type": "checkbox", "options": ["DA", "CX", "CD"] },
+        { "id": "comentario", "label": "Comentario adicional", "type": "textarea" }
+      ]
+    }
+  ]
+}

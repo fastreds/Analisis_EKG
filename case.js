@@ -9,7 +9,7 @@ import { reportStructure } from './data.js';
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-28',
-            medico_referente: 'Dr. A. Nito'
+            medico_referente: 'Dra. Alana Nito'
         },
         informacion_clinica: {
             indicacion: 'Dolor torácico atípico',
