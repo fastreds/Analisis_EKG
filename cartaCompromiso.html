@@ -1,0 +1,164 @@
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta de Compromiso | Proyecto Vivit CardioTools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        h1, h2, h3, h4, h5, h6, .font-montserrat {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        :root {
+            --aid-primary: #0C5457;
+            --aid-secondary: #279EA4;
+            --aid-text-dark: #1e293b;
+            --aid-text-light: #64748b;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            .no-print {
+                display: none;
+            }
+            .printable-area {
+                box-shadow: none;
+                margin: 0;
+                border: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white p-8 sm:p-12 shadow-lg rounded-lg border border-gray-200 printable-area">
+        
+        <header class="flex justify-between items-start border-b pb-6 mb-8">
+            <div>
+                <img src="https://i.ibb.co/L9pCV9f/aid-logo-simple.png" alt="AID Logo" class="h-16">
+                <div class="mt-2">
+                    <h1 class="text-2xl font-bold text-aid-primary">AID Servicios de Salud</h1>
+                    <p class="text-sm text-aid-text-light">Soluciones Tecnológicas para el Sector Salud</p>
+                    <p class="text-sm text-aid-text-light">San José, Costa Rica</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <h2 class="text-3xl font-bold text-aid-text-dark">Carta de Compromiso</h2>
+                <p class="text-aid-text-light mt-1">Fecha: 02 de Octubre, 2025</p>
+            </div>
+        </header>
+
+        <main>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
+                <div>
+                    <h3 class="font-montserrat text-aid-text-light font-medium">CLIENTE (Contratante)</h3>
+                    <p class="font-semibold text-lg text-aid-text-dark">Clínica Vivit</p>
+                    <p class="text-aid-text-light">[Representante Legal del Cliente]</p>
+                    <p class="text-aid-text-light">[Cédula Jurídica del Cliente]</p>
+                </div>
+                <div>
+                    <h3 class="font-montserrat text-aid-text-light font-medium">PROVEEDOR (Desarrollador)</h3>
+                    <p class="font-semibold text-lg text-aid-text-dark">AID Servicios de Salud S.A.</p>
+                    <p class="text-aid-text-light">[Tu Nombre/Representante Legal]</p>
+                    <p class="text-aid-text-light">[Cédula Jurídica de AID]</p>
+                </div>
+            </div>
+
+            <h3 class="font-montserrat text-xl font-bold text-aid-primary mb-4">Asunto: Acuerdo de Inicio para el Proyecto "Vivit CardioTools"</h3>
+
+            <p class="text-aid-text-light mb-6">
+                Por medio de la presente, ambas partes, **Clínica Vivit** (en adelante "El Cliente") y **AID Servicios de Salud S.A.** (en adelante "El Proveedor"), manifiestan su acuerdo y compromiso para dar inicio al desarrollo del proyecto de software denominado **"Vivit CardioTools"**, bajo los términos y condiciones que se detallan a continuación.
+            </p>
+
+            <section class="mb-8">
+                <h4 class="font-montserrat text-lg font-bold text-aid-text-dark border-b pb-2 mb-3">1. Alcance del Proyecto</h4>
+                <p class="text-aid-text-light mb-4">El objetivo del proyecto es desarrollar una plataforma web para la generación de informes médicos. El alcance inicial se limita a los siguientes tipos de reportes:</p>
+                <ul class="list-disc list-inside space-y-2 text-aid-text-light pl-4">
+                    <li>AngioTAC Coronario con susu variantes anatomicas</li>
+                    <li></li>
+                </ul>
+            </section>
+
+            <section class="mb-8">
+                <h4 class="font-montserrat text-lg font-bold text-aid-text-dark border-b pb-2 mb-3">2. Funcionalidades Principales</h4>
+                <p class="text-aid-text-light mb-4">La plataforma contará con una interfaz de usuario segura que permitirá las siguientes acciones:</p>
+                <ul class="list-disc list-inside space-y-2 text-aid-text-light pl-4">
+                    <li>**Generación** de informes a través de un formulario dinámico e intuitivo.</li>
+                    <li>**Lectura y visualización** de informes generados previamente.</li>
+                    <li>**Modificación** de informes existentes.</li>
+                    <li>**Envío automatizado** del informe final en formato PDF por correo electrónico, tanto al paciente como al médico referente.</li>
+                </ul>
+            </section>
+            
+            <section class="mb-8">
+                <h4 class="font-montserrat text-lg font-bold text-aid-text-dark border-b pb-2 mb-3">3. Herramientas Tecnológicas</h4>
+                <p class="text-aid-text-light">El desarrollo se basará en una arquitectura moderna y escalable, utilizando las siguientes tecnologías principales: Google Cloud Services, Firebase (Firestore/Authentication) y Node.js.</p>
+            </section>
+
+            <section class="mb-8">
+                <h4 class="font-montserrat text-lg font-bold text-aid-text-dark border-b pb-2 mb-3">4. Cronograma de Pagos y Reuniones</h4>
+                <p class="text-aid-text-light mb-4">Las partes acuerdan el siguiente cronograma financiero y de seguimiento:</p>
+                <ul class="list-disc list-inside space-y-2 text-aid-text-light pl-4">
+                    <li>Se realizará un **adelanto del 50%** del costo total del proyecto para dar inicio formal a las labores de desarrollo.</li>
+                    <li>El **50% restante** será cancelado al finalizar las 5 semanas de desarrollo estipuladas en la propuesta.</li>
+                    <li>Se establecen **dos reuniones de revisión** para realizar ajustes de forma y diseño.</li>
+                    <li>Se agenda una reunión de seguimiento y revisión de avances para el día **14 de Octubre de 2025**.</li>
+                </ul>
+            </section>
+            
+             <section class="mb-8">
+                <h4 class="font-montserrat text-lg font-bold text-aid-text-dark border-b pb-2 mb-3">5. Plan de Mantenimiento Opcional</h4>
+                <p class="text-aid-text-light mb-4">El Cliente tiene la opción de contratar un plan de mantenimiento trimestral por un costo de **$300 USD + IVA**, el cual incluye:</p> por el primer año tras la entrega del proyecto.
+                <ul class="list-disc list-inside space-y-2 text-aid-text-light pl-4">
+                    <li>Costo de hosting y servidor en Google Cloud.</li>
+                    <li>Soporte técnico para correcciones menores (bugs).</li>
+                    <li>Pequeños ajustes de texto o campos en la plataforma.</li>
+                </ul>
+            </section>
+
+            <p class="text-aid-text-light mt-10">
+                Ambas partes declaran haber leído y comprendido los términos aquí expuestos y firman en señal de conformidad en San José, Costa Rica, a la fecha indicada.
+            </p>
+
+        </main>
+
+        <footer class="mt-20">
+            <div class="grid grid-cols-2 gap-20">
+                <div class="text-center">
+                    <div class="border-t border-gray-400 pt-2">
+                        <p class="font-semibold text-aid-text-dark">[Nombre del Representante de Vivit]</p>
+                        <p class="text-sm text-aid-text-light">Representante Legal, Clínica Vivit</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="border-t border-gray-400 pt-2">
+                        <p class="font-semibold text-aid-text-dark">[Tu Nombre]</p>
+                        <p class="text-sm text-aid-text-light">Representante Legal, AID Servicios de Salud S.A.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+    
+    <div class="text-center mt-6 no-print">
+        <button onclick="window.print()" class="bg-aid-primary text-white px-6 py-2 rounded-full font-semibold hover:bg-opacity-90 transition-colors">Imprimir o Guardar como PDF</button>
+    </div>
+
+</body>
+
+</html>
