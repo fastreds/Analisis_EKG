@@ -194,11 +194,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const stenosisSelect = item.querySelector(`[name$="estenosis"]`);
                     if (stenosisSelect && stenosisSelect.value) {
                         const value = stenosisSelect.value;
-                        let currentStenosis = 0;
-                        if (value.includes('Severa') || value.includes('Oclusión')) currentStenosis = 3;
-                        else if (value.includes('Moderna')) currentStenosis = 2;
-                        else if (value.includes('Mínima') || value.includes('Leve')) currentStenosis = 1;
-                        maxStenosisValue = Math.max(maxStenosisValue, currentStenosis);
+                        let currentStenosisLevel = 0;
+                        if (value.includes('Severa') || value.includes('Oclusión')) currentStenosisLevel = 4;
+                        else if (value.includes('Moderada')) currentStenosisLevel = 3;
+                        else if (value.includes('Leve')) currentStenosisLevel = 2;
+                        else if (value.includes('Mínima')) currentStenosisLevel = 1;
+                        maxStenosisValue = Math.max(maxStenosisValue, currentStenosisLevel);
                         
                         const point = path.node().getPointAtLength(path.node().getTotalLength() * (0.3 + index * 0.2));
                         group.append('circle')
@@ -206,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             .attr('cx', point.x)
                             .attr('cy', point.y)
                             .attr('r', 5)
-                            .style('fill', ['#4b5563', '#F59E0B', '#F97316', '#EF4444'][currentStenosis]);
+                            .style('fill', ['#4b5563', '#10B981', '#F59E0B', '#F97316', '#EF4444'][currentStenosisLevel]);
                     }
                 });
             }
@@ -235,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .attr('r', 8);
             }
 
-            const color = ['#10B981', '#F59E0B', '#F97316', '#EF4444'][maxStenosisValue] || '#4b5563';
+            const color = ['#4b5563', '#10B981', '#F59E0B', '#F97316', '#EF4444'][maxStenosisValue] || '#4b5563';
             path.style('stroke', color);
         });
     };
@@ -575,10 +576,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function buildLegend() {
        const legendData = [
-            { color: '#10B981', label: 'Normal (0-30%)' },
-            { color: '#F59E0B', label: 'Leve (31-69%)' },
-            { color: '#F97316', label: 'Moderada (70-99%)' },
-            { color: '#EF4444', label: 'Severa (100%)' },
+            { color: '#10B981', label: 'Mínima (1-24%)' },
+            { color: '#F59E0B', label: 'Leve (25-49%)' },
+            { color: '#F97316', label: 'Moderada (50-69%)' },
+            { color: '#EF4444', label: 'Severa/Oclusión (≥70%)' },
             { symbol: 'stent', label: 'Stent' },
             { symbol: 'bridge', label: 'Puente Miocárdico' },
             { symbol: 'aneurysm', label: 'Aneurisma' },
