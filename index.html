@@ -4,12 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivit CardioTools - Reporte Dinámico AngioTAC</title>
+    <title>Vivit CardioTools - Reporte Dinámico AngioTAC</title> 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        #sketch-container { perspective: 1000px; cursor: grab; }
+        .segment-group:not(.edit-mode) { cursor: pointer; }
+        .segment-group { cursor: move; }
+        .segment-path { fill: none; stroke-width: 6px; stroke: #c73f3f; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.3s ease, stroke-width 0.3s ease; filter: url(#filtro-tubo); }
+        .segment-group:hover .segment-path { stroke-width: 7px; }
+        .segment-label { font-size: 10px; font-weight: bold; fill: #1f2937; pointer-events: none; text-shadow: 0 0 2px white, 0 0 2px white, 0 0 2px white; }
+        .control-handle { fill: #3b82f6; stroke: white; stroke-width: 2px; cursor: pointer; opacity: 0; transition: opacity 0.3s; }
+        .segment-group.edit-mode .control-handle { opacity: 1; }
+        .stent-marker { fill: none; stroke-width: 8px; stroke: #3b82f6; stroke-dasharray: 1 5; stroke-linecap: round; opacity: 0.9; pointer-events: none; }
+        .bridge-marker { fill: none; stroke: #9ca3af; stroke-width: 12px; opacity: 0.5; pointer-events: none; }
+        .aneurysm-marker { fill: #ef4444; opacity: 0.6; pointer-events: none; }
+        .bg-image { opacity: 0.2; pointer-events: none; }
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: #6B7280; /* gray-500 */
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #1F2937; /* gray-800 */ }
+        .tab-btn.active {
+            color: #3B82F6; /* blue-500 */
+            border-bottom-color: #3B82F6;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 text-gray-800">
@@ -46,19 +73,51 @@
 
             <!-- Columna del Reporte -->
             <div class="sticky top-8 self-start">
-                <div id="report-preview-container" class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-semibold text-gray-700">Vista Previa del Reporte</h2>
-                        <button id="copy-report-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                            </svg>
-                            Copiar
-                        </button>
+                <!-- Contenedor de Pestañas -->
+                <div class="bg-white rounded-2xl shadow-lg">
+                    <!-- Botones de Pestañas -->
+                    <div class="flex border-b border-gray-200 px-4">
+                        <button id="tab-btn-croquis" class="tab-btn active">Croquis Interactivo</button>
+                        <button id="tab-btn-reporte" class="tab-btn">Vista Previa del Reporte</button>
                     </div>
-                    <div id="report-output" class="prose max-w-none bg-gray-50 p-4 rounded-lg h-[80vh] overflow-y-auto report-placeholder">
-                        <!-- El reporte generado se mostrará aquí -->
+
+                    <!-- Paneles de Contenido de las Pestañas -->
+                    <div id="tab-content-panels">
+                        <!-- Panel del Croquis -->
+                        <div id="tab-panel-croquis" class="tab-panel">
+                            <div id="croquis-wrapper" class="p-4">
+                                <h4 id="dominance-title" class="text-md font-semibold text-blue-800 mb-2 text-center"></h4>
+                                <div id="sketch-container" class="relative bg-gray-100 rounded-lg overflow-hidden">
+                                    <!-- SVGs se inyectarán aquí -->
+                                </div>
+                                <div class="mt-4 grid grid-cols-2 gap-2">
+                                    <input type="file" id="image-upload" class="hidden" accept="image/*">
+                                    <button onclick="document.getElementById('image-upload').click()" class="flex-1 btn btn-secondary text-sm">Cargar Fondo</button>
+                                    <button id="toggle-labels-btn" class="flex-1 btn btn-secondary text-sm">Ocultar Etiquetas</button>
+                                    <button id="edit-positions-btn" class="flex-1 btn btn-secondary text-sm">Editar Posiciones</button>
+                                    <button id="reset-positions-btn" class="flex-1 btn btn-secondary text-sm">Restablecer Posiciones</button>
+                                </div>
+                                <div id="legend-container" class="mt-4 border-t pt-4 bg-gray-50 p-4 rounded-lg">
+                                    <!-- La leyenda se generará aquí -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel del Reporte -->
+                        <div id="tab-panel-reporte" class="tab-panel hidden">
+                            <div id="report-preview-container" class="p-6">
+                                <button id="copy-report-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center gap-2 float-right mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                                    </svg>
+                                    Copiar
+                                </button>
+                                <div id="report-output" class="prose max-w-none bg-gray-50 p-4 rounded-lg h-[80vh] overflow-y-auto report-placeholder">
+                                    <!-- El reporte generado se mostrará aquí -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -66,8 +125,23 @@
 
     </div>
 
-    <script type="module" src="script.js">    </script>
+    <!-- Modal Structure for Coronary Sketch -->
+    <div id="segment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 id="modal-title" class="text-xl leading-6 font-bold text-gray-900">Editar Segmento</h3>
+                    <button id="modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+                </div>
+                <div id="modal-content" class="mt-4 max-h-[60vh] overflow-y-auto p-2">
+                    <!-- Dynamic form content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <script type="module" src="script.js"></script>
+    <script src="audit.js"></script>
 
 </body>
 

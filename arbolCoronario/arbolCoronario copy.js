@@ -1,5 +1,73 @@
 export const coronaryTreeStructure = {
+    title: "Fase 3: Análisis Coronario Sistemático y Detallado",
+    id: "analisis_coronario",
     sections: [
+        {
+            title: "Anatomía Coronaria General",
+            id: "anatomia_general",
+            fields: [
+                {
+                    id: 'origen_arterias',
+                    label: '1.1. Origen de las Arterias Coronarias',
+                    type: 'radio',
+                    options: ['Normal', 'Anómalo'],
+                    triggers: {
+                        'Anómalo': 'show_anomalo_details'
+                    }
+                },
+                {
+                    id: 'anomalo_details',
+                    type: 'conditional_group',
+                    fields: [
+                        {
+                            id: 'tipo_anomalia',
+                            label: 'Tipo de Anomalía (selección múltiple)',
+                            type: 'checkbox',
+                            options: ['Origen alto (supracomisural)', 'Origen en seno coronario opuesto', 'Arteria coronaria única', 'Origen desde la arteria pulmonar (ALCAPA/ARCAPA)', 'Ostia múltiples'],
+                            triggers: {
+                                'Origen en seno coronario opuesto': 'show_seno_opuesto_details'
+                            }
+                        },
+                        {
+                            id: 'seno_opuesto_details',
+                            type: 'conditional_group',
+                            fields: [
+                                {
+                                    id: 'vaso_anomalo',
+                                    label: 'Vaso anómalo',
+                                    type: 'select',
+                                    options: ['ACD naciendo de Seno Izquierdo', 'TCI/ACI naciendo de Seno Derecho', 'ACx naciendo de Seno Derecho']
+                                },
+                                {
+                                    id: 'trayecto_anomalo',
+                                    label: 'Trayecto del vaso anómalo',
+                                    type: 'radio',
+                                    options: ['Interarterial (entre Aorta y Pulmonar)', 'Retroaórtico', 'Prepulmonar', 'Transeptal (intramiocárdico)']
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'dominancia',
+                    label: '1.2. Dominancia Coronaria',
+                    type: 'radio',
+                    options: ['Dominancia Derecha', 'Dominancia Izquierda', 'Codominancia']
+                },
+                {
+                    id: 'ramificacion_tci',
+                    label: '1.3. Ramificación del Tronco Coronario Izquierdo (TCI)',
+                    type: 'radio',
+                    options: ['Bifurcación (en ADA y ACx)', 'Trifurcación (presencia de Ramo Intermedio)']
+                },
+                {
+                    id: 'terminacion_ada',
+                    label: '1.4. Terminación de la Arteria Descendente Anterior (ADA)',
+                    type: 'radio',
+                    options: ['Tipo 1 (Termina antes de llegar al ápex)', 'Tipo 2 (Llega hasta el ápex)', 'Tipo 3 ("Wraparound")']
+                }
+            ]
+        },
         {
             title: "Evaluación por Segmento (Modelo de 16 Segmentos)",
             id: "evaluacion_segmento",
@@ -76,6 +144,33 @@ export const coronaryTreeStructure = {
                     ]
                 }
             ]
+        },
+        {
+            title: "Evaluación de Injertos de Bypass (Grafts)",
+            id: "bypass",
+            fields: [
+                {
+                    id: 'antecedentes_bypass',
+                    label: '¿El paciente tiene antecedentes de cirugía de revascularización miocárdica?',
+                    type: 'radio',
+                    options: ['No', 'Sí'],
+                    triggers: {
+                        'Sí': 'show_grafts_container'
+                    }
+                },
+                {
+                    id: 'grafts_container',
+                    type: 'repeatable_block',
+                    add_button_label: '+ Añadir Injerto',
+                    template: [
+                        { id: 'tipo_conducto', label: 'Tipo de Conducto', type: 'select', options: ['Arteria Mamaria Interna Izquierda (LIMA)', 'Arteria Mamaria Interna Derecha (RIMA)', 'Vena Safena (SVG)', 'Arteria Radial'] },
+                        { id: 'anastomosis_proximal', label: 'Anastomosis Proximal (Origen)', type: 'select', options: ['Aorta', 'In situ', 'Otro injerto (Y-graft)'] },
+                        { id: 'anastomosis_distal', label: 'Anastomosis Distal (Destino)', type: 'select', options: ['Segmento 1', 'Segmento 2', 'Segmento 3', 'Segmento 4', 'Segmento 5', 'Segmento 6', 'Segmento 7', 'Segmento 8', 'Segmento 9', 'Segmento 10', 'Segmento 11', 'Segmento 12', 'Segmento 13', 'Segmento 14', 'Segmento 15', 'Segmento 16'] },
+                        { id: 'estado_injerto', label: 'Estado del Injerto', type: 'radio', options: ['Permeable, sin estenosis', 'Con estenosis', 'Ocluido', 'No valorable'] }
+                    ]
+                }
+            ]
         }
     ]
 };
+

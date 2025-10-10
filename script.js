@@ -1,7 +1,11 @@
 import { reportStructure } from './data.js';
 import { sampleCases } from './case.js';
+import { initCoronarySketch } from './arbolCoronarioLogic.js';
 
-
+// --- DEBUG: Expose modules to global scope for audit.js ---
+window.reportStructure = reportStructure;
+window.sampleCases = sampleCases;
+window.initCoronarySketch = initCoronarySketch;
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -240,283 +244,196 @@ document.addEventListener('DOMContentLoaded', () => {
         updateReport();
     };
 
-    const updateCalciumScore = () => {
-        const tci = parseFloat(document.getElementById('score_calcio-tci')?.value) || 0;
-        const da = parseFloat(document.getElementById('score_calcio-da')?.value) || 0;
-        const cx = parseFloat(document.getElementById('score_calcio-cx')?.value) || 0;
-        const cd = parseFloat(document.getElementById('score_calcio-cd')?.value) || 0;
-        const total = tci + da + cx + cd;
-        const totalInput = document.getElementById('score_calcio-total');
-        if (totalInput) {
-            totalInput.value = total;
-        }
-        updateReport();
-    };
+    const buildField = (field, prefix) => {
+        let fieldHtml = '';
+        const id = `${prefix}-${field.id}`;
 
-    const createField = (field, sectionId, itemIndex = null, plaqueIndex = null) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'mb-4';
-
-        const label = document.createElement('label');
-        label.textContent = field.label;
-        label.className = 'block text-sm font-medium text-gray-600 mb-1';
-        wrapper.appendChild(label);
-
-        let dataId = itemIndex !== null ?
-            (plaqueIndex !== null ?
-                `${sectionId}-${itemIndex}-placas-${plaqueIndex}-${field.id}` :
-                `${sectionId}-${itemIndex}-${field.id}`) :
-            `${sectionId}-${field.id}`;
-
-
-        switch (field.type) {
-            case 'text':
-            case 'number':
-            case 'date':
-                const input = document.createElement('input');
-                input.type = field.type;
-                input.id = dataId;
-                input.placeholder = field.placeholder || '';
-                input.readOnly = field.readonly || false;
-                input.className = `w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${field.readonly ? 'bg-gray-100' : ''} ${field.class || ''}`;
-                if (field.class === 'score-input') {
-                    input.addEventListener('input', updateCalciumScore);
-                }
-                wrapper.appendChild(input);
+        switch(field.type) {
+            case 'radio':
+                const radioOptions = field.options.map(opt => {
+                    const inputName = `${prefix}-${field.id}`; // Usar el mismo nombre para todo el grupo
+                    const isChecked = opt === field.default ? 'checked' : '';
+                    return `<label class="flex items-center">
+                        <input type="radio" name="${inputName}" value="${opt}" class="form-radio" data-triggers="${field.triggers && field.triggers[opt] ? field.triggers[opt] : ''}" ${isChecked}>
+                        <span class="ml-2 text-sm">${opt}</span>
+                    </label>`;
+                }).join('');
+                fieldHtml = `<div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">${field.label}</label>
+                    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-x-4 gap-y-2">${radioOptions}</div>
+                </div>`;
                 break;
-
-            case 'textarea':
-                const textarea = document.createElement('textarea');
-                textarea.id = dataId;
-                textarea.placeholder = field.placeholder || '';
-                textarea.rows = field.rows || 3;
-                textarea.className = 'w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
-                wrapper.appendChild(textarea);
-                break;
-
-            case 'select':
-                const select = document.createElement('select');
-                select.id = dataId;
-                select.className = 'w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
-                const defaultOption = document.createElement('option');
-                defaultOption.textContent = `--- Seleccionar ${field.label} ---`;
-                defaultOption.value = "";
-                select.appendChild(defaultOption);
-                field.options.forEach(opt => {
-                    const option = document.createElement('option');
-                    option.value = opt;
-                    option.textContent = opt;
-                    select.appendChild(option);
-                });
-                if(dataId === 'cad_rads-score') {
-                    select.addEventListener('change', () => {
-                        cadRadsManualOverride = true;
-                    });
-                }
-                wrapper.appendChild(select);
-                break;
-
             case 'checkbox':
-                const checkboxContainer = document.createElement('div');
-                checkboxContainer.className = 'grid grid-cols-2 gap-2';
-                field.options.forEach(opt => {
-                    const checkWrapper = document.createElement('div');
-                    checkWrapper.className = 'flex items-center';
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.id = `${dataId}-${opt.replace(/\s+/g, '-')}`;
-                    checkbox.value = opt;
-                    checkbox.className = 'h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500';
-                    const checkLabel = document.createElement('label');
-                    checkLabel.htmlFor = checkbox.id;
-                    checkLabel.textContent = opt;
-                    checkLabel.className = 'ml-2 block text-sm text-gray-700';
-                    checkWrapper.appendChild(checkbox);
-                    checkWrapper.appendChild(checkLabel);
-                    checkboxContainer.appendChild(checkWrapper);
-                });
-                wrapper.appendChild(checkboxContainer);
+                 const checkOptions = field.options.map(opt => `
+                    <label class="flex items-center">
+                        <input type="checkbox" name="${id}" value="${opt}" class="form-checkbox" data-triggers="${field.triggers && field.triggers[opt] ? field.triggers[opt] : ''}">
+                        <span class="ml-2 text-sm text-gray-700">${opt}</span>
+                    </label>
+                `).join('');
+                fieldHtml = `<div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">${field.label}</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${checkOptions}</div>
+                </div>`;
                 break;
-
+             case 'master_checkbox':
+                fieldHtml = `<div class="mb-2"><label class="flex items-center font-semibold">
+                    <input type="checkbox" id="${id}" name="${id}" value="${field.label}" class="form-checkbox" data-triggers="${field.triggers && field.triggers.checked ? field.triggers.checked : ''}">
+                    <span class="ml-2">${field.label}</span>
+                </label></div>`;
+                break;
+            case 'select':
+                 const selectOptions = field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+                 fieldHtml = `<div class="mb-4">
+                    <label for="${id}" class="block text-sm font-medium text-gray-600 mb-1">${field.label}</label>
+                    <select id="${id}" name="${id}" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"><option value="">-- Seleccionar --</option>${selectOptions}</select>
+                 </div>`;
+                 break;
+             case 'number':
+             case 'date':
+             case 'text':
+             case 'textarea':
+                fieldHtml = `<div class="mb-4">
+                   <label for="${id}" class="block text-sm font-medium text-gray-600 mb-1">${field.label}</label>
+                   <${field.type === 'textarea' ? 'textarea' : `input type="${field.type}"`} id="${id}" name="${id}" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" ${field.rows ? `rows="${field.rows}"` : ''} placeholder="${field.placeholder || ''}"></${field.type === 'textarea' ? 'textarea' : 'input'}>
+                </div>`;
+                break;
+            case 'conditional_group':
+                const innerFields = field.fields.map(f => buildField(f, id)).join('');
+                fieldHtml = `<div id="${id}" class="hidden mt-4 pl-6 border-l-2 border-gray-200 space-y-4">${innerFields}</div>`;
+                break;
+             case 'repeatable_block':
+                fieldHtml = `
+                    <div class="mb-4">
+                         <h5 class="font-semibold text-gray-800">${field.title}</h5>
+                         <div id="repeat-container-${id}" class="space-y-4 mt-2 pl-2"></div>
+                         <button type="button" class="btn-add-repeatable bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm mt-2" data-template-id="${id}-template" data-prefix="${id}">${field.add_button_label}</button>
+                    </div>
+                    <template id="${id}-template">
+                        <div class="repeat-item border-t pt-4 mt-4 relative">
+                             <h6 class="text-sm font-bold text-gray-600 mb-2"></h6>
+                             ${field.template.map(f => buildField(f, 'placeholder_prefix')).join('')}
+                             <button type="button" class="btn-remove-repeatable absolute top-2 right-2 text-red-500 font-bold">×</button>
+                        </div>
+                    </template>
+                `;
+                break;
             case 'button':
-                const button = document.createElement('button');
-                button.id = dataId;
-                button.textContent = field.label;
-                button.type = 'button';
-                button.className = 'w-full mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-300';
-                if (field.id === 'autogenerate_conclusion') {
-                    button.addEventListener('click', generateConclusion);
-                }
-                wrapper.appendChild(button);
-                break;
+                 fieldHtml = `<button type="button" id="${id}" class="w-full mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">${field.label}</button>`;
+                 break;
         }
-        return wrapper;
+        return fieldHtml;
     };
 
-    const createRepeatableGroup = (section) => {
-        const sectionContainer = document.createElement('div');
-
-        section.items.forEach((item, itemIndex) => {
-            const itemContainer = document.createElement('div');
-            itemContainer.className = 'mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50';
-            itemContainer.id = `item-${section.id}-${itemIndex}`;
-
-            const itemHeader = document.createElement('h4');
-            itemHeader.className = 'text-md font-semibold text-gray-700 mb-3';
-            itemHeader.textContent = item.nombre;
-            itemContainer.appendChild(itemHeader);
-
-            const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
-
-            section.template.forEach(field => {
-                if (field.condition && !field.condition(item)) {
-                    return;
-                }
-                const fieldEl = createField(field, section.id, itemIndex);
-
-                // FIX: For the readonly 'nombre' field, set its value immediately upon creation.
-                // This ensures the name is always displayed correctly.
-                if (field.id === 'nombre') {
-                    const input = fieldEl.querySelector('input');
-                    if (input) {
-                        input.value = item.nombre;
-                    }
-                }
-
-                grid.appendChild(fieldEl);
-            });
-            itemContainer.appendChild(grid);
-
-            const plaquesContainer = document.createElement('div');
-            plaquesContainer.id = `plaques-container-${section.id}-${itemIndex}`;
-            plaquesContainer.className = 'mt-4';
-            itemContainer.appendChild(plaquesContainer);
-
-            const addPlaqueBtn = document.createElement('button');
-            addPlaqueBtn.textContent = 'Añadir Placa';
-            addPlaqueBtn.className = 'mt-2 bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600';
-            addPlaqueBtn.onclick = () => addPlaque(section.id, itemIndex);
-            itemContainer.appendChild(addPlaqueBtn);
-
-            sectionContainer.appendChild(itemContainer);
+    const buildForm = () => {
+        let formHtml = '';
+        reportStructure.forEach((section, index) => {
+            const isCollapsible = true; 
+            const isCollapsed = index !== 0; // Colapsar todas excepto la primera
+            formHtml += `<div class="form-section-container border border-gray-200 rounded-lg mb-6">
+                <h3 class="text-lg font-semibold p-4 bg-gray-50 border-b flex justify-between items-center ${isCollapsible ? 'cursor-pointer' : ''}" ${isCollapsible ? `data-collapsible-target="section-content-${section.id}"` : ''}>
+                    <span class="flex items-center">${index + 1}. ${section.title}</span>
+                    <span class="collapsible-arrow transform ${isCollapsed ? '-rotate-90' : 'rotate-0'} transition-transform duration-300">&#9660;</span>
+                </h3>
+                <div id="section-content-${section.id}" class="p-6 space-y-4 ${isCollapsed ? 'hidden' : ''}">`;
+            
+            if (section.type === 'segmented_group') {
+                section.segments.forEach(segment => {
+                    formHtml += `<div id="form-segment-${segment.id}" class="segment-container border-b pb-4 mb-4">
+                        <h4 class="font-semibold text-blue-800 mb-2">${segment.name}</h4>
+                        <div class="pl-2">`;
+                    section.template.forEach(field => {
+                        formHtml += buildField(field, `${section.id}-${segment.id}`);
+                    });
+                    formHtml += `</div></div>`;
+                });
+            } else if (section.fields) { // Solo procesar si la sección tiene un array de 'fields'
+                section.fields.forEach(field => {
+                    formHtml += buildField(field, section.id);
+                });
+            } else {
+                // Ignorar secciones que no tienen 'fields' ni son 'segmented_group'
+            }
+            formHtml += `</div></div>`;
         });
-        return sectionContainer;
-    }
-
-    const addPlaque = (sectionId, itemIndex) => {
-        const section = reportStructure.find(s => s.id === sectionId);
-        const item = section.items[itemIndex];
-        if (!item.placas) item.placas = [];
-        const plaqueIndex = item.placas.length;
-        item.placas.push({});
-
-        const plaquesContainer = document.getElementById(`plaques-container-${sectionId}-${itemIndex}`);
-        const plaqueDiv = document.createElement('div');
-        plaqueDiv.className = 'p-3 mt-3 border border-blue-200 rounded-md relative bg-white';
-        plaqueDiv.id = `plaque-${sectionId}-${itemIndex}-${plaqueIndex}`;
-
-        const plaqueHeader = document.createElement('h5');
-        plaqueHeader.textContent = `Detalle Placa #${plaqueIndex + 1}`;
-        plaqueHeader.className = 'font-semibold text-blue-800 mb-2';
-        plaqueDiv.appendChild(plaqueHeader);
-
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '×';
-        removeBtn.className = 'absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl';
-        removeBtn.onclick = () => {
-            item.placas.splice(plaqueIndex, 1);
-            plaqueDiv.remove();
-            updateReport();
-        };
-        plaqueDiv.appendChild(removeBtn);
-
-        const grid = document.createElement('div');
-        grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-4';
-        section.plaqueTemplate.forEach(field => {
-            const fieldEl = createField(field, sectionId, itemIndex, plaqueIndex);
-            grid.appendChild(fieldEl);
-        });
-        plaqueDiv.appendChild(grid);
-        plaquesContainer.appendChild(plaqueDiv);
-
-        plaqueDiv.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', updateReport));
-        return plaqueDiv;
+        formContainer.innerHTML = formHtml;
     };
 
-    reportStructure.forEach((section, index) => {
-        const sectionWrapper = document.createElement('div');
-        sectionWrapper.className = 'mb-4 border border-gray-200 rounded-lg';
+    buildForm(); // Call the new build function
 
-        const header = document.createElement('h3');
-        header.className = 'text-xl font-semibold p-4 cursor-pointer bg-gray-100 hover:bg-gray-200 rounded-t-lg flex justify-between items-center';
-        header.textContent = section.title;
+    // --- Event Listeners for Form Interactivity ---
 
-        const arrow = document.createElement('span');
-        arrow.innerHTML = '&#9660;';
-        header.appendChild(arrow);
-
-        sectionWrapper.appendChild(header);
-
-        const sectionContent = document.createElement('div');
-        sectionContent.className = 'p-4 form-section';
-        if (index > 0) {
-            sectionContent.classList.add('collapsed');
-            arrow.style.transform = 'rotate(-90deg)';
-        }
-
+    // Collapsible sections
+    formContainer.querySelectorAll('[data-collapsible-target]').forEach(header => {
         header.addEventListener('click', () => {
-            sectionContent.classList.toggle('collapsed');
-            arrow.style.transform = sectionContent.classList.contains('collapsed') ? 'rotate(-90deg)' : 'rotate(0deg)';
+            const targetId = header.dataset.collapsibleTarget;
+            const content = document.getElementById(targetId);
+            const arrow = header.querySelector('.collapsible-arrow');
+            content.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-0', !content.classList.contains('hidden'));
+            arrow.classList.toggle('-rotate-90', content.classList.contains('hidden'));
         });
-
-
-        if (section.type === 'repeatableGroup') {
-            sectionContent.appendChild(createRepeatableGroup(section));
-        } else {
-            section.fields.forEach(field => {
-                sectionContent.appendChild(createField(field, section.id));
-            });
-        }
-        sectionWrapper.appendChild(sectionContent);
-        formContainer.appendChild(sectionWrapper);
     });
 
     const gatherData = () => {
         formData = {};
         reportStructure.forEach(section => {
-            formData[section.id] = {};
-            if (section.type === 'repeatableGroup') {
-                formData[section.id].items = [];
-                section.items.forEach((item, itemIndex) => {
-                    const itemData = {
-                        nombre: item.nombre
-                    };
-                    section.template.forEach(field => {
-                        if (field.condition && !field.condition(item)) return;
-                        const el = document.getElementById(`${section.id}-${itemIndex}-${field.id}`);
-                        if (el) itemData[field.id] = el.value;
-                    });
+            if (!section.id) return; // Skip sections without an ID
 
-                    itemData.placas = [];
-                    if (item.placas) {
-                        item.placas.forEach((plaque, plaqueIndex) => {
-                            const plaqueData = {};
-                            section.plaqueTemplate.forEach(field => {
-                                const el = document.getElementById(`${section.id}-${itemIndex}-placas-${plaqueIndex}-${field.id}`);
-                                if (el) plaqueData[field.id] = el.value;
-                            });
-                            itemData.placas.push(plaqueData);
+            if (section.type === 'segmented_group') {
+                formData[section.id] = { segments: {} };
+                section.segments.forEach(segment => {
+                    const segmentContainer = document.getElementById(`form-segment-${segment.id}`);
+                    if (segmentContainer) {
+                        const segmentData = {};
+                        const inputs = segmentContainer.querySelectorAll('input, select, textarea');
+                        inputs.forEach(input => {
+                            const idParts = input.id.split('-');
+                            const key = idParts[idParts.length - 1];
+
+                            // Handle repeatable blocks (placas, stents)
+                            if (input.closest('.repeat-item')) {
+                                const repeatableBlock = input.closest('[id^="repeat-container-"]');
+                                const blockId = repeatableBlock.id.split('-').pop();
+                                const itemIndex = Array.from(repeatableBlock.children).indexOf(input.closest('.repeat-item'));
+
+                                if (!segmentData[blockId]) {
+                                    segmentData[blockId] = [];
+                                }
+                                if (!segmentData[blockId][itemIndex]) {
+                                    segmentData[blockId][itemIndex] = {};
+                                }
+                                segmentData[blockId][itemIndex][key] = input.value;
+
+                            } else if (input.type === 'radio') {
+                                if (input.checked) {
+                                    const radioKey = input.name.split('-').pop();
+                                    segmentData[radioKey] = input.value;
+                                }
+                            } else if (input.type === 'checkbox') {
+                                const checkboxKey = input.name.split('-').pop();
+                                if (!segmentData[checkboxKey]) {
+                                    segmentData[checkboxKey] = [];
+                                }
+                                if (input.checked) {
+                                    segmentData[checkboxKey].push(input.value);
+                                }
+                            } else {
+                                // Handle simple fields
+                                if (key) {
+                                    segmentData[key] = input.value;
+                                }
+                            }
                         });
+                        formData[section.id].segments[segment.id] = segmentData;
                     }
-                    formData[section.id].items.push(itemData);
                 });
-            } else {
+            } else if (section.fields) {
+                formData[section.id] = {};
                 section.fields.forEach(field => {
                     if (field.type === 'checkbox') {
                         formData[section.id][field.id] = [];
                         field.options.forEach(opt => {
-                            const checkbox = document.getElementById(`${section.id}-${field.id}-${opt.replace(/\s+/g, '-')}`);
+                            const checkbox = document.querySelector(`input[name="${section.id}-${field.id}"][value="${opt}"]`);
                             if (checkbox && checkbox.checked) {
                                 formData[section.id][field.id].push(opt);
                             }
@@ -526,8 +443,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (el) {
                             formData[section.id][field.id] = el.value;
                         }
-                    }
+                    } // This curly brace was misplaced, causing a syntax error.
                 });
+            } else if (section.type === 'repeatableGroup') {
+                // FIX: Added handler for repeatableGroup type like 'bypass'
+                formData[section.id] = { items: [] };
+                const repeatableField = section.fields.find(f => f.type === 'repeatable_block');
+                if (repeatableField) {
+                    const container = document.getElementById(`repeat-container-${section.id}-${repeatableField.id}`);
+                    if (container) {
+                        container.querySelectorAll('.repeat-item').forEach((itemNode, itemIndex) => {
+                            const itemData = {};
+                            repeatableField.template.forEach(field => {
+                                const inputId = `${section.id}-${repeatableField.id}-${itemIndex}-${field.id}`;
+                                const el = document.getElementById(inputId);
+                                if (el) {
+                                    if (el.type === 'radio') {
+                                        if(el.checked) itemData[field.id] = el.value;
+                                    } else {
+                                        itemData[field.id] = el.value;
+                                    }
+                                }
+                            });
+                            formData[section.id].items.push(itemData);
+                        });
+                    }
+                }
             }
         });
         return formData;
@@ -703,6 +644,30 @@ document.addEventListener('DOMContentLoaded', () => {
     formContainer.addEventListener('input', updateReport);
     formContainer.addEventListener('change', updateReport);
     
+    // Usamos un pequeño timeout para asegurar que el DOM principal esté completamente renderizado y los valores por defecto aplicados.
+    console.log('[script.js] DOM cargado. Programando inicialización del croquis...');
+    setTimeout(initCoronarySketch, 100);
+    
+    // --- Lógica para las Pestañas de la Columna Derecha ---
+    const croquisTabBtn = document.getElementById('tab-btn-croquis');
+    const reporteTabBtn = document.getElementById('tab-btn-reporte');
+    const croquisPanel = document.getElementById('tab-panel-croquis');
+    const reportePanel = document.getElementById('tab-panel-reporte');
+
+    if (croquisTabBtn && reporteTabBtn && croquisPanel && reportePanel) {
+        croquisTabBtn.addEventListener('click', () => {
+            croquisTabBtn.classList.add('active');
+            reporteTabBtn.classList.remove('active');
+            croquisPanel.classList.remove('hidden');
+            reportePanel.classList.add('hidden');
+        });
+        reporteTabBtn.addEventListener('click', () => {
+            reporteTabBtn.classList.add('active');
+            croquisTabBtn.classList.remove('active');
+            reportePanel.classList.remove('hidden');
+            croquisPanel.classList.add('hidden');
+        });
+    }
+
     updateReport(); // Initial call to render the form correctly
 });
-

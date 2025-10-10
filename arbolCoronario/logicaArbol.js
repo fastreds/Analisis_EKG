@@ -12,10 +12,33 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const defaultImagePath = "img/arbolCoroAnterior.png";
 
+    const svgDefs = `
+        <defs>
+            <filter id="filtro-tubo" x="-50%" y="-50%" width="200%" height="200%">
+                <!-- Sombra suave -->
+                <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="blur"/>
+                <feOffset in="blur" dx="2" dy="3" result="offsetBlur"/>
+                
+                <!-- Iluminación para dar volumen -->
+                <feSpecularLighting in="blur" surfaceScale="7" specularConstant="1.2" specularExponent="40" lighting-color="#eeeeee" result="specOut">
+                    <fePointLight x="-5000" y="-10000" z="20000"/>
+                </feSpecularLighting>
+                <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut"/>
+                <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litPaint"/>
+                
+                <!-- Combinar sombra y trazado iluminado -->
+                <feMerge>
+                    <feMergeNode in="offsetBlur"/>
+                    <feMergeNode in="litPaint"/>
+                </feMerge>
+            </filter>
+        </defs>
+    `;
+
     const sketches = {
-        derecha: `<svg id="svg-derecha" viewBox="0 0 400 400"><image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`,
-        izquierda: `<svg id="svg-izquierda" class="hidden" viewBox="0 0 400 400"><image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`,
-        codominancia: `<svg id="svg-codominancia" class="hidden" viewBox="0 0 400 400"><image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`
+        derecha: `<svg id="svg-derecha" viewBox="0 0 400 400">${svgDefs}<image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`,
+        izquierda: `<svg id="svg-izquierda" class="hidden" viewBox="0 0 400 400">${svgDefs}<image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`,
+        codominancia: `<svg id="svg-codominancia" class="hidden" viewBox="0 0 400 400">${svgDefs}<image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`
     };
     sketchContainer.innerHTML = sketches.derecha + sketches.izquierda + sketches.codominancia;
     
@@ -194,11 +217,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const stenosisSelect = item.querySelector(`[name$="estenosis"]`);
                     if (stenosisSelect && stenosisSelect.value) {
                         const value = stenosisSelect.value;
-                        let currentStenosis = 0;
-                        if (value.includes('Severa') || value.includes('Oclusión')) currentStenosis = 3;
-                        else if (value.includes('Moderna')) currentStenosis = 2;
-                        else if (value.includes('Mínima') || value.includes('Leve')) currentStenosis = 1;
-                        maxStenosisValue = Math.max(maxStenosisValue, currentStenosis);
+                        let currentStenosisLevel = 0;
+                        if (value.includes('Severa') || value.includes('Oclusión')) currentStenosisLevel = 4;
+                        else if (value.includes('Moderada')) currentStenosisLevel = 3;
+                        else if (value.includes('Leve')) currentStenosisLevel = 2;
+                        else if (value.includes('Mínima')) currentStenosisLevel = 1;
+                        maxStenosisValue = Math.max(maxStenosisValue, currentStenosisLevel);
                         
                         const point = path.node().getPointAtLength(path.node().getTotalLength() * (0.3 + index * 0.2));
                         group.append('circle')
@@ -206,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             .attr('cx', point.x)
                             .attr('cy', point.y)
                             .attr('r', 5)
-                            .style('fill', ['#4b5563', '#F59E0B', '#F97316', '#EF4444'][currentStenosis]);
+                            .style('fill', ['#635b4bff', '#10B981', '#F59E0B', '#F97316', '#EF4444'][currentStenosisLevel]);
                     }
                 });
             }
@@ -235,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .attr('r', 8);
             }
 
-            const color = ['#10B981', '#F59E0B', '#F97316', '#EF4444'][maxStenosisValue] || '#4b5563';
+            const color = ['#bb1e12ff', '#10B981', '#F59E0B', '#F97316', '#EF4444'][maxStenosisValue] || '#4b5563';
             path.style('stroke', color);
         });
     };
@@ -575,10 +599,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function buildLegend() {
        const legendData = [
-            { color: '#10B981', label: 'Normal (0-30%)' },
-            { color: '#F59E0B', label: 'Leve (31-69%)' },
-            { color: '#F97316', label: 'Moderada (70-99%)' },
-            { color: '#EF4444', label: 'Severa (100%)' },
+            { color: '#10B981', label: 'Mínima (1-24%)' },
+            { color: '#F59E0B', label: 'Leve (25-49%)' },
+            { color: '#F97316', label: 'Moderada (50-69%)' },
+            { color: '#EF4444', label: 'Severa/Oclusión (≥70%)' },
             { symbol: 'stent', label: 'Stent' },
             { symbol: 'bridge', label: 'Puente Miocárdico' },
             { symbol: 'aneurysm', label: 'Aneurisma' },

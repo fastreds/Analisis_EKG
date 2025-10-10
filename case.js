@@ -23,14 +23,11 @@ import { reportStructure } from './data.js';
             total: '0',
             percentil: '<25'
         },
-        arterias_coronarias: {
-            items: reportStructure.find(s => s.id === 'arterias_coronarias').items.map(item => ({
-                nombre: item.nombre,
-                dominancia: (item.nombre.includes('CD')) ? 'Dominante' : 'No aplica',
-                descripcion_general: 'Normal, sin evidencia de placa',
-                placas: []
-            }))
-        },
+        evaluacion_segmento: {
+            segments: {
+                // En un caso normal, la mayoría de los segmentos no tendrán datos específicos.
+            }
+        }
     },
     case2: { // Caso Patológico
         datos_paciente: {
@@ -55,15 +52,25 @@ import { reportStructure } from './data.js';
             total: '735',
             percentil: '>90'
         },
-        arterias_coronarias: {
-            items: [
-                { nombre: 'Tronco Coronario Izquierdo (TCI)', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Calcificada', localizacion: 'Ostial', estenosis_severidad: 'Leve (25-49%)' }] },
-                { nombre: 'Arteria Descendente Anterior (DA)', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Mixta (predominio calcificado)', localizacion: 'Proximal', estenosis_severidad: 'Severa (70-99%)', estenosis_porcentaje: '80' }] },
-                { nombre: 'Arteria Circunfleja (CX)', dominancia: 'No dominante', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Calcificada', localizacion: 'Medio', estenosis_severidad: 'Moderna (50-69%)' }] },
-                { nombre: 'Arteria Coronaria Derecha (CD)', dominancia: 'Dominante', descripcion_general: 'Presenta placa ateromatosa', placas: [{ tipo_placa: 'Calcificada', localizacion: 'Distal', estenosis_severidad: 'Leve (25-49%)' }] },
-                 ...reportStructure.find(s => s.id === 'arterias_coronarias').items.slice(4).map(item => ({...item, descripcion_general: 'Normal, sin evidencia de placa', placas: [] }))
-            ]
+        anatomia_general: {
+            dominancia: 'Dominancia Derecha'
         },
+        evaluacion_segmento: {
+            segments: {
+                '5': { // TCI
+                    estado_general: 'Con hallazgos patológicos',
+                    findings: { placas: [{ composicion: 'Calcificada', estenosis: 'CAD-RADS 2: Leve (25-49%)' }] }
+                },
+                '6': { // pADA
+                    estado_general: 'Con hallazgos patológicos',
+                    findings: { placas: [{ composicion: 'Parcialmente calcificada (mixta)', estenosis: 'CAD-RADS 4A: Severa (70-99%)' }] }
+                },
+                '11': { // pACx
+                    estado_general: 'Con hallazgos patológicos',
+                    findings: { placas: [{ composicion: 'Calcificada', estenosis: 'CAD-RADS 3: Moderada (50-69%)' }] }
+                }
+            }
+        }, // <-- Missing comma was here
          anatomia_cardiovascular: {
             ventriculo_izquierdo_fevi: "Levemente reducida (45-54%)"
          },
@@ -151,92 +158,6 @@ import { reportStructure } from './data.js';
             cd: '890',
             total: '2665',
             percentil: '>90'
-        },
-        arterias_coronarias: {
-            items: [
-                { 
-                    nombre: 'Tronco Coronario Izquierdo (TCI)', 
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Mixta (predominio no calcificado)', 
-                        localizacion: 'Ostial', 
-                        longitud: 15,
-                        remodelado: 'Positivo',
-                        estenosis_severidad: 'Moderna (50-69%)',
-                        estenosis_porcentaje: '65',
-                        lipidico_porcentaje: '70',
-                        calcico_porcentaje: '20',
-                        ulcerada_porcentaje: '10'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Descendente Anterior (DA)', 
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Mixta (predominio no calcificado)', 
-                        localizacion: 'Proximal', 
-                        longitud: 25,
-                        remodelado: 'Positivo',
-                        estenosis_severidad: 'Oclusión total (100%)',
-                        estenosis_porcentaje: '100',
-                        lipidico_porcentaje: '85',
-                        calcico_porcentaje: '10',
-                        ulcerada_porcentaje: '25'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Circunfleja (CX)', 
-                    dominancia: 'Codominante',
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Mixta (predominio calcificado)', 
-                        localizacion: 'Medio', 
-                        longitud: 18,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '85',
-                        lipidico_porcentaje: '40',
-                        calcico_porcentaje: '45',
-                        ulcerada_porcentaje: '5'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Coronaria Derecha (CD)', 
-                    dominancia: 'Codominante',
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Distal', 
-                        longitud: 12,
-                        remodelado: 'Ausente',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '75',
-                        lipidico_porcentaje: '20',
-                        calcico_porcentaje: '70',
-                        ulcerada_porcentaje: '0'
-                    }] 
-                },
-                { 
-                    nombre: 'Ramo Intermedio', 
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'No calcificada', 
-                        localizacion: 'Proximal', 
-                        longitud: 8,
-                        remodelado: 'Positivo',
-                        estenosis_severidad: 'Moderna (50-69%)',
-                        estenosis_porcentaje: '60',
-                        lipidico_porcentaje: '90',
-                        calcico_porcentaje: '5',
-                        ulcerada_porcentaje: '15'
-                    }] 
-                },
-                ...reportStructure.find(s => s.id === 'arterias_coronarias').items.slice(5).map(item => ({
-                    ...item, 
-                    descripcion_general: 'Normal, sin evidencia de placa', 
-                    placas: [] 
-                }))
-            ]
         },
         cad_rads: {
             score: 'CAD-RADS 5',
@@ -334,97 +255,6 @@ import { reportStructure } from './data.js';
             total: '4190',
             percentil: '>90'
         },
-        arterias_coronarias: {
-            items: [
-                { 
-                    nombre: 'Tronco Coronario Izquierdo (TCI)', 
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Ostial', 
-                        longitud: 12,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '80',
-                        lipidico_porcentaje: '15',
-                        calcico_porcentaje: '80',
-                        ulcerada_porcentaje: '2'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Descendente Anterior (DA)', 
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Proximal', 
-                        longitud: 35,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '90',
-                        lipidico_porcentaje: '10',
-                        calcico_porcentaje: '85',
-                        ulcerada_porcentaje: '1'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Circunfleja (CX)', 
-                    dominancia: 'No dominante',
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Medio', 
-                        longitud: 28,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '85',
-                        lipidico_porcentaje: '8',
-                        calcico_porcentaje: '90',
-                        ulcerada_porcentaje: '0'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Coronaria Derecha (CD)', 
-                    dominancia: 'Dominante',
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Proximal', 
-                        longitud: 22,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '75',
-                        lipidico_porcentaje: '12',
-                        calcico_porcentaje: '83',
-                        ulcerada_porcentaje: '3'
-                    }] 
-                },
-                { 
-                    nombre: 'Ramos Diagonales', 
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Ostial', 
-                        longitud: 15,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Oclusión total (100%)',
-                        estenosis_porcentaje: '100',
-                        lipidico_porcentaje: '5',
-                        calcico_porcentaje: '92',
-                        ulcerada_porcentaje: '0'
-                    }] 
-                },
-                ...reportStructure.find(s => s.id === 'arterias_coronarias').items.slice(5).map(item => ({
-                    ...item, 
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{
-                        tipo_placa: 'Calcificada',
-                        localizacion: 'Medio',
-                        estenosis_severidad: 'Moderna (50-69%)',
-                        estenosis_porcentaje: '60'
-                    }] 
-                }))
-            ]
-        },
         cad_rads: {
             score: 'CAD-RADS 4B',
             modifiers: ['G (Bypass)'],
@@ -520,97 +350,6 @@ import { reportStructure } from './data.js';
             cd: '1450',
             total: '4480',
             percentil: '>90'
-        },
-        arterias_coronarias: {
-            items: [
-                { 
-                    nombre: 'Tronco Coronario Izquierdo (TCI)', 
-                    descripcion_general: 'Ocluida crónicamente', 
-                    placas: [{ 
-                        tipo_placa: 'Mixta (predominio calcificado)', 
-                        localizacion: 'Ostial', 
-                        longitud: 8,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Oclusión total (100%)',
-                        estenosis_porcentaje: '100',
-                        lipidico_porcentaje: '25',
-                        calcico_porcentaje: '70',
-                        ulcerada_porcentaje: '15'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Descendente Anterior (DA)', 
-                    descripcion_general: 'Ocluida crónicamente', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Proximal', 
-                        longitud: 42,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Oclusión total (100%)',
-                        estenosis_porcentaje: '100',
-                        lipidico_porcentaje: '15',
-                        calcico_porcentaje: '80',
-                        ulcerada_porcentaje: '8'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Circunfleja (CX)', 
-                    dominancia: 'Dominante',
-                    descripcion_general: 'Presenta placa ateromatosa', 
-                    placas: [{ 
-                        tipo_placa: 'Mixta (predominio no calcificado)', 
-                        localizacion: 'Ostial', 
-                        longitud: 5,
-                        remodelado: 'Positivo',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '95',
-                        lipidico_porcentaje: '75',
-                        calcico_porcentaje: '20',
-                        ulcerada_porcentaje: '30'
-                    }] 
-                },
-                { 
-                    nombre: 'Arteria Coronaria Derecha (CD)', 
-                    dominancia: 'No dominante',
-                    descripcion_general: 'Anomalía de origen/trayecto', 
-                    placas: [{ 
-                        tipo_placa: 'No calcificada', 
-                        localizacion: 'Proximal', 
-                        longitud: 18,
-                        remodelado: 'Positivo',
-                        estenosis_severidad: 'Severa (70-99%)',
-                        estenosis_porcentaje: '90',
-                        lipidico_porcentaje: '85',
-                        calcico_porcentaje: '10',
-                        ulcerada_porcentaje: '40'
-                    }] 
-                },
-                { 
-                    nombre: 'Ramo Intermedio', 
-                    descripcion_general: 'Ocluida crónicamente', 
-                    placas: [{ 
-                        tipo_placa: 'Calcificada', 
-                        localizacion: 'Ostial', 
-                        longitud: 12,
-                        remodelado: 'Negativo',
-                        estenosis_severidad: 'Oclusión total (100%)',
-                        estenosis_porcentaje: '100',
-                        lipidico_porcentaje: '8',
-                        calcico_porcentaje: '88',
-                        ulcerada_porcentaje: '2'
-                    }] 
-                },
-                ...reportStructure.find(s => s.id === 'arterias_coronarias').items.slice(5).map(item => ({
-                    ...item, 
-                    descripcion_general: 'Ocluida crónicamente', 
-                    placas: [{
-                        tipo_placa: 'Calcificada',
-                        localizacion: 'Proximal',
-                        estenosis_severidad: 'Oclusión total (100%)',
-                        estenosis_porcentaje: '100'
-                    }] 
-                }))
-            ]
         },
         cad_rads: {
             score: 'CAD-RADS 5',
