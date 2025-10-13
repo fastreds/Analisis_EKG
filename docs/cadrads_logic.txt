@@ -1,0 +1,141 @@
+# Lógica de Cálculo para CAD-RADS™ 2.0 en la Aplicación
+
+## Descripción General
+
+Este documento detalla el proceso implementado en el archivo `js/logic/script.js` para calcular automáticamente la puntuación **CAD-RADS™ 2.0**. El cálculo se basa en las guías oficiales de la *Society of Cardiovascular Computed Tomography (SCCT)* y utiliza los datos de estenosis introducidos por el usuario en la sección "Evaluación por Segmento".
+
+La función principal responsable de esta lógica es `calculateCadRads(data)`.
+
+---
+
+## Proceso de Cálculo Detallado
+
+El cálculo se realiza siguiendo una serie de pasos jerárquicos:
+
+### Paso 1: Verificación de la Calidad del Estudio
+
+-   **Regla:** Si la calidad de la imagen del estudio se marca como "No diagnóstica".
+-   **Resultado:** El sistema asigna **`CAD-RADS N`** (N por No diagnóstico) y el cálculo se detiene.
+
+### Paso 2: Recopilación y Mapeo de Datos de Estenosis
+
+1.  **Mapeo de Segmentos a Vasos:**
+    Primero, se define una estructura que mapea cada uno de los 16 segmentos coronarios a su vaso principal correspondiente. Esto es fundamental para identificar la enfermedad del tronco coronario izquierdo (TCI) y la enfermedad de múltiples vasos.
+
+    -   **Tronco Coronario Izquierdo (TCI):** Segmento 5
+    -   **Arteria Descendente Anterior (DA):** Segmentos 6, 7, 8, 9, 10
+    -   **Arteria Circunfleja (CX):** Segmentos 11, 12, 13, 14, 15
+    -   **Arteria Coronaria Derecha (CD):** Segmentos 1, 2, 3, 4, 16
+
+2.  **Extracción de Estenosis:**
+    El sistema itera sobre cada segmento del formulario y sus placas asociadas para encontrar el grado máximo de estenosis.
+
+    -   Se da **prioridad al valor numérico** introducido en el campo `estenosis_porcentaje`.
+    -   Si el campo numérico está vacío, se utiliza el **valor categórico** del menú desplegable (ej. "CAD-RADS 3: Moderada (50-69%)") y se convierte a su valor numérico máximo (ej. 69%).
+
+3.  **Agregación de Resultados:**
+    Durante la iteración, se mantienen actualizadas las siguientes variables:
+    -   `maxStenosisOverall`: La estenosis más alta encontrada en *cualquier* parte del árbol coronario.
+    -   `vesselStenosis`: Un objeto que almacena la estenosis máxima para cada uno de los 4 vasos principales (DA, CX, CD, TCI).
+
+### Paso 3: Aplicación de las Reglas Jerárquicas de CAD-RADS™ 2.0
+
+Una vez recopilados todos los datos de estenosis, el sistema aplica las siguientes reglas en estricto orden descendente (de la más grave a la menos grave):
+
+1.  **`CAD-RADS 5`**
+    -   **Condición:** Si `maxStenosisOverall` es ≥ 100% (oclusión total).
+    -   **Resultado:** `CAD-RADS 5`
+
+2.  **`CAD-RADS 4B`**
+    -   **Condición:** Si la estenosis en el TCI es ≥ 50% **O** si 3 vasos principales (DA, CX, CD) tienen una estenosis ≥ 70%.
+    -   **Resultado:** `CAD-RADS 4B`
+
+3.  **`CAD-RADS 4A`**
+    -   **Condición:** Si 1 o 2 vasos principales tienen una estenosis ≥ 70%.
+    -   **Resultado:** `CAD-RADS 4A`
+
+4.  **`CAD-RADS 3`**
+    -   **Condición:** Si la `maxStenosisOverall` es ≥ 50% (y no se cumplieron las condiciones anteriores).
+    -   **Resultado:** `CAD-RADS 3`
+
+5.  **`CAD-RADS 2`**
+    -   **Condición:** Si la `maxStenosisOverall` es ≥ 25%.
+    -   **Resultado:** `CAD-RADS 2`
+
+6.  **`CAD-RADS 1`**
+    -   **Condición:** Si la `maxStenosisOverall` es ≥ 1%.
+    -   **Resultado:** `CAD-RADS 1`
+
+7.  **`CAD-RADS 0`**
+    -   **Condición:** Si no se cumple ninguna de las condiciones anteriores (es decir, `maxStenosisOverall` es 0%).
+    -   **Resultado:** `CAD-RADS 0`
+
+---
+
+## Código de Referencia
+
+A continuación se muestra la función `calculateCadRads` implementada en `js/logic/script.js` que refleja esta lógica:
+
+```javascript
+const calculateCadRads = (data) => {
+    // Lógica de Cálculo de CAD-RADS™ 2.0
+    // Basado en las guías de la Society of Cardiovascular Computed Tomography (SCCT).
+
+    // 1. Comprobar la calidad del estudio.
+    const calidadImagen = data.protocolo_estudio?.calidad_imagen;
+    if (!calidadImagen || calidadImagen.includes('No diagnóstica')) {
+        return 'CAD-RADS N'; // N por no diagnóstico.
+    }
+
+    const segmentData = data.evaluacion_segmento?.segments;
+    if (!segmentData) {
+        return 'CAD-RADS 0'; // Si no hay datos de segmentos, se asume 0.
+    }
+
+    // 2. Mapeo de segmentos coronarios a vasos principales.
+    const segmentToVesselMap = {
+        // ... (ver mapeo en la sección anterior)
+    };
+
+    // 3. Extraer y procesar los datos de estenosis.
+    let maxStenosisOverall = 0;
+    const vesselStenosis = { DA: 0, CX: 0, CD: 0, TCI: 0 };
+
+    Object.entries(segmentData).forEach(([segmentId, segment]) => {
+        const vessel = segmentToVesselMap[segmentId];
+        if (!vessel || !segment.findings?.placas) return;
+
+        segment.findings.placas.forEach(plaque => {
+            let currentStenosis = 0;
+            if (plaque.estenosis_porcentaje && plaque.estenosis_porcentaje > 0) {
+                currentStenosis = parseInt(plaque.estenosis_porcentaje, 10);
+            } else if (plaque.estenosis) {
+                currentStenosis = severityToMaxPercent[plaque.estenosis] || 0;
+            }
+
+            if (currentStenosis > vesselStenosis[vessel]) {
+                vesselStenosis[vessel] = currentStenosis;
+            }
+
+            if (currentStenosis > maxStenosisOverall) {
+                maxStenosisOverall = currentStenosis;
+            }
+        });
+    });
+
+    // 4. Aplicar las reglas de CAD-RADS 2.0 en orden jerárquico.
+    if (maxStenosisOverall >= 100) return 'CAD-RADS 5';
+    
+    const severeVesselsCount = Object.keys(vesselStenosis).filter(v => v !== 'TCI' && vesselStenosis[v] >= 70).length;
+    if (vesselStenosis.TCI >= 50 || severeVesselsCount >= 3) return 'CAD-RADS 4B';
+    
+    if (severeVesselsCount === 1 || severeVesselsCount === 2) return 'CAD-RADS 4A';
+    if (maxStenosisOverall >= 70) return 'CAD-RADS 4A';
+
+    if (maxStenosisOverall >= 50) return 'CAD-RADS 3';
+    if (maxStenosisOverall >= 25) return 'CAD-RADS 2';
+    if (maxStenosisOverall >= 1) return 'CAD-RADS 1';
+
+    return 'CAD-RADS 0';
+};
+```

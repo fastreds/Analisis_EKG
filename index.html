@@ -50,18 +50,20 @@
             </div>
         </header>
 
-        <div id="case-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-8">
+                <div id="case-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-8">
             <h2 class="text-xl font-semibold text-gray-700 mb-3">Casos de Ejemplo y Guardado</h2>
-            <div class="flex flex-wrap gap-3 items-center">      
-
-
-                <button data-case="case1" class="case-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">1</button>
-                <button data-case="case2" class="case-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">2</button>
-                <button data-case="case3" class="case-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">3</button>
+            <div class="relative">
+                <div id="case-buttons-container" class="flex flex-wrap gap-3 items-center">
+                    <!-- Buttons will be dynamically inserted here -->
+                </div>
+                <div id="case-tooltip" class="hidden absolute z-10 w-64 p-3 -mt-2 text-sm font-normal text-left text-gray-600 bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <!-- Tooltip content will be dynamically inserted here -->
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 items-center mt-4">
                 <button id="load-saved-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">Cargar Estudio Guardado</button>
                 <button id="save-study-btn" class="btn btn-primary">Guardar Estudio</button>
                 <button id="save-informe-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">Generar Informe Visual</button>
-           
             </div>
         </div>
 
@@ -105,13 +107,16 @@
 
                         <!-- Panel del Reporte -->
                         <div id="tab-panel-reporte" class="tab-panel hidden">
-                            <div id="report-preview-container" class="p-6">
-                                <button id="copy-report-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center gap-2 float-right mb-4">
+
+                            
+                            
+                            <div id="report-preview-container" class="p-6">            <button id="copy-report-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg 
+                                hover:bg-blue-700 transition-colors duration-300 flex items-center gap-2 float-right mb-4">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                                         <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
                                     </svg>
-                                    Copiar
+                                  
                                 </button>
                                 <div id="report-output" class="prose max-w-none bg-gray-50 p-4 rounded-lg h-[80vh] overflow-y-auto report-placeholder">
                                     <!-- El reporte generado se mostrará aquí -->

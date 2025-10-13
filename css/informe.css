@@ -1,0 +1,234 @@
+        :root {
+            --verde: #10B981;
+            --amarillo: #F59E0B;
+            --naranja: #F97316;
+            --rojo: #EF4444;
+            --azul: #3B82F6;
+            --azul-vivit: #004AAD;
+            --gris-fondo: #F9FAFB;
+            --gris-borde: #E5E7EB;
+            --texto-principal: #1F2937;
+            --texto-secundario: #6B7280;
+            --font-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            margin: 0;
+            background: var(--gris-fondo);
+            color: var(--texto-principal);
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--gris-borde);
+            background: #fff;
+        }
+
+        .logo {
+            height: 50px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: var(--texto-principal);
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin: 0
+        }
+
+        .card,
+        .card-flat {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            border: 1px solid var(--gris-borde);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+        }
+
+        .left {
+            flex: 1;
+            min-width: 320px
+        }
+
+        .right {
+            width: 520px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        table td,
+        table th {
+            padding: 8px;
+            border-bottom: 1px solid var(--gris-borde);
+            font-size: 13px;
+            text-align: left;
+        }
+
+        table th {
+            color: var(--texto-secundario);
+            font-weight: 500;
+        }
+
+        .small {
+            font-size: 14px;
+            color: var(--texto-secundario);
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+
+        .detail-item span:first-child {
+            color: var(--texto-secundario);
+        }
+
+        .detail-item span:last-child {
+            font-weight: 500;
+            text-align: right;
+        }
+
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: var(--azul-vivit);
+            color: #fff;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        button {
+            background: var(--azul-vivit);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        button:hover {
+            background-color: #003a8c;
+        }
+        
+        .print-only {
+            display: none;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: #fff;
+                color: #000;
+            }
+            
+            header {
+                display: flex !important;
+            }
+
+            .no-print, .controls {
+                display: none !important;
+            }
+
+            main {
+                display: flex !important;
+                gap: 18px !important;
+                padding: 18px !important;
+            }
+
+            .right {
+                width: 40% !important;
+            }
+
+            .left {
+                width: 58% !important;
+            }
+
+            .card,
+            .card-flat {
+                box-shadow: none;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
+
+            .print-only {
+                display: block;
+                page-break-before: always;
+                padding: 24px;
+            }
+            .print-only h3, .print-only h4 {
+                color: #000;
+            }
+            .print-only p, .print-only li {
+                 font-size: 12pt;
+                 line-height: 1.5;
+            }
+        }
+
+        /* Coronary schematic */
+        .coronary-wrap {
+            background: #fff;
+            padding: 8px;
+            border-radius: 8px
+        }
+
+        svg.heart {
+            width: 100%;
+            height: 360px
+        }
+
+        .legend {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px
+        }
+
+        .legend .item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 13px
+        }
+
+        .legend .sw {
+            width: 18px;
+            height: 12px;
+            border-radius: 3px
+        }
+
+        footer {
+            padding: 18px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            border-top: 1px solid var(--gris-borde);
+            clear: both;
+        }

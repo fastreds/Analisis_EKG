@@ -198,6 +198,14 @@ export function initCoronarySketch() {
         modal.classList.add('hidden');
         originalSegmentParent = null;
         originalSegmentNextSibling = null;
+
+        // Se redibuja el croquis para reflejar cualquier cambio hecho en el modal.
+        updateSketchFromForm();
+
+        // Se dispara un evento 'input' en el contenedor principal del formulario.
+        // Esto asegura que el listener en script.js se active y llame a updateReport(),
+        // actualizando así el informe de texto y cualquier otra parte de la UI.
+        document.getElementById('form-container').dispatchEvent(new Event('input', { bubbles: true }));
     };
 
     // --- 6. LÓGICA DE INTERACCIÓN 3D Y EDICIÓN ---
@@ -223,21 +231,7 @@ export function initCoronarySketch() {
         d3.select(sketchContainer).call(drag3D);
     };
 
-    // Actualiza el <textarea> de depuración con las posiciones actuales de los segmentos en formato JSON.
-    function updatePositionsArrayOutput() { 
-        const output = document.getElementById('array-output');
-        if (!output) return;
-        const updatedSegments = segmentsData.map(seg => {
-            const group = d3.select(`svg:not(.hidden)`).select(`#g-segment-${seg.id}`);
-            const transform = group.empty() ? seg.transform : group.attr('transform');
-            return {
-                ...seg,
-                transform: transform || "translate(0,0) rotate(0)"
-            };
-        });
-        
-        output.value = `export const newPositions = ${JSON.stringify(updatedSegments, (key, value) => key === 'points' ? undefined : value, 4)};`;
-    }
+
 
     // Añade el comportamiento de arrastre a los grupos de segmentos para moverlos en el modo de edición.
     function addDragBehavior(group) { 
@@ -278,7 +272,6 @@ export function initCoronarySketch() {
             })
             .on('end', function() {
                 d3.select(this).style('cursor', 'move');
-                updatePositionsArrayOutput();
             });
         
         group.call(drag);
@@ -305,7 +298,6 @@ export function initCoronarySketch() {
             })
             .on('end', function() { 
                 d3.select(this).attr('r', 5);
-                updatePositionsArrayOutput();
             });
         
         handles.call(handleDrag);
@@ -313,9 +305,9 @@ export function initCoronarySketch() {
 
     // Dibuja los segmentos coronarios en el SVG activo según la dominancia seleccionada.
     function drawSegments() { 
-        console.log('[drawSegments] 1. Iniciando redibujo de segmentos.');
+       // console.log('[drawSegments] 1. Iniciando redibujo de segmentos.');
         const dominanceRadio = document.querySelector('input[name="anatomia_general-dominancia"]:checked');
-        console.log('[drawSegments] 2. Buscando radio de dominancia seleccionado:', dominanceRadio);
+       // console.log('[drawSegments] 2. Buscando radio de dominancia seleccionado:', dominanceRadio);
 
         if (!dominanceRadio) {
             console.warn('[drawSegments] 2.1. ¡No se encontró un radio de dominancia seleccionado! Reintentando en 100ms.');
@@ -323,7 +315,7 @@ export function initCoronarySketch() {
             return;
         }
         const dominance = dominanceRadio.value || 'Dominancia Derecha';
-        console.log(`[drawSegments] 3. Valor de dominancia obtenido: "${dominance}"`);
+        // console.log(`[drawSegments] 3. Valor de dominancia obtenido: "${dominance}"`);
         let currentDominanceKey = 'derecha';
         if (dominance.includes('Izquierda')) currentDominanceKey = 'izquierda';
         if (dominance.includes('Codominancia')) currentDominanceKey = 'codominancia';
@@ -345,7 +337,7 @@ export function initCoronarySketch() {
                 segmentsData = JSON.parse(JSON.stringify(posicionesDerecha));
                 break;
         }
-        console.log(`[drawSegments] 4. Modelo de posiciones '${currentDominanceKey}' seleccionado. Total de segmentos a procesar: ${segmentsData.length}`);
+        // console.log(`[drawSegments] 4. Modelo de posiciones '${currentDominanceKey}' seleccionado. Total de segmentos a procesar: ${segmentsData.length}`);
         
         d3.selectAll('svg').selectAll('.segment-group').remove();
 
@@ -360,7 +352,7 @@ export function initCoronarySketch() {
             if (seg.dominance.includes(currentDominanceKey)) {
                 const svg = d3.select(`svg:not(.hidden)`);
                 const group = svg.append('g').attr('id', `g-segment-${seg.id}`).attr('class', 'segment-group');
-                console.log(`   -> Dibujando segmento ${seg.name} porque su dominancia (${seg.dominance}) incluye la actual (${currentDominanceKey}).`);
+                //console.log(`   -> Dibujando segmento ${seg.name} porque su dominancia (${seg.dominance}) incluye la actual (${currentDominanceKey}).`);
 
                 const pathGenerator = d3.line().curve(d3.curveBasis);
                 group.append('path')
@@ -389,7 +381,7 @@ export function initCoronarySketch() {
                 }
             }
         });
-        console.log('[drawSegments] 6. Dibujo de segmentos completado. Adjuntando eventos de arrastre y clic.');
+        //console.log('[drawSegments] 6. Dibujo de segmentos completado. Adjuntando eventos de arrastre y clic.');
         addDragBehavior(d3.selectAll('.segment-group'));
         updateSketchFromForm();
         d3.selectAll('.segment-group').on('click', function(event) {
@@ -400,7 +392,7 @@ export function initCoronarySketch() {
             event.stopPropagation();
         });
         addHandleDragBehavior(d3.selectAll('.control-handle'));
-        updatePositionsArrayOutput();
+
     }
     
     // Construye y muestra la leyenda de simbología (colores de estenosis, stents, etc.).
@@ -549,8 +541,27 @@ export function initCoronarySketch() {
             if (isEditMode) {
                 // Reset 3D rotation
                 d3.selectAll('#sketch-container svg').style('transform', 'rotateX(0deg) rotateY(0deg)');
+            } else {
+                logFinalPositions();
             }
         });
+    }
+
+    function logFinalPositions() {
+        const updatedSegments = segmentsData.map(seg => {
+            const group = d3.select(`svg:not(.hidden)`).select(`#g-segment-${seg.id}`);
+            const transform = group.attr('transform');
+            return {
+                id: seg.id,
+                name: seg.name,
+                points: seg.points,
+                dominance: seg.dominance,
+                labelPos: seg.labelPos,
+                transform: transform || "translate(0,0) rotate(0)"
+            };
+        });
+        
+        console.log('export const nuevaposturadelArbol = ' + JSON.stringify(updatedSegments, null, 4));
     }
 
     // Listener para el botón de cerrar la ventana modal.
@@ -559,7 +570,6 @@ export function initCoronarySketch() {
     }
 
     // --- 8. EJECUCIÓN INICIAL ---
-    drawSegments();
     buildLegend();
     setup3DRotation();
 }

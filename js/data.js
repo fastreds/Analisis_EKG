@@ -160,7 +160,7 @@ export const reportStructure = [{
     }, {
         "id": "auricula_derecha",
         "label": "Aurícula derecha",
-        "type": "select",
+        "type": "checkbox",
         "options": ["No dilatada", "Dilatada", "Thrombus", "Myxoma o masa", "Hipertrofia"]
     }, {
         "id": "septum_interauricular",
@@ -444,6 +444,7 @@ export const reportStructure = [{
         { id: 8, name: 'Segmento 8: ADA, Distal/Apical (dADA)' },
         { id: 9, name: 'Segmento 9: Primera Diagonal (D1)' },
         { id: 10, name: 'Segmento 10: Segunda Diagonal (D2)' },
+        { id: 101, name: 'Segmento 10: Segunda Diagonal (D3)' },
         { id: 11, name: 'Segmento 11: ACx, Proximal (pACx)' },
         { id: 12, name: 'Segmento 12: Primera Obtusa Marginal (OM1)' },
         { id: 13, name: 'Segmento 13: ACx, Distal (dACx)' },
@@ -483,7 +484,7 @@ export const reportStructure = [{
                         id: 'estenosis',
                         label: 'Grado de Estenosis',
                         type: 'select',
-                        options: ['CAD-RADS 1: Mínima (1-24%)', 'CAD-RADS 2: Leve (25-49%)', 'CAD-RADS 3: Moderada (50-69%)', 'CAD-RADS 4A: Severa (70-99%)', 'CAD-RADS 5: Oclusión total (100%)']
+                        options: ['Mínima (1-24%)', 'Leve (25-49%)', 'Moderada (50-69%)', 'Severa (70-99%)', 'Oclusión total (100%)']
                     }, {
                         id: 'has_hrp',
                         label: 'Características de Placa de Alto Riesgo (HRP ≥2)',

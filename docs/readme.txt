@@ -28,29 +28,34 @@ La herramienta permite a los usuarios introducir datos de un estudio de AngioTAC
 A continuación se describe la estructura de archivos y directorios del proyecto:
 
 .
-├── 📂 bkp/
-│   ├── 📄 cartaCompromiso.html   (Copia de seguridad de la carta de compromiso)
-│   └── 📄 propuesta.html         (Copia de seguridad de la propuesta)
+├── 📂 css/
+│   ├── 📄 styles.css         (Estilos principales de la aplicación del formulario)
+│   └── 📄 informe.css        (Estilos específicos para la página del informe final)
 │
-├── 📂 ekg/
-│   ├── 📄 ekg_movil.html         (Versión móvil de un generador de informes EKG, parece un proyecto separado)
-│   ├── 📄 index.html             (Generador de informes EKG, parece un proyecto separado)
-│   └── 📄 indexAI.html           (Versión con IA del generador de informes EKG)
+├── 📂 docs/
+│   ├── 📄 cartaCompromiso.html (Documento del proyecto)
+│   ├── 📄 propuesta.html     (Documento del proyecto)
+│   └── 📄 readme.txt         (Este archivo)
 │
 ├── 📂 img/
-│   └── 🖼️ arbolCoroAnterior.png    (Imagen de fondo para el croquis coronario)
+│   └── ... (Imágenes y logos usados en la aplicación)
 │
-├── 📄 arbolCoronario.html -       (❌ OBSOLETO - Su funcionalidad ahora está en index.html)
-├── 📄 arbolCoronario.js          (❌ OBSOLETO Y CONFLICTIVO - Su contenido debe estar en data.js)
-├── 📄 arbolCoronarioLogic.js     (✅ LÓGICA DEL CROQUIS - Dibuja y maneja la interacción del croquis)
-├── 📄 audit.js                   (✅ HERRAMIENTA DE DIAGNÓSTICO - Script para auditar el proyecto desde la consola)
-├── 📄 case.js                    (✅ DATOS DE EJEMPLO - Contiene los casos de prueba para el formulario)
-├── 📄 cartaCompromiso.html       (Documento del proyecto)
-├── 📄 data.js                    (❗ ARCHIVO CLAVE - Debería ser la ÚNICA fuente de datos para TODO el formulario)
-├── 📄 index.html                 (✅ PÁGINA PRINCIPAL - La aplicación principal que el usuario ve)
-├── 📄 informe.html               (✅ PÁGINA DE REPORTE - La vista final para imprimir/guardar el informe)
-├── 📄 logicaArbol.js             (❌ OBSOLETO - Su lógica ahora está en script.js y arbolCoronarioLogic.js)
-├── 📄 posicionesDominancia.js    (✅ DATOS DEL CROQUIS - Contiene las coordenadas para dibujar las arterias)
-├── 📄 propuesta.html             (Documento del proyecto)
-├── 📄 script.js                  (✅ LÓGICA PRINCIPAL - Construye el formulario, recolecta datos y actualiza la UI)
-└── 📄 styles.css                 (✅ ESTILOS - Hoja de estilos principal de la aplicación)
+├── 📂 js/
+│   ├── 📂 data/
+│   │   ├── 📄 case.js          (✅ DATOS DE EJEMPLO - Contiene los casos de prueba para el formulario)
+│   │   └── 📄 posicionesDominancia.js (✅ DATOS DEL CROQUIS - Contiene las coordenadas para dibujar las arterias)
+│   │
+│   ├── 📂 logic/
+│   │   ├── 📄 arbolCoronarioLogic.js (✅ LÓGICA DEL CROQUIS - Dibuja y maneja la interacción del croquis)
+│   │   ├── 📄 script.js        (✅ LÓGICA PRINCIPAL - Construye el formulario, recolecta datos y actualiza la UI)
+│   │   └── 📄 informe.js       (✅ LÓGICA DEL INFORME - Carga los datos guardados y genera la visualización del informe)
+│   │
+│   ├── 📂 utils/
+│   │   └── 📄 audit.js         (✅ HERRAMIENTA DE DIAGNÓSTICO - Script para auditar el proyecto desde la consola)
+│   │
+│   └── 📄 data.js              (❗ ARCHIVO CLAVE - Define la estructura de datos de todo el informe)
+│
+├── 📄 index.html               (✅ PÁGINA PRINCIPAL - La aplicación principal para rellenar el formulario)
+├── 📄 informe.html             (✅ PÁGINA DE REPORTE - La vista final para imprimir/guardar el informe)
+├── 📄 arbol.txt                (Utilidad para generar la estructura de archivos)
+└── ... (Otros archivos de configuración y Git)

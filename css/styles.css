@@ -65,7 +65,7 @@ body {
     color: #fff;
 }
 .btn-primary:hover {
-    background-color: #2a960f;
+    background-color: #003a8c;
 }
 
 
@@ -164,6 +164,14 @@ body {
     margin-top: 1rem;
 }
 
+.report-title-clickable {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.report-title-clickable:hover {
+    color: var(--azul-acento);
+}
+
 /* Form Inputs */
 input[type="text"],
 input[type="number"],
@@ -194,7 +202,7 @@ textarea:focus {
     --color-stenosis-4: #EF4444; /* Rojo (Severa) */
 
     /* --- Grosores de Línea --- */
-    --stroke-width-normal: 3px;
+    --stroke-width-normal: 2px;
     --stroke-width-stent-circle: 1px;
 }
 .segment-path { 

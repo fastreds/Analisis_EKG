@@ -80,9 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'CAD-RADS 0';
     };
 
-
     const updateReport = () => {
         let data = gatherData();
+        updateCalciumScore();
         
         if (!cadRadsManualOverride) {
             const calculatedScore = calculateCadRads(data);
@@ -145,32 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             } else if (section.type === 'segmented_group') {
-                if (sectionData && sectionData.segments) {
-                    let segmentContent = '<ul>';
-                    let hasSegmentFindings = false;
-                    Object.entries(sectionData.segments).forEach(([segmentId, segment]) => {
-                        if (segment.estado_general === 'Con hallazgos patológicos' && segment.findings) {
-                            const segmentInfo = section.segments.find(s => s.id == segmentId);
-                            let findingText = '';
-                            if (segment.findings.placas && segment.findings.placas.length > 0) {
-                                findingText += segment.findings.placas.map(p => `Placa ${p.composicion || ''} con estenosis ${p.estenosis || 'no definida'}`).join(', ');
-                            }
-                            // Aquí se pueden añadir más hallazgos como stents, puentes, etc.
-
-                            if (findingText) {
-                                segmentContent += `<li><strong>${segmentInfo.name}:</strong> ${findingText}</li>`;
-                                hasSegmentFindings = true;
-                            }
-                        }
-                    });
-                    segmentContent += '</ul>';
-                    if (hasSegmentFindings) {
-                        sectionHtml += segmentContent;
-                        sectionHasContent = true;
-                    }
-                }
-            }
-            else {
+                // This section is now handled below, after the main loop
+            } else {
                 // This handles sections with a 'fields' array
                 if (sectionData) {
                     Object.entries(sectionData).forEach(([key, value]) => {
@@ -190,10 +166,50 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (sectionHasContent) {
-                html += `<h3>${section.title}</h3>${sectionHtml}`;
+                html += `<h3 class="report-title-clickable" data-scroll-to="form-section-${section.id}">${section.title}</h3>${sectionHtml}`;
                 hasContent = true;
             }
         });
+
+        // Add segment evaluation text
+        const segmentData = data.evaluacion_segmento?.segments;
+        if (segmentData) {
+            const segmentSection = reportStructure.find(s => s.id === 'evaluacion_segmento');
+            if (segmentSection) {
+                let segmentText = `<h3 class="text-lg font-semibold mb-2">${segmentSection.title}</h3>`;
+                let findingsFound = false;
+                segmentSection.segments.forEach(segmentInfo => {
+                    const segmentId = segmentInfo.id;
+                    const segment = segmentData[segmentId];
+                    if (segment && segment.estado_general === 'Con hallazgos patológicos' && segment.findings) {
+                        let findingsList = [];
+                        if (segment.findings.placas && segment.findings.placas.length > 0) {
+                            segment.findings.placas.forEach(p => {
+                                let estenosisText = p.estenosis_porcentaje ? `${p.estenosis_porcentaje}%` : p.estenosis;
+                                let placaText = `Placa ${p.composicion || ''} que produce estenosis de ${estenosisText}`;
+                                if (p.has_hrp && p.has_hrp.length > 0) {
+                                    placaText += ` con características de alto riesgo (${p.has_hrp.join(', ')})`;
+                                }
+                                findingsList.push(placaText);
+                            });
+                        }
+                        // Future logic for stents, bridges, etc. can be added here
+                        
+                        if (findingsList.length > 0) {
+                            segmentText += `<p><strong>${segmentInfo.name}:</strong> ${findingsList.join('. ')}.</p>`;
+                            findingsFound = true;
+                        }
+                    }
+                });
+
+                if (!findingsFound) {
+                    segmentText += "<p>No se encontraron hallazgos patológicos significativos en los segmentos evaluados.</p>";
+                }
+                html += segmentText;
+                hasContent = true;
+            }
+        }
+
 
         reportOutput.innerHTML = html;
         if (hasContent) {
@@ -202,6 +218,21 @@ document.addEventListener('DOMContentLoaded', () => {
             reportOutput.classList.add('report-placeholder');
         }
     };
+
+    reportOutput.addEventListener('click', (e) => {
+        if (e.target.matches('.report-title-clickable')) {
+            const targetId = e.target.dataset.scrollTo;
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                const content = targetElement.querySelector('[id^="section-content-"]'); // The collapsible content
+                if (content && content.classList.contains('hidden')) {
+                    const header = targetElement.querySelector('h3');
+                    header.click(); // Simulate click to expand
+                }
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    });
 
     const generateConclusion = () => {
         const data = formData;
@@ -357,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         reportStructure.forEach((section, index) => {
             const isCollapsible = true; 
             const isCollapsed = index !== 0; // Colapsar todas excepto la primera
-            formHtml += `<div class="form-section-container border border-gray-200 rounded-lg mb-6">
+            formHtml += `<div id="form-section-${section.id}" class="form-section-container border border-gray-200 rounded-lg mb-6">
                 <h3 class="text-lg font-semibold p-4 bg-gray-50 border-b flex justify-between items-center ${isCollapsible ? 'cursor-pointer' : ''}" ${isCollapsible ? `data-collapsible-target="section-content-${section.id}"` : ''}>
                     <span class="flex items-center">${index + 1}. ${section.title}</span>
                     <span class="collapsible-arrow transform ${isCollapsed ? '-rotate-90' : 'rotate-0'} transition-transform duration-300">&#9660;</span>
@@ -390,6 +421,15 @@ document.addEventListener('DOMContentLoaded', () => {
     buildForm();
     initCoronarySketch();
 
+    // Trigger initial draw after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        const dominanceRadio = document.querySelector('input[name="anatomia_general-dominancia"]:checked');
+        if (dominanceRadio) {
+            dominanceRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        updateReport(); // To draw initial report state
+    }, 100);
+
     // Collapsible sections
     formContainer.querySelectorAll('[data-collapsible-target]').forEach(header => {
         header.addEventListener('click', () => {
@@ -410,15 +450,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const items = [];
         container.querySelectorAll('.repeat-item').forEach(itemNode => {
             const itemData = {};
+            const processedNames = new Set();
+
             itemNode.querySelectorAll('input, select, textarea').forEach(input => {
-                const key = input.id.split('-').pop();
+                const name = input.name || input.id;
+                if (!name || processedNames.has(name)) return;
+
+                const nameParts = name.split('-');
+                const key = nameParts[nameParts.length - 1];
+                
                 if (input.type === 'radio') {
-                    if (input.checked) itemData[key] = input.value;
+                    const checkedRadio = itemNode.querySelector(`input[name="${name}"]:checked`);
+                    if (checkedRadio) {
+                        itemData[key] = checkedRadio.value;
+                    }
+                    processedNames.add(name);
                 } else if (input.type === 'checkbox') {
-                    if (!itemData[key]) itemData[key] = [];
-                    if (input.checked) itemData[key].push(input.value);
-                } else {
+                    const values = [];
+                    itemNode.querySelectorAll(`input[name="${name}"]:checked`).forEach(cb => {
+                        values.push(cb.value);
+                    });
+                    itemData[key] = values;
+                    processedNames.add(name);
+                } else { // select, text, textarea, etc.
                     itemData[key] = input.value;
+                    processedNames.add(name);
                 }
             });
             items.push(itemData);
@@ -443,6 +499,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     };
 
+    const getSegmentFindingsData = (findingsContainer, fields) => {
+        if (!findingsContainer || findingsContainer.classList.contains('hidden')) return null;
+        const findingsData = {};
+        fields.forEach(field => {
+            const elId = findingsContainer.id + '-' + field.id;
+            if (field.type === 'repeatable_block') {
+                findingsData[field.id] = getRepeatableBlockData(`repeat-container-${elId}`);
+            } else if (field.type === 'master_checkbox') {
+                const masterCheckbox = document.getElementById(elId);
+                if (masterCheckbox && masterCheckbox.checked) {
+                    findingsData[field.id] = true;
+                    const detailsContainer = document.getElementById(elId.replace(field.id, field.id + '_details'));
+                    if (detailsContainer) {
+                        findingsData[field.id + '_details'] = getConditionalGroupData(detailsContainer);
+                    }
+                }
+            }
+        });
+        return findingsData;
+    };
+
     const gatherData = () => {
         formData = {};
         reportStructure.forEach(section => {
@@ -460,6 +537,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (field.type === 'radio') {
                                 const checkedRadio = segmentContainer.querySelector(`input[name="${prefix}-${field.id}"]:checked`);
                                 if (checkedRadio) segmentData[field.id] = checkedRadio.value;
+                            } else if (field.type === 'conditional_group' && field.id === 'findings') {
+                                segmentData[field.id] = getSegmentFindingsData(el, field.fields);
                             } else if (field.type === 'conditional_group') {
                                 segmentData[field.id] = getConditionalGroupData(el);
                             }
@@ -474,9 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const elId = `${prefix}-${field.id}`;
                     if (field.type === 'checkbox') {
                         const values = [];
-                        field.options.forEach(opt => {
-                            const checkbox = document.querySelector(`input[name="${elId}"][value="${opt}"]`);
-                            if (checkbox?.checked) values.push(opt);
+                        document.querySelectorAll(`input[name="${elId}"]`).forEach(checkbox => {
+                            if (checkbox.checked) values.push(checkbox.value);
                         });
                         formData[section.id][field.id] = values;
                     } else if (field.type === 'radio') {
@@ -497,86 +575,169 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadCase = (caseData) => {
+        // 1. Reset the form completely
         formContainer.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], textarea').forEach(el => el.value = '');
-        formContainer.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+        formContainer.querySelectorAll('select').forEach(el => {
+            el.selectedIndex = 0;
+            // Manually trigger change for selects to reset dependent UI
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
         formContainer.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(el => {
             el.checked = false;
-            el.dispatchEvent(new Event('change', { bubbles: true })); // Para ocultar campos condicionales
+            // Dispatch change to hide conditional fields
+            el.dispatchEvent(new Event('change', { bubbles: true }));
         });
         formContainer.querySelectorAll('[id^="repeat-container-"]').forEach(el => el.innerHTML = '');
 
+        // 2. Populate form with case data and dispatch events
         reportStructure.forEach(section => {
             const sectionData = caseData[section.id];
             if (!sectionData) return;
 
-            if (section.type === 'segmented_group') {
-                if (sectionData.segments) {
-                    Object.entries(sectionData.segments).forEach(([segmentId, segmentValues]) => {
-                        const prefix = `${section.id}-${segmentId}`;
-                        const radio = document.querySelector(`input[name="${prefix}-estado_general"][value="${segmentValues.estado_general}"]`);
-                        if (radio) {
-                            radio.checked = true;
-                            radio.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
-
-                        if (segmentValues.findings?.placas) {
-                            const addPlaqueBtn = document.querySelector(`button[data-template-id="${prefix}-findings-placas-template"]`);
-                            segmentValues.findings.placas.forEach(placaData => {
-                                if (addPlaqueBtn) addPlaqueBtn.click();
-                                const plaqueContainer = document.getElementById(`repeat-container-${prefix}-findings-placas`);
-                                const newPlaqueItem = plaqueContainer.querySelector('.repeat-item:last-child');
-                                if (newPlaqueItem) {
-                                    Object.entries(placaData).forEach(([key, value]) => {
-                                        const input = newPlaqueItem.querySelector(`[id$="-${key}"]`);
-                                        if (input) input.value = value;
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            } else if (section.fields) {
-                section.fields.forEach(field => {
-                    const value = sectionData[field.id];
+            // Handle regular fields in sections
+            if (section.fields) {
+                Object.entries(sectionData).forEach(([fieldId, value]) => {
                     if (value === undefined) return;
-                    const elId = `${section.id}-${field.id}`;
+                    
+                    const fieldDef = section.fields.find(f => f.id === fieldId);
+                    const elId = `${section.id}-${fieldId}`;
+                    const el = document.getElementById(elId);
 
-                    if (field.type === 'checkbox') {
+                    if (!fieldDef && !el) return; // Skip if field doesn't exist in structure or DOM
+
+                    if (fieldDef?.type === 'checkbox' && Array.isArray(value)) {
+                        // First, uncheck all options in the group
+                        document.querySelectorAll(`input[name^="${elId}"]`).forEach(cb => cb.checked = false);
+                        // Then, check the ones from the case data
                         value.forEach(opt => {
                             const checkbox = document.querySelector(`input[name="${elId}"][value="${opt}"]`);
-                            if (checkbox) checkbox.checked = true;
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
                         });
-                    } else if (field.type === 'radio') {
-                        const radio = document.querySelector(`input[name="${elId}"][value="${value}"]`);
+                    } else if (fieldDef?.type === 'radio') {
+                        const radio = document.querySelector(`input[name="${elId}"][value="${value.replace(/"/g, '\\"')}"]`);
                         if (radio) {
                             radio.checked = true;
+                            // This is critical for updating the sketch dominance and other conditional UI
                             radio.dispatchEvent(new Event('change', { bubbles: true }));
                         }
-                    } else if (field.type === 'repeatable_block') {
+                    } else if (fieldDef?.type === 'repeatable_block' && Array.isArray(value)) {
                         const addBtn = document.querySelector(`button[data-template-id="${elId}-template"]`);
-                        if (addBtn && Array.isArray(value)) {
+                        if (addBtn) {
                             value.forEach(itemData => {
-                                addBtn.click();
+                                addBtn.click(); // This will create the new item structure
                                 const container = document.getElementById(`repeat-container-${elId}`);
                                 const newItem = container.querySelector('.repeat-item:last-child');
                                 if (newItem) {
                                     Object.entries(itemData).forEach(([key, val]) => {
                                         const input = newItem.querySelector(`[id$="-${key}"]`);
-                                        if (input) input.value = val;
+                                        if (input) {
+                                            if (input.type === 'checkbox' || input.type === 'radio') {
+                                                // Handle checkboxes/radios within repeatable blocks
+                                                if ((Array.isArray(val) && val.includes(input.value)) || val === input.value) {
+                                                    input.checked = true;
+                                                } else {
+                                                    input.checked = false;
+                                                }
+                                                input.dispatchEvent(new Event('change', { bubbles: true }));
+                                            } else {
+                                                input.value = val;
+                                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                                            }
+                                        }
                                     });
                                 }
                             });
                         }
-                    } else if (field.type !== 'button') {
-                        const el = document.getElementById(elId);
-                        if (el) el.value = value;
+                    } else if (el) { // For text, number, select, textarea etc.
+                        el.value = value;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+
+            // Handle segmented group separately
+            if (section.type === 'segmented_group' && sectionData.segments) {
+                Object.entries(sectionData.segments).forEach(([segmentId, segmentValues]) => {
+                    const prefix = `${section.id}-${segmentId}`;
+                    
+                    // Set estado_general
+                    const estadoRadio = document.querySelector(`input[name="${prefix}-estado_general"][value="${segmentValues.estado_general}"]`);
+                    if (estadoRadio) {
+                        estadoRadio.checked = true;
+                        estadoRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+
+                    // Handle findings within the segment
+                    if (segmentValues.findings) {
+                        Object.entries(segmentValues.findings).forEach(([findingKey, findingValue]) => {
+                            const findingDef = section.template.find(t => t.id === 'findings')?.fields.find(f => f.id === findingKey);
+                            if (!findingDef) return;
+
+                            if (findingDef.type === 'repeatable_block' && Array.isArray(findingValue)) {
+                                const addBtn = document.querySelector(`button[data-template-id="${prefix}-findings-${findingKey}-template"]`);
+                                if (addBtn) {
+                                    findingValue.forEach(itemData => {
+                                        addBtn.click();
+                                        const container = document.getElementById(`repeat-container-${prefix}-findings-${findingKey}`);
+                                        const newItem = container.querySelector('.repeat-item:last-child');
+                                        if (newItem) {
+                                            Object.entries(itemData).forEach(([key, val]) => {
+                                                const input = newItem.querySelector(`[id$="-${key}"]`);
+                                                if (input) {
+                                                    if (input.type === 'checkbox' && Array.isArray(val)) {
+                                                        val.forEach(v => {
+                                                            const cb = newItem.querySelector(`input[value="${v}"]`);
+                                                            if(cb) cb.checked = true;
+                                                        });
+                                                    } else {
+                                                        input.value = val;
+                                                    }
+                                                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            } else if (findingDef.type === 'master_checkbox') {
+                                const masterCheckbox = document.getElementById(`${prefix}-findings-${findingKey}`);
+                                if (masterCheckbox) {
+                                    masterCheckbox.checked = !!findingValue;
+                                    masterCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+                                    if (findingValue && typeof findingValue === 'object' && segmentValues.findings[findingKey+'_details']) {
+                                        const details = segmentValues.findings[findingKey+'_details'];
+                                        Object.entries(details).forEach(([detailKey, detailValue]) => {
+                                            const detailInput = document.querySelector(`[id$="${findingKey}_details-${detailKey}"]`);
+                                            if(detailInput) {
+                                                detailInput.value = detailValue;
+                                                detailInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        });
                     }
                 });
             }
         });
 
-        cadRadsManualOverride = false;
-        updateReport();
+        // 3. Final update
+        // A small timeout can help ensure all DOM updates and event dispatches from the loading process are settled
+        setTimeout(() => {
+            cadRadsManualOverride = false;
+            updateReport(); // This will also trigger sketch updates via its internal calls
+            
+            // Explicitly trigger a final change on the dominance radio to be sure the sketch is correct
+            const dominanceRadio = document.querySelector('input[name="anatomia_general-dominancia"]:checked');
+            if (dominanceRadio) {
+                dominanceRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }, 100);
     };
 
     // --- EVENT LISTENERS ---
@@ -616,14 +777,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.querySelectorAll('.case-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const caseKey = e.target.dataset.case;
-            if (sampleCases[caseKey]) {
-                loadCase(sampleCases[caseKey]);
-            }
+    const buildCaseButtons = () => {
+        const buttonsContainer = document.getElementById('case-buttons-container');
+        const tooltip = document.getElementById('case-tooltip');
+        if (!buttonsContainer || !tooltip) return;
+
+        Object.keys(sampleCases).forEach((caseKey, index) => {
+            const caseData = sampleCases[caseKey];
+            const button = document.createElement('button');
+            button.dataset.case = caseKey;
+            button.className = 'case-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors';
+            button.textContent = index + 1;
+
+            button.addEventListener('mouseenter', () => {
+                const patient = caseData.datos_paciente || {};
+                const clinInfo = caseData.informacion_clinica || {};
+                const cadRads = caseData.cad_rads || {};
+
+                let tooltipHtml = `<p class="font-bold">${patient.nombre || 'Caso ' + (index + 1)}</p>`;
+                if (patient.edad || patient.genero) {
+                    tooltipHtml += `<p class="text-xs">${patient.edad || ''} años, ${patient.genero || ''}</p>`;
+                }
+                if (clinInfo.indicacion) {
+                    tooltipHtml += `<p class="mt-2 text-xs"><strong>Indicación:</strong> ${clinInfo.indicacion}</p>`;
+                }
+                if (cadRads.score) {
+                    tooltipHtml += `<p class="mt-1 text-xs"><strong>CAD-RADS:</strong> ${cadRads.score}</p>`;
+                }
+
+                tooltip.innerHTML = tooltipHtml;
+                tooltip.classList.remove('hidden');
+
+                const btnRect = button.getBoundingClientRect();
+                const containerRect = buttonsContainer.parentElement.getBoundingClientRect();
+                tooltip.style.left = `${btnRect.left - containerRect.left}px`;
+                tooltip.style.top = `${btnRect.bottom - containerRect.top + 8}px`; // 8px for margin
+            });
+
+            button.addEventListener('mouseleave', () => {
+                tooltip.classList.add('hidden');
+            });
+            
+            button.addEventListener('click', (e) => {
+                const caseKey = e.target.dataset.case;
+                if (sampleCases[caseKey]) {
+                    loadCase(sampleCases[caseKey]);
+                }
+            });
+
+            buttonsContainer.appendChild(button);
         });
-    });
+    };
+
+    buildCaseButtons();
 
     saveBtn.addEventListener('click', () => {
         const currentData = gatherData();
@@ -671,7 +877,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    formContainer.addEventListener('input', updateReport);
+
+    const updateCalciumScore = () => {
+        const tci = parseFloat(document.getElementById('score_calcio-tci')?.value) || 0;
+        const da = parseFloat(document.getElementById('score_calcio-da')?.value) || 0;
+        const cx = parseFloat(document.getElementById('score_calcio-cx')?.value) || 0;
+        const cd = parseFloat(document.getElementById('score_calcio-cd')?.value) || 0;
+
+        const total = tci + da + cx + cd;
+
+        const totalEl = document.getElementById('score_calcio-total');
+        if (totalEl) {
+            totalEl.value = total;
+        }
+
+        const data = gatherData();
+        const age = data.datos_paciente?.edad;
+        const gender = data.datos_paciente?.genero;
+        const percentile = calculatePercentile(total, age, gender);
+
+        const percentileEl = document.getElementById('score_calcio-percentil');
+        if (percentileEl) {
+            percentileEl.value = percentile;
+        }
+    };
+
+    const calculatePercentile = (score, age, gender) => {
+        // Placeholder logic for percentile calculation
+        if (score > 400) return '>90';
+        if (score > 100) return '75-90';
+        if (score > 10) return '50-75';
+        if (score > 0) return '25-50';
+        return '<25';
+    };
+
+    formContainer.addEventListener('input', (e) => {
+        if (e.target.id.startsWith('score_calcio-')) {
+            updateCalciumScore();
+        }
+        updateReport();
+    });
+
     formContainer.addEventListener('change', updateReport);
     
     const croquisTabBtn = document.getElementById('tab-btn-croquis');

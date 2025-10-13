@@ -1,0 +1,85 @@
+# Lógica e Interpretación del Score de Calcio (Agatston)
+
+## Descripción General
+
+Este documento describe cómo la aplicación maneja y interpreta el Score de Calcio Coronario (CAC), también conocido como score de Agatston. Esta puntuación es un indicador clave del riesgo de enfermedad coronaria y se utiliza en la aplicación para generar una parte importante de la conclusión del informe.
+
+La lógica principal no implica un cálculo complejo dentro de la aplicación (como en el caso de CAD-RADS), sino que se centra en la **interpretación** de los valores del score de calcio que el usuario introduce en el formulario.
+
+La función que implementa esta interpretación es `generateConclusion()` en el archivo `js/logic/script.js`.
+
+---
+
+## Campos del Formulario
+
+La sección "Score de Calcio" del formulario recopila los siguientes datos, que son la base para la interpretación:
+
+-   **Score Total (Agatston):** El valor numérico total del score de Agatston.
+-   **Percentil para Edad y Género:** El percentil del paciente en comparación con una población de referencia.
+-   **Distribución por Arteria:**
+    -   Tronco Coronario Izquierdo (TCI)
+    -   Arteria Descendente Anterior (DA)
+    -   Arteria Circunfleja (CX)
+    -   Arteria Coronaria Derecha (CD)
+
+---
+
+## Lógica de Interpretación
+
+La aplicación utiliza el **Score Total** para generar una descripción textual del grado de calcificación de la placa coronaria. La lógica sigue las clasificaciones estándar basadas en el score de Agatston:
+
+1.  **Score = 0**
+    -   **Interpretación:** Ausencia de placa coronaria calcificada.
+    -   **Texto Generado:** "...indica ausencia de placa coronaria calcificada."
+
+2.  **Score de 1 a 10**
+    -   **Interpretación:** Placa mínima.
+    -   **Texto Generado:** "...indica placa mínima."
+
+3.  **Score de 11 a 100**
+    -   **Interpretación:** Placa leve.
+    -   **Texto Generado:** "...indica placa leve."
+
+4.  **Score de 101 a 400**
+    -   **Interpretación:** Placa moderada.
+    -   **Texto Generado:** "...indica placa moderada."
+
+5.  **Score > 400**
+    -   **Interpretación:** Placa severa.
+    -   **Texto Generado:** "...indica placa severa."
+
+Adicionalmente, la conclusión siempre incluye el **percentil** para dar un contexto de riesgo relativo al paciente.
+
+---
+
+## Código de Referencia
+
+A continuación se muestra el fragmento de la función `generateConclusion` que implementa esta lógica de interpretación:
+
+```javascript
+const generateConclusion = () => {
+    // ... (otras partes de la conclusión)
+
+    const scoreData = data.score_calcio;
+    if (scoreData && scoreData.total) {
+        const score = scoreData.total;
+        conclusion += `- Score de calcio coronario total de ${score} (Agatston), lo que indica `;
+        
+        if (score == 0) {
+            conclusion += "ausencia de placa coronaria calcificada. ";
+        } else if (score >= 1 && score <= 10) {
+            conclusion += "placa mínima. ";
+        } else if (score >= 11 && score <= 100) {
+            conclusion += "placa leve. ";
+        } else if (score >= 101 && score <= 400) {
+            conclusion += "placa moderada. ";
+        } else {
+            conclusion += "placa severa. ";
+        }
+        
+        conclusion += `Percentil ${scoreData.percentil} para edad y género.\n`;
+    }
+
+    // ... (resto de la conclusión)
+};
+```

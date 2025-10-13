@@ -1,18 +1,67 @@
- export const sampleCases = {
+export const sampleCases = {
     case1: { // Caso Normal
         datos_paciente: {
             nombre: 'Juan Pérez',
             id_paciente: '1-1234-5678',
             edad: '55',
             genero: 'Masculino',
+            peso: '75',
+            talla: '170'
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-28',
-            medico_referente: 'Dra. Alana Nito'
+            medico_referente: 'Dra. Alana Nito',
+            medico_especialidad: 'Cardiología',
+            equipo: "Canon Aquilion 160 cortes",
+            tiempo_rotacion: "0.35/seg",
+            adquisicion: "Prospectivo",
+            ecg_gating_detalles: "Ritmo sinusal estable",
+            medio_contraste: "Ultravist 370",
+            contraste_iv: "70 ml",
+            velocidad_infusion: "5 ml/s",
+            ritmo_estudio: "Ritmo sinusal normal",
+            calidad_imagen: "Excelente"
         },
         informacion_clinica: {
             indicacion: 'Dolor torácico atípico',
             factores_riesgo: ['Dislipidemia']
+        },
+        motivo_generalidades: {
+            descripcion_referencia: "Evaluación de riesgo cardiovascular en paciente con dolor torácico no característico.",
+            consentimiento_informado: "Consentimiento informado obtenido.",
+            tolerancia_estudio: "Buena tolerancia, sin reacciones adversas al medio contraste",
+            fc_durante_estudio: "60 lpm",
+            medicamentos_usados: [],
+            analisis_imagenes: "Vitrea"
+        },
+        anatomia_cardiovascular: {
+            venas_cavas: ["Ambas no dilatadas drenando en la aurícula derecha"],
+            auricula_derecha: "No dilatada",
+            septum_interauricular: "No se visualizan defectos",
+            seno_coronario: "Drenando a la AD en forma habitual sin dilatación o anomalías",
+            valvula_tricuspide: "No se visualizan defectos por este método",
+            ventriculo_derecho: "No dilatado ni hipertrófico",
+            arteria_pulmonar: "Diámetro Normal",
+            venas_pulmonares: "Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas",
+            auricula_izquierda: "No se observan trombos en la orejuela izquierda, ni masas o lesiones intracardiacas",
+            ventriculo_izquierdo_size: "No dilatado",
+            ventriculo_izquierdo_hipertrofia: "Ninguna",
+            ventriculo_izquierdo_motilidad: "Global y regional conservada",
+            ventriculo_izquierdo_fevi: "Normal (>55%)",
+            hallazgos_extracardiacos: "Ninguno"
+        },
+        valvula_aortica_diametros_aorta: {
+            cuspidies: "3 cúspides de conformación Normal",
+            calcificaciones: "NO PRESENTA",
+            morfologia_anillo: "Elíptica",
+            diametro_menor_anillo: "22",
+            diametro_mayor_anillo: "25",
+            senos_valsalva_diametro: "32",
+            senos_valsalva_observaciones: "NORMAL",
+            union_sinotubular_diametro: "28",
+            union_sinotubular_observaciones: "NORMAL",
+            porcion_tubular_ascendente_diametro: "34",
+            porcion_tubular_ascendente_observaciones: "NORMAL"
         },
         score_calcio: {
             tci: '0',
@@ -23,12 +72,30 @@
             percentil: '<25'
         },
         anatomia_general: {
+            origen_arterias: 'Normal',
             dominancia: 'Dominancia Derecha',
             ramificacion_tci: 'Bifurcación (en ADA y ACx)',
             terminacion_ada: 'Tipo 2 (Llega hasta el ápex)'
         },
         evaluacion_segmento: {
             segments: {} // Todos los segmentos usarán su valor por defecto "Sin hallazgos"
+        },
+        bypass: {
+            antecedentes_bypass: 'No'
+        },
+        cad_rads: {
+            score: 'CAD-RADS 0',
+            modifiers: [],
+            description: 'Ausencia de placa aterosclerótica coronaria.'
+        },
+        evaluacion_extracardiaca: {
+            hallazgos: ['Sin hallazgos patológicos significativos']
+        },
+        comentarios_adicionales: {
+            texto: 'Estudio normal, sin evidencia de enfermedad coronaria.'
+        },
+        conclusion: {
+            texto_conclusion: 'Estudio de angiotomografía coronaria sin evidencia de enfermedad aterosclerótica. Score de calcio de 0. Anatomía coronaria sin variantes anómalas.'
         }
     },
     case2: { // Caso Patológico
@@ -37,14 +104,34 @@
             id_paciente: '9-8765-4321',
             edad: '68',
             genero: 'Femenino',
+            peso: '82',
+            talla: '160'
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-27',
-            medico_referente: 'Dra. I. Lomas'
+            medico_referente: 'Dra. I. Lomas',
+            medico_especialidad: 'Medicina Interna',
+            equipo: "Siemens Somatom",
+            tiempo_rotacion: "0.5/seg",
+            adquisicion: "Retrospectivo",
+            ecg_gating_detalles: "Frecuencia cardíaca variable",
+            medio_contraste: "Omnipaque 350",
+            contraste_iv: "80 ml",
+            velocidad_infusion: "4 ml/s",
+            ritmo_estudio: "Ritmo sinusal normal",
+            calidad_imagen: "Buena"
         },
         informacion_clinica: {
             indicacion: 'Evaluación preoperatoria de cirugía no cardiaca',
             factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Tabaquismo']
+        },
+        motivo_generalidades: {
+            descripcion_referencia: "Paciente programada para reemplazo de cadera, con múltiples factores de riesgo cardiovascular.",
+            consentimiento_informado: "Consentimiento informado obtenido.",
+            tolerancia_estudio: "Buena tolerancia, sin reacciones adversas al medio contraste",
+            fc_durante_estudio: "75 lpm",
+            medicamentos_usados: ["Beta-bloqueadores"],
+            analisis_imagenes: "Syngo.via"
         },
         score_calcio: {
             tci: '15',
@@ -55,6 +142,7 @@
             percentil: '>90'
         },
         anatomia_general: {
+            origen_arterias: 'Normal',
             dominancia: 'Dominancia Derecha',
             ramificacion_tci: 'Bifurcación (en ADA y ACx)',
             terminacion_ada: 'Tipo 3 ("Wraparound")'
@@ -64,13 +152,13 @@
                 '6': { // pADA
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
-                        placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'CAD-RADS 3: Moderada (50-69%)' }]
+                        placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'Moderada (50-69%)', has_hrp: ['Remodelado Positivo'], comentario_placa: 'Placa blanda en ADA proximal.' }],
                     }
                 },
                 '1': { // pACD
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
-                        stents: [{ evaluacion: 'Permeable, sin reestenosis significativa' }]
+                        stents: [{ evaluacion: 'Permeable, sin reestenosis significativa', comentario_stent: 'Stent permeable en CD proximal.' }]
                     }
                 },
                 '7': { // mADA
@@ -82,16 +170,42 @@
                             compresion: 'Leve <50%'
                         }
                     }
+                },
+                '11': { // pACx
+                    estado_general: 'Con hallazgos patológicos',
+                    findings: {
+                        has_aneurisma: true,
+                        aneurisma_details: {
+                            diametro: '6'
+                        }
+                    }
                 }
             }
         },
-         anatomia_cardiovascular: {
+        bypass: {
+            antecedentes_bypass: 'No'
+        },
+        anatomia_cardiovascular: {
             ventriculo_izquierdo_fevi: "Levemente reducida (45-54%)"
-         },
-         valvula_aortica_diametros_aorta: {
+        },
+        valvula_aortica_diametros_aorta: {
             porcion_tubular_ascendente_observaciones: "DILATADO (>35 mm)",
             porcion_tubular_ascendente_diametro: "42"
-         }
+        },
+        cad_rads: {
+            score: 'CAD-RADS 3',
+            modifiers: ['S (Stent)', 'V (Placa Vulnerable)'],
+            description: 'Enfermedad coronaria moderada en ADA proximal. Stent permeable en CD. Puente miocárdico en ADA media.'
+        },
+        evaluacion_extracardiaca: {
+            hallazgos: ['Hernia hiatal']
+        },
+        comentarios_adicionales: {
+            texto: 'Se recomienda optimizar tratamiento médico antes de la cirugía de cadera.'
+        },
+        conclusion: {
+            texto_conclusion: 'Enfermedad coronaria no obstructiva significativa con placa moderada en ADA proximal. Stent en CD proximal permeable. FEVI levemente deprimida.'
+        }
     },
     case3: { // Caso Complejo y Severo
         datos_paciente: {
@@ -183,13 +297,13 @@
                 '5': { // TCI
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
-                        placas: [{ composicion: 'Parcialmente calcificada (mixta)', estenosis: 'CAD-RADS 4A: Severa (70-99%)', has_hrp: ['Remodelado Positivo', 'Placa de Baja Atenuación'] }]
+                        placas: [{ composicion: 'Parcialmente calcificada (mixta)', estenosis: 'Severa (70-99%)', has_hrp: ['Remodelado Positivo', 'Placa de Baja Atenuación'] }]
                     }
                 },
                 '6': { // pADA
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
-                        placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'CAD-RADS 5: Oclusión total (100%)' }]
+                        placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'Oclusión total (100%)' }]
                     }
                 },
                 '11': { // pACx
@@ -253,6 +367,11 @@
             fc_durante_estudio: "90-110 lpm (fibrilación auricular)",
             medicamentos_usados: [],
             analisis_imagenes: "Syngo.via"
+        },
+        anatomia_general: {
+            dominancia: 'Dominancia Derecha',
+            ramificacion_tci: 'Bifurcación (en ADA y ACx)',
+            terminacion_ada: 'Tipo 2 (Llega hasta el ápex)'
         },
         anatomia_cardiovascular: {
             venas_cavas: ["Dilatada superior o inferior"],
@@ -349,6 +468,11 @@
             fc_durante_estudio: "130-145 lpm",
             medicamentos_usados: ["Nitroglicerina sublingual", "Beta-bloqueadores"],
             analisis_imagenes: "IntelliSpace Portal"
+        },
+        anatomia_general: {
+            dominancia: 'Dominancia Izquierda',
+            ramificacion_tci: 'Bifurcación (en ADA y ACx)',
+            terminacion_ada: 'Tipo 1 (Termina antes de llegar al ápex)'
         },
         anatomia_cardiovascular: {
             venas_cavas: ["Thrombus", "Stenosis o compresión"],
