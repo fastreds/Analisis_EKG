@@ -1,0 +1,233 @@
+:root {
+    --azul-vivit: #004AAD;
+    --azul-acento: #3B82F6;
+    --verde: #10B981;
+    --amarillo: #F59E0B;
+    --gris-fondo: #F9FAFB;
+    --gris-borde: #E5E7EB;
+    --texto-principal: #1F2937;
+    --texto-secundario: #6B7280;
+    --sombra-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --sombra-lg: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--gris-fondo);
+    color: var(--texto-principal);
+}
+
+/* Header */
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+}
+
+.app-logo {
+    height: 3.5rem; /* 56px */
+    width: 3.5rem; /* 56px */
+}
+
+/* Control Buttons */
+.controls-card {
+    background-color: #fff;
+    padding: 1.25rem;
+    border-radius: 1.5rem; /* 24px */
+    box-shadow: var(--sombra-lg);
+    margin-bottom: 2rem;
+    border: 1px solid var(--gris-borde);
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem; /* 8px */
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+}
+
+.btn-secondary {
+    background-color: var(--gris-fondo);
+    color: var(--texto-principal);
+    border-color: var(--gris-borde);
+}
+.btn-secondary:hover {
+    background-color: #F3F4F6; /* Slightly darker gray */
+    border-color: #D1D5DB;
+}
+
+.btn-primary {
+    background-color: var(--azul-vivit);
+    color: #fff;
+}
+.btn-primary:hover {
+    background-color: #2a960f;
+}
+
+
+
+/* Main Layout */
+.form-column, .preview-column {
+    background-color: #fff;
+    padding: 0;
+    border-radius: 1.5rem; /* 24px */
+    box-shadow: var(--sombra-lg);
+    border: 1px solid var(--gris-borde);
+    overflow: hidden;
+}
+
+.preview-sticky-container {
+    position: sticky;
+    top: 2rem; /* 32px */
+    align-self: flex-start;
+}
+.preview-column {
+    padding: 1.5rem;
+}
+
+
+/* Report Preview */
+#report-output {
+    background-color: var(--gris-fondo);
+    border: 1px dashed var(--gris-borde);
+    border-radius: 0.75rem; /* 12px */
+    padding: 1rem;
+    overflow-y: auto;
+}
+#report-output.report-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--texto-secundario);
+}
+#report-output:not(.report-placeholder) {
+     color: var(--texto-principal);
+}
+
+/* Form Styles inside form-column */
+.form-column h3 { /* Section headers */
+    cursor: pointer;
+    padding: 1rem 1.5rem;
+    background-color: #fff;
+    border-bottom: 1px solid var(--gris-borde);
+    font-weight: 600;
+    transition: background-color 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-column h3:hover {
+    background-color: var(--gris-fondo);
+}
+.form-column h3 span {
+    transition: transform 0.3s ease-in-out;
+}
+
+
+.form-section {
+    max-height: 5000px;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out, margin 0.5s ease-in-out;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gris-borde);
+}
+.form-column > div:last-of-type .form-section {
+    border-bottom: none;
+}
+
+
+.form-section.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: -1px; /* To hide border */
+}
+
+/* Prose for report output */
+#report-output h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--azul-vivit);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid var(--azul-vivit);
+}
+#report-output h4 {
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+/* Form Inputs */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+    border-color: var(--gris-borde);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    --tw-ring-color: var(--azul-acento);
+    border-color: var(--azul-acento);
+    box-shadow: 0 0 0 1px var(--azul-acento);
+}
+
+/* Croquis SVG Styles */
+:root {
+    /* --- Colores de Estenosis --- */
+    --color-stenosis-0: #32be16ff; /* verde claro (Normal) */
+    --color-stenosis-1: #0d3102ff; /* Verde (Mínima) */
+    --color-stenosis-2: #F59E0B; /* Amarillo (Leve) */
+    --color-stenosis-3: #F97316; /* Naranja (Moderada) */
+    --color-stenosis-4: #EF4444; /* Rojo (Severa) */
+
+    /* --- Grosores de Línea --- */
+    --stroke-width-normal: 3px;
+    --stroke-width-stent-circle: 1px;
+}
+.segment-path { 
+    stroke-width: var(--stroke-width-normal); 
+    stroke-linecap: round; 
+    fill: none; 
+    transition: stroke 0.3s; 
+    filter: url(#filtro-tubo); 
+}
+.segment-path.stenosis-0 { stroke: var(--color-stenosis-0); }
+.segment-path.stenosis-1 { stroke: var(--color-stenosis-1); }
+.segment-path.stenosis-2 { stroke: var(--color-stenosis-2); }
+.segment-path.stenosis-3 { stroke: var(--color-stenosis-3); }
+.segment-path.stenosis-4 { stroke: var(--color-stenosis-4); }
+
+.plaque-marker { 
+    stroke: white; 
+    stroke-width: 1px; 
+}
+.plaque-marker.stenosis-1 { fill: var(--color-stenosis-1); }
+.plaque-marker.stenosis-2 { fill: var(--color-stenosis-2); }
+.plaque-marker.stenosis-3 { fill: var(--color-stenosis-3); }
+.plaque-marker.stenosis-4 { fill: var(--color-stenosis-4); }
+
+/* --- Estilos para Símbolos Específicos --- */
+.stent-circle-marker { 
+    fill: none; 
+    stroke: #3b82f6; 
+    stroke-width: var(--stroke-width-stent-circle); 
+}
+
+.legend-swatch.stenosis-0 { background-color: var(--color-stenosis-0); }
+.legend-swatch.stenosis-1 { background-color: var(--color-stenosis-1); }
+.legend-swatch.stenosis-2 { background-color: var(--color-stenosis-2); }
+.legend-swatch.stenosis-3 { background-color: var(--color-stenosis-3); }
+.legend-swatch.stenosis-4 { background-color: var(--color-stenosis-4); }

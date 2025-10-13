@@ -433,6 +433,7 @@
             const study = data.protocolo_estudio || {};
             const anatomy = data.anatomia_cardiovascular || {};
 
+
             document.title = `Informe AngioTAC Cardíaco — ${patient.nombre || 'Paciente'}`;
             document.getElementById('patient-name').textContent = patient.nombre || 'N/A';
             document.getElementById('patient-id').textContent = `(ID: ${patient.id_paciente || 'N/A'})`;
@@ -582,50 +583,111 @@
 
 
             // --- STENOSIS & ARTERIES DATA ---
-            const arteries = data.arterias_coronarias?.items || [];
-            const stenosisData = [];
+            const segmentEvaluation = data.evaluacion_segmento || {};
+            const allSegmentsInfo = reportStructure.find(s => s.id === 'evaluacion_segmento')?.segments || [];
+
+            const stenosisDataForChart = [];
             const tableBody = document.querySelector("#arteries-table tbody");
             tableBody.innerHTML = ''; // Clear previous
-            const severityToValue = { 'Sin estenosis (0%)': 0, 'Mínima (1-24%)': 10, 'Leve (25-49%)': 35, 'Moderna (50-69%)': 60, 'Severa (70-99%)': 85, 'Oclusión total (100%)': 100 };
+            
+            const severityToValue = {
+                'CAD-RADS 1: Mínima (1-24%)': 10,
+                'CAD-RADS 2: Leve (25-49%)': 35,
+                'CAD-RADS 3: Moderada (50-69%)': 60,
+                'CAD-RADS 4A: Severa (70-99%)': 85,
+                'CAD-RADS 5: Oclusión total (100%)': 100
+            };
+
             const getColorForStenosis = (v) => {
                 if (v >= 70) return getColor('--rojo');
                 if (v >= 50) return getColor('--naranja');
                 if (v >= 25) return getColor('--amarillo');
                 return getColor('--verde');
             };
+            
+            // Procesa todos los segmentos para la tabla y los gráficos
+            const processedSegments = {};
+            if (segmentEvaluation.segments) {
+                Object.entries(segmentEvaluation.segments).forEach(([segmentId, segmentData]) => {
+                    const segmentInfo = allSegmentsInfo.find(s => s.id == segmentId);
+                    if (!segmentInfo) return;
 
-            arteries.forEach(art => {
-                if (art.placas && art.placas.length > 0) {
-                    art.placas.forEach(plaque => {
+                    let maxStenosis = 0;
+                    let hasFindings = false;
+
+                    // Placas
+                    if (segmentData.findings?.placas && segmentData.findings.placas.length > 0) {
+                        hasFindings = true;
+                        segmentData.findings.placas.forEach(plaque => {
+                            const row = tableBody.insertRow();
+                            row.insertCell().textContent = segmentInfo.name;
+                            row.insertCell().textContent = `Placa ${plaque.composicion || ''}`;
+                            row.insertCell().textContent = 'Segmento'; // Localización es el propio segmento
+                            const stenosisCell = row.insertCell();
+                            stenosisCell.textContent = plaque.estenosis || 'N/A';
+                            
+                            const stenosisValue = severityToValue[plaque.estenosis] || 0;
+                            if (stenosisValue > maxStenosis) maxStenosis = stenosisValue;
+                            stenosisCell.style.color = getColorForStenosis(stenosisValue);
+                        });
+                    }
+
+                    // Stents
+                    if (segmentData.findings?.stents && segmentData.findings.stents.length > 0) {
+                        hasFindings = true;
+                        segmentData.findings.stents.forEach(stent => {
+                            const row = tableBody.insertRow();
+                            row.insertCell().textContent = segmentInfo.name;
+                            row.insertCell().textContent = 'Stent';
+                            row.insertCell().textContent = 'Segmento';
+                            row.insertCell().textContent = stent.evaluacion || 'N/A';
+                        });
+                    }
+
+                    // Puente Miocárdico
+                    if (segmentData.findings?.has_puente) {
+                        hasFindings = true;
                         const row = tableBody.insertRow();
-                        row.insertCell().textContent = art.nombre;
-                        row.insertCell().textContent = plaque.tipo_placa;
-                        row.insertCell().textContent = plaque.localizacion;
-                        const stenosisCell = row.insertCell();
-                        let stenosisText = plaque.estenosis_porcentaje ? `${plaque.estenosis_porcentaje}%` : plaque.estenosis_severidad;
-                        stenosisCell.textContent = stenosisText;
-                        let stenosisValue = plaque.estenosis_porcentaje || severityToValue[plaque.estenosis_severidad] || 0;
-                        stenosisCell.style.color = getColorForStenosis(stenosisValue);
-                        if (stenosisValue > 0) stenosisData.push({ arteria: art.nombre.match(/\((.*?)\)/)?.[1] || art.nombre, value: stenosisValue });
-                    });
-                } else {
-                    const row = tableBody.insertRow();
-                    row.insertCell().textContent = art.nombre;
-                    row.insertCell().textContent = '---';
-                    row.insertCell().textContent = '---';
-                    row.insertCell().textContent = art.descripcion_general;
-                }
-            });
+                        row.insertCell().textContent = segmentInfo.name;
+                        row.insertCell().textContent = 'Puente Miocárdico';
+                        row.insertCell().textContent = 'Segmento';
+                        row.insertCell().textContent = `Profundidad: ${segmentData.findings.puente_details?.profundidad || 'N/A'}`;
+                    }
+
+                    // Aneurisma
+                    if (segmentData.findings?.has_aneurisma) {
+                        hasFindings = true;
+                        const row = tableBody.insertRow();
+                        row.insertCell().textContent = segmentInfo.name;
+                        row.insertCell().textContent = 'Aneurisma/Ectasia';
+                        row.insertCell().textContent = 'Segmento';
+                        row.insertCell().textContent = `Diámetro: ${segmentData.findings.aneurisma_details?.diametro || 'N/A'} mm`;
+                    }
+
+                    if (!hasFindings && segmentData.estado_general !== 'Sin hallazgos patológicos significativos') {
+                         const row = tableBody.insertRow();
+                         row.insertCell().textContent = segmentInfo.name;
+                         row.insertCell().textContent = segmentData.estado_general || '---';
+                         row.insertCell().textContent = '---';
+                         row.insertCell().textContent = '---';
+                    }
+
+                    processedSegments[segmentId] = { ...segmentData, maxStenosis };
+                    if (maxStenosis > 0) {
+                        stenosisDataForChart.push({ arteria: segmentInfo.name.match(/\((.*?)\)/)?.[1] || segmentInfo.name, value: maxStenosis });
+                    }
+                });
+            }
 
             // --- Stenosis line chart ---
-            if (stenosisData.length > 0) {
+            if (stenosisDataForChart.length > 0) {
                 new Chart(document.getElementById('stenosisLine').getContext('2d'), {
                     type: 'line',
                     data: {
-                        labels: stenosisData.map(d => d.arteria),
+                        labels: stenosisDataForChart.map(d => d.arteria),
                         datasets: [{
                             label: '% Estenosis',
-                            data: stenosisData.map(d => d.value),
+                            data: stenosisDataForChart.map(d => d.value),
                             fill: true, tension: 0.3, pointRadius: 6, pointHoverRadius: 8, borderColor: '#444', borderWidth: 2
                         }]
                     },
@@ -638,19 +700,15 @@
 
             // --- Coronary SVG schematic using D3 ---
             d3.select('#coronarySVG').select('svg').remove(); // Clear previous SVG
-            const svgData = [{ id: 'TCI', points: [[240, 80], [240, 120]] }, { id: 'DA', points: [[240, 120], [240, 200], [240, 280]] }, { id: 'CX', points: [[240, 120], [180, 160], [120, 200]] }, { id: 'CD', points: [[240, 140], [300, 180], [340, 220]] }
-            ].map(seg => {
-                const artery = arteries.find(a => a.nombre.includes(seg.id));
-                let maxStenosis = 0;
-                if (artery && artery.placas && artery.placas.length > 0) {
-                    artery.placas.forEach(p => {
-                        let currentStenosis = p.estenosis_porcentaje || severityToValue[p.estenosis_severidad] || 0;
-                        if (currentStenosis > maxStenosis) maxStenosis = currentStenosis;
-                    });
-                }
-                seg.sten = maxStenosis;
-                return seg;
-            });
+            // This part can be enhanced to use the real segment paths from `posicionesDominancia.js`
+            // For now, a simplified representation:
+            const svgData = allSegmentsInfo.map(segInfo => ({
+                id: segInfo.id,
+                name: segInfo.name.match(/\((.*?)\)/)?.[1] || segInfo.name,
+                sten: processedSegments[segInfo.id]?.maxStenosis || 0,
+                // Dummy points for simplified viz
+                points: [[Math.random()*400, Math.random()*300], [Math.random()*400, Math.random()*300]]
+            }));
 
             const svg = d3.select('#coronarySVG').append('svg').attr('class', 'heart').attr('viewBox', `0 0 480 360`);
             svg.append('path').attr('d', 'M240 60 C 280 20, 360 40, 360 110 C 360 190, 240 300, 240 300 C 240 300, 120 190, 120 110 C 120 40, 200 20, 240 60 Z').attr('fill', '#fff').attr('stroke', '#eee');
@@ -658,7 +716,7 @@
             svgData.forEach(s => {
                 svg.append('path').attr('d', 'M' + s.points.map(p => p.join(',')).join(' L ')).attr('fill', 'none').attr('stroke', getColorForStenosis(s.sten)).attr('stroke-width', Math.max(6, (s.sten / 100) * 18)).attr('stroke-linecap', 'round');
                 const lp = s.points[Math.floor(s.points.length / 2)];
-                svg.append('text').attr('x', lp[0] + 8).attr('y', lp[1] - 6).text(`${s.id} ${s.sten}%`).attr('font-size', 12).attr('fill', '#222');
+                svg.append('text').attr('x', lp[0] + 8).attr('y', lp[1] - 6).text(`${s.name} ${s.sten}%`).attr('font-size', 12).attr('fill', '#222');
             });
 
 
@@ -681,8 +739,8 @@
                     protocolo_estudio: study = {},
                     anatomia_cardiovascular: anatomy = {},
                     valvula_aortica_diametros_aorta: aorta = {},
-                    score_calcio: calcium = {},
-                    arterias_coronarias: coronary = { items: [] },
+                    score_calcio: calcium = {}, 
+                    evaluacion_segmento: segmentData = { segments: {} },
                     cad_rads: cadRads = {},
                     evaluacion_extracardiaca: extracardiac = {},
                     conclusion = {}
@@ -708,20 +766,31 @@
                 `;
 
                 report += `<h4>3. Arterias Coronarias</h4>`;
-                const arteriesText = coronary.items.map(art => {
-                    let desc = `<li><strong>${art.nombre}:</strong> `;
-                    if (art.placas && art.placas.length > 0) {
-                        const plaqueDescs = art.placas.map(p => {
-                            return `presenta placa ${p.tipo_placa || ''} a nivel ${p.localizacion || ''} que condiciona una estenosis del ${p.estenosis_porcentaje ? p.estenosis_porcentaje + '%' : (p.estenosis_severidad || 'no especificada')}`;
-                        }).join('; y ');
-                        desc += plaqueDescs;
-                    } else {
-                        desc += art.descripcion_general || 'sin hallazgos significativos';
+                let findingsText = '';
+                Object.entries(segmentData.segments).forEach(([segmentId, segment]) => {
+                    const segmentInfo = allSegmentsInfo.find(s => s.id == segmentId);
+                    if (!segmentInfo || segment.estado_general === 'Sin hallazgos patológicos significativos') return;
+
+                    let segmentDesc = `<li><strong>${segmentInfo.name}:</strong> `;
+                    let hasFinding = false;
+                    if (segment.findings?.placas?.length > 0) {
+                        hasFinding = true;
+                        segmentDesc += segment.findings.placas.map(p => `Placa ${p.composicion || ''} que causa estenosis ${p.estenosis || 'no definida'}`).join(', ');
                     }
-                    desc += `.</li>`;
-                    return desc;
-                }).join('');
-                report += `<ul>${arteriesText}</ul>`;
+                    if (segment.findings?.stents?.length > 0) {
+                        hasFinding = true;
+                        segmentDesc += (hasFinding ? '; ' : '') + segment.findings.stents.map(s => `Stent preexistente con estado: ${s.evaluacion || 'N/A'}`).join(', ');
+                    }
+                    if (segment.findings?.has_puente) {
+                        hasFinding = true;
+                        segmentDesc += (hasFinding ? '; ' : '') + `Puente miocárdico con compresión sistólica ${segment.findings.puente_details?.compresion || 'N/A'}`;
+                    }
+                    if (hasFinding) {
+                        findingsText += segmentDesc + '.</li>';
+                    }
+                });
+
+                report += `<ul>${findingsText || '<li>Sin evidencia de enfermedad coronaria obstructiva.</li>'}</ul>`;
 
 
                 report += `
@@ -767,4 +836,3 @@
 </body>
 
 </html>
-
