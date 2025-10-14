@@ -438,23 +438,34 @@ export const reportStructure = [{
     id: "evaluacion_segmento",
     type: "segmented_group",
     segments: [
-        { id: 5, name: 'Segmento 5: Tronco Coronario Izquierdo (TCI)' },
-        { id: 6, name: 'Segmento 6: ADA, Proximal (pADA)' },
-        { id: 7, name: 'Segmento 7: ADA, Media (mADA)' },
-        { id: 8, name: 'Segmento 8: ADA, Distal/Apical (dADA)' },
-        { id: 9, name: 'Segmento 9: Primera Diagonal (D1)' },
-        { id: 10, name: 'Segmento 10: Segunda Diagonal (D2)' },
-        { id: 101, name: 'Segmento 10: Segunda Diagonal (D3)' },
-        { id: 11, name: 'Segmento 11: ACx, Proximal (pACx)' },
-        { id: 12, name: 'Segmento 12: Primera Obtusa Marginal (OM1)' },
-        { id: 13, name: 'Segmento 13: ACx, Distal (dACx)' },
-        { id: 14, name: 'Segmento 14: Rama Posterolateral Izquierda (RPL)' },
-        { id: 15, name: 'Segmento 15: Descendente Posterior Izquierda (DPI)' },
-        { id: 1, name: 'Segmento 1: ACD, Proximal (pACD)' },
-        { id: 2, name: 'Segmento 2: ACD, Media (mACD)' },
-        { id: 3, name: 'Segmento 3: ACD, Distal (dACD)' },
-        { id: 4, name: 'Segmento 4: Arteria Descendente Posterior (ADP)' },
-        { id: 16, name: 'Segmento 16: Rama Posterolateral Derecha (RPLD)' },
+      // Arteria Coronaria Derecha (ACD)
+    { "id": 1, "name": "Segmento 1: ACD, Proximal (pACD)" },
+    { "id": 2, "name": "Segmento 2: ACD, Media (mACD)" },
+    { "id": 21, "name": "Segmento 2.1: Rama Marginal Aguda (RMA)" },
+    { "id": 3, "name": "Segmento 3: ACD, Distal (dACD)" },
+    { "id": 4, "name": "Segmento 4: Arteria Descendente Posterior (ADP)" },
+    { "id": 16, "name": "Segmento 16: Rama Posterolateral Derecha (RPLD)" },
+
+    // Tronco Coronario Izquierdo (TCI)
+    { "id": 5, "name": "Segmento 5: Tronco Coronario Izquierdo (TCI)" },
+
+    // Arteria Descendente Anterior (ADA) y Ramas
+    { "id": 6, "name": "Segmento 6: ADA, Proximal (pADA)" },
+    { "id": 7, "name": "Segmento 7: ADA, Media (mADA)" },
+    { "id": 8, "name": "Segmento 8: ADA, Distal/Apical (dADA)" },
+    { "id": 9, "name": "Segmento 9: Primera Diagonal (D1)" },
+    { "id": 10, "name": "Segmento 10: Segunda Diagonal (D2)" },
+    { "id": 101, "name": "Segmento 10.1: Tercera Diagonal (D3)" },
+
+    // Arteria Circunfleja (ACx) y Ramas
+    { "id": 11, "name": "Segmento 11: ACx, Proximal (pACx)" },
+    { "id": 125, "name": "Segmento 12.5: Rama Intermedia (RI)" },
+    { "id": 12, "name": "Segmento 12: Primera Obtusa Marginal (OM1)" },
+    { "id": 121, "name": "Segmento 12.1: Segunda Obtusa Marginal (OM2)" },
+    { "id": 122, "name": "Segmento 12.2: Tercera Obtusa Marginal (OM3)" },
+    { "id": 13, "name": "Segmento 13: ACx, Distal (dACx)" },
+    { "id": 14, "name": "Segmento 14: Rama Posterolateral Izquierda (RPLI)" },
+    { "id": 15, "name": "Segmento 15: Descendente Posterior Izquierda (DPI)" }
     ],
     template: [
         {

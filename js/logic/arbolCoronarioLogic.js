@@ -1,4 +1,4 @@
-import { posicionesDerecha, posicionesIzquierda, posicionesCodominancia } from '../data/posicionesDominancia.js';
+import { dominanciaData } from '../data/posicionesDominancia.js';
 
 
 export function initCoronarySketch() {
@@ -17,9 +17,6 @@ export function initCoronarySketch() {
     const modalCloseBtn = document.getElementById('modal-close-btn');
     
     // --- 2. ESTILOS Y DEFINICIONES SVG ---
-    // Ruta de la imagen de fondo por defecto para el croquis.
-    const defaultImagePath = "../../img/corazonSinetiquetas.png";
-
     // Definiciones SVG, incluyendo un filtro para dar un efecto 3D a los vasos.
     const svgDefs = `
         <defs>
@@ -41,9 +38,9 @@ export function initCoronarySketch() {
 
     // Plantillas HTML para los tres SVGs de dominancia (derecha, izquierda, codominancia).
     const sketches = {
-        derecha: `<svg id="svg-derecha" viewBox="0 0 400 400">${svgDefs}<image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`,
-        izquierda: `<svg id="svg-izquierda" class="hidden" viewBox="0 0 400 400">${svgDefs}<image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`,
-        codominancia: `<svg id="svg-codominancia" class="hidden" viewBox="0 0 400 400">${svgDefs}<image href="${defaultImagePath}" class="bg-image" width="400" height="400"/></svg>`
+        derecha: `<svg id="svg-derecha" viewBox="0 0 400 400">${svgDefs}<image href="${dominanciaData.derecha.image}" class="bg-image" width="400" height="400"/></svg>`,
+        izquierda: `<svg id="svg-izquierda" class="hidden" viewBox="0 0 400 400">${svgDefs}<image href="${dominanciaData.izquierda.image}" class="bg-image" width="400" height="400"/></svg>`,
+        codominancia: `<svg id="svg-codominancia" class="hidden" viewBox="0 0 400 400">${svgDefs}<image href="${dominanciaData.codominancia.image}" class="bg-image" width="400" height="400"/></svg>`
     };
     sketchContainer.innerHTML = sketches.derecha + sketches.izquierda + sketches.codominancia;
     
@@ -305,17 +302,12 @@ export function initCoronarySketch() {
 
     // Dibuja los segmentos coronarios en el SVG activo según la dominancia seleccionada.
     function drawSegments() { 
-       // console.log('[drawSegments] 1. Iniciando redibujo de segmentos.');
         const dominanceRadio = document.querySelector('input[name="anatomia_general-dominancia"]:checked');
-       // console.log('[drawSegments] 2. Buscando radio de dominancia seleccionado:', dominanceRadio);
-
         if (!dominanceRadio) {
-            console.warn('[drawSegments] 2.1. ¡No se encontró un radio de dominancia seleccionado! Reintentando en 100ms.');
             setTimeout(drawSegments, 100); // Reintentar si el form no está listo
             return;
         }
         const dominance = dominanceRadio.value || 'Dominancia Derecha';
-        // console.log(`[drawSegments] 3. Valor de dominancia obtenido: "${dominance}"`);
         let currentDominanceKey = 'derecha';
         if (dominance.includes('Izquierda')) currentDominanceKey = 'izquierda';
         if (dominance.includes('Codominancia')) currentDominanceKey = 'codominancia';
@@ -325,24 +317,11 @@ export function initCoronarySketch() {
             dominanceTitle.textContent = dominance;
         }
 
-        switch (currentDominanceKey) {
-            case 'izquierda':
-                segmentsData = JSON.parse(JSON.stringify(posicionesIzquierda));
-                break;
-            case 'codominancia':
-                segmentsData = JSON.parse(JSON.stringify(posicionesCodominancia));
-                break;
-            case 'derecha':
-            default:
-                segmentsData = JSON.parse(JSON.stringify(posicionesDerecha));
-                break;
-        }
-        // console.log(`[drawSegments] 4. Modelo de posiciones '${currentDominanceKey}' seleccionado. Total de segmentos a procesar: ${segmentsData.length}`);
+        segmentsData = JSON.parse(JSON.stringify(dominanciaData[currentDominanceKey].positions));
         
         d3.selectAll('svg').selectAll('.segment-group').remove();
 
         segmentsData.forEach(seg => {
-            // console.log(`[drawSegments] 5. Procesando segmento: ${seg.name} (ID: ${seg.id})`);
             const formSegment = document.getElementById(`form-segment-${seg.id}`);
             if (formSegment) {
                 const shouldShow = seg.dominance.includes(currentDominanceKey);
@@ -352,7 +331,6 @@ export function initCoronarySketch() {
             if (seg.dominance.includes(currentDominanceKey)) {
                 const svg = d3.select(`svg:not(.hidden)`);
                 const group = svg.append('g').attr('id', `g-segment-${seg.id}`).attr('class', 'segment-group');
-                //console.log(`   -> Dibujando segmento ${seg.name} porque su dominancia (${seg.dominance}) incluye la actual (${currentDominanceKey}).`);
 
                 const pathGenerator = d3.line().curve(d3.curveBasis);
                 group.append('path')
@@ -381,7 +359,6 @@ export function initCoronarySketch() {
                 }
             }
         });
-        //console.log('[drawSegments] 6. Dibujo de segmentos completado. Adjuntando eventos de arrastre y clic.');
         addDragBehavior(d3.selectAll('.segment-group'));
         updateSketchFromForm();
         d3.selectAll('.segment-group').on('click', function(event) {
