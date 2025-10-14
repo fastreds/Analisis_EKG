@@ -549,19 +549,23 @@ export function initCoronarySketch() {
 
     function logFinalPositions() {
         const updatedSegments = segmentsData.map(seg => {
-            const group = d3.select(`svg:not(.hidden)`).select(`#g-segment-${seg.id}`);
-            const transform = group.attr('transform');
-            return {
-                id: seg.id,
-                name: seg.name,
-                points: seg.points,
-                dominance: seg.dominance,
-                labelPos: seg.labelPos,
-                transform: transform || "translate(0,0) rotate(0)"
-            };
-        });
+                const groupNode = d3.select(`svg:not(.hidden)`).select(`#g-segment-${seg.id}`).node();
+                // Si el grupo no existe en el DOM (porque no pertenece a la dominancia actual),
+                // devolvemos el segmento original sin cambios para no perderlo.
+                if (!groupNode) {
+                    return seg;
+                }
+                const transform = groupNode.getAttribute('transform');
+                return {
+                    ...seg, // Copiamos las propiedades originales como name, dominance, labelPos
+                    points: seg.points, // Mantenemos los puntos actualizados por el handle drag
+                    transform: transform || "translate(0,0) rotate(0)"
+                };
+            })
+            .filter(Boolean); // Filtramos cualquier resultado nulo o indefinido
         
-        console.log('export const nuevaposturadelArbol = ' + JSON.stringify(updatedSegments, null, 4));
+        console.log('// --- Posiciones Actualizadas del Árbol Coronario ---');
+        console.log('export const nuevasPosiciones = ' + JSON.stringify(updatedSegments, null, 4) + ';');
     }
 
     // Listener para el botón de cerrar la ventana modal.

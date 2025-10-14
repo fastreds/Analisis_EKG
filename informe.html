@@ -4,11 +4,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Informe AngioTC Cardíaco</title>
+    <title>Vivit CardioTools - Informe AngioTC Cardíaco</title>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- D3 for SVG manipulations -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Data Structures -->
+    <script type="module" src="js/data.js"></script>
+    <script type="module" src="js/data/posicionesDominancia.js"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,9 +20,8 @@
 </head>
 
 <body>
-    <header>
-        <img src="https://i0.wp.com/vivitsalud.com/wp-content/uploads/2023/01/Diseno-sin-titulo-9.png?w=200&ssl=1"
-            alt="Vivit Salud Logo" class="logo">
+    <header class="no-print">
+        <img src="https://i0.wp.com/vivitsalud.com/wp-content/uploads/2023/01/Diseno-sin-titulo-9.png?w=200&ssl=1" alt="Vivit Salud Logo" class="logo">
         <div style="flex:1">
             <h1>Informe de AngioTC Cardíaco</h1>
             <div class="small" id="report-date"></div>
@@ -30,158 +32,155 @@
         </div>
     </header>
 
-    <main style="padding:18px;display:flex;gap:18px;align-items:flex-start">
-        <section class="left">
-            <div class="card" style="margin-bottom:12px">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <main>
+        <!-- Columna Principal (Izquierda) -->
+        <div class="main-column">
+            <section class="card patient-header">
+                <div class="patient-info">
                     <div>
                         <div class="badge">Paciente</div>
-                        <h2 style="margin:8px 0 6px"><span id="patient-name"></span> <span class="small"
-                                id="patient-id"></span></h2>
+                        <h2><span id="patient-name"></span></h2>
                         <div class="small" id="patient-details"></div>
-                        <div style="margin-top:8px" class="small">Indicación: <span id="patient-indication"></span><br>
-                            Médico referente: <span id="patient-doctor"></span> (<span id="doctor-specialty"></span>)
+                        <div class="small meta-info">
+                            <div><strong>Indicación:</strong> <span id="patient-indication"></span></div>
+                            <div><strong>Médico Ref.:</strong> <span id="patient-doctor"></span> (<span id="doctor-specialty"></span>)</div>
                         </div>
                     </div>
-
-                </div>
-                <div style="text-align:right">
-                    <div class="small">Factores de Riesgo</div>
-                    <div id="risk-factors" style="margin-top:10px"></div>
-                </div>
-            </div>
-
-            <div class="grid" style="align-items:start; margin-bottom:12px">
-                <div class="card">
-                    <h3 style="margin:6px 0">Función Ventricular</h3>
-                    <canvas id="feviChart" width="100" height="80"></canvas>
-                    <div class="small" style="margin-top:6px">FEVI Ventrículo izquierdo: <strong id="fevi-text"></strong></div>
-                     <div class="legend" style="margin-top:8px; font-size: 12px;">
-                        <div class="item"><div class="sw" style="background:var(--verde)"></div> Normal (>55%)</div>
-                        <div class="item"><div class="sw" style="background:var(--amarillo)"></div> Leve (45-54%)</div>
-                        <div class="item"><div class="sw" style="background:var(--naranja)"></div> Mod. (30-44%)</div>
-                        <div class="item"><div class="sw" style="background:var(--rojo)"></div> Sev. (&lt;30%)</div>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3 style="margin:6px 0">Aorta</h3>
-                    <div class="small">Diámetro porción tubular ascendente: <strong id="aorta-diameter"></strong></div>
-                    <div style="margin-top:12px">
-                        <div style="height:14px;background:var(--gris-borde);border-radius:8px;overflow:hidden">
-                            <div id="aortaBar"
-                                style="height:100%;width:0%;background:linear-gradient(90deg,var(--amarillo),var(--rojo))">
-                            </div>
+                    <div class="patient-id-risk">
+                        <div id="patient-id" class="small"></div>
+                        <div class="risk-factors-container">
+                            <div class="small">Factores de Riesgo</div>
+                            <div id="risk-factors"></div>
                         </div>
-                        <div class="small" style="margin-top:6px">Interpretación: <strong
-                                id="aorta-interpretation"></strong></div>
-                    </div>
-                    <div class="legend" style="margin-top:14px; font-size: 12px; padding-top: 10px; border-top: 1px solid var(--gris-borde);">
-                        <div class="item"><div class="sw" style="background:var(--verde)"></div> Normal (&lt;40mm)</div>
-                        <div class="item"><div class="sw" style="background:var(--amarillo)"></div> Dilatado (40-45mm)</div>
-                        <div class="item"><div class="sw" style="background:var(--rojo)"></div> Aneurisma (>45mm)</div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="card" style="margin-bottom:12px">
-                <h3 style="margin:6px 0">Score de Calcio (Agatston)</h3>
-                <div style="display:flex;gap:12px;align-items:center">
-                    <div style="flex:1">
-                        <canvas id="calcioBar" height="125"></canvas>
-                    </div>
-                    <div style="width:160px;text-align:center">
-                        <div class="small">Score Total</div>
-                        <div id="calcium-score-total" style="font-size:28px;font-weight:700;"></div>
-                        <div class="small">Percentil para edad/género: <strong id="calcium-percentile"></strong></div>
-                    </div>
-                </div>
-                <div style="margin-top:12px; max-height: 120px; display: flex; justify-content: center;">
-                    <canvas id="calcioPie" style="max-height: 120px;"></canvas>
-                </div>
-            </div>
+            <section class="card coronary-wrap">
+                <h3>Mapa Coronario Esquemático <span id="coronary-map-dominance" class="small"></span></h3>
+                <div id="coronarySVG" class="coronary-svg-container"></div>
+                <div id="legend-container" class="legend"></div>
+            </section>
 
-            <div class="card" style="margin-bottom:12px">
-                <h3 style="margin:6px 0">Estenosis por Segmento (nivel de severidad)</h3>
-                <canvas id="stenosisLine" height="120"></canvas>
-                <div class="small" style="margin-top:8px">Leyenda: Verde (Normal) • Amarillo (25-49%) • Naranja (50-69%) • Rojo (≥70%)</div>
-            </div>
-
-            <div class="card-flat">
-                <h3 style="margin:6px 0">Detalles por Arteria</h3>
+            <section class="card">
+                <h3>Hallazgos por Arteria</h3>
                 <table id="arteries-table">
                     <thead>
                         <tr>
                             <th>Arteria</th>
-                            <th>Placa</th>
+                            <th>Hallazgo</th>
                             <th>Localización</th>
                             <th>Estenosis</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
-            </div>
+            </section>
 
-        </section>
+            <section class="card">
+                <h3>Grado de Estenosis Máxima por Segmento</h3>
+                <div class="chart-container" style="height: 200px;">
+                    <canvas id="stenosisLine"></canvas>
+                </div>
+            </section>
+        </div>
 
-        <aside class="right">
-            <div class="card coronary-wrap" style="margin-bottom:12px">
-                <h3 style="margin:6px 0">Mapa Coronario (esquemático)</h3>
-                <div id="coronarySVG"></div>
-                <div class="legend" style="margin-top:8px">
-                    <div class="item">
-                        <div class="sw" style="background:var(--verde)"></div> Normal
-                    </div>
-                    <div class="item">
-                        <div class="sw" style="background:var(--amarillo)"></div> 25-49%
-                    </div>
-                    <div class="item">
-                        <div class="sw" style="background:var(--naranja)"></div> 50-69%
-                    </div>
-                    <div class="item">
-                        <div class="sw" style="background:var(--rojo)"></div> ≥70%
+        <!-- Columna Lateral (Derecha) -->
+        <div class="sidebar-column">
+            <section class="card">
+                <h3>CAD-RADS™ 2.0</h3>
+                <div class="cad-rads-summary">
+                    <div id="cad-rads-score" class="cad-rads-score">N/A</div>
+                    <div class="cad-rads-details">
+                        <div class="small"><strong>Modificadores:</strong> <span id="cad-rads-modifiers"></span></div>
+                        <p class="small" id="cad-rads-description"></p>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="card-flat" style="margin-bottom:12px">
-                <h3 style="margin:6px 0">CAD-RADS™ 2.0</h3>
-                <div><strong>Score:</strong> <span id="cad-rads-score"></span></div>
-                <div class="small"><strong>Modificadores:</strong> <span id="cad-rads-modifiers"></span></div>
-                <p class="small" id="cad-rads-description" style="margin-top:8px;"></p>
-            </div>
-
-            <div class="card-flat" style="margin-bottom:12px">
-                <h3 style="margin:6px 0">Anatomía Cardiovascular</h3>
-                <div id="cardiac-anatomy" class="small"></div>
-            </div>
-
-            <div class="card-flat" style="margin-bottom:12px">
-                <h3 style="margin:6px 0">Detalles Técnicos del Estudio</h3>
-                <div id="technical-details" class="small"></div>
-            </div>
-
-            <div class="card-flat" style="margin-bottom:12px">
-                <h3 style="margin:6px 0">Hallazgos Extracardíacos</h3>
-                <p class="small" id="extracardiac-findings"></p>
-            </div>
-
-            <div class="card-flat">
-                <h3 style="margin:6px 0">Conclusión</h3>
+            <section class="card">
+                <h3>Conclusión</h3>
                 <p class="small" id="conclusion-text"></p>
-            </div>
-        </aside>
+            </section>
+
+            <section class="card">
+                <h3>Score de Calcio (Agatston)</h3>
+                <div class="calcium-grid">
+                    <div class="calcium-summary">
+                        <div class="small">Score Total</div>
+                        <div id="calcium-score-total" class="total-score"></div>
+                        <div class="small" id="calcium-percentile"></div>
+                    </div>
+                    <div class="calcium-pie-chart">
+                        <canvas id="calcioPie"></canvas>
+                    </div>
+                </div>
+                <div class="legend calcium-legend">
+                    <div class="item"><div class="sw" style="background:var(--verde)"></div> Mínimo (1-10)</div>
+                    <div class="item"><div class="sw" style="background:var(--amarillo)"></div> Leve (11-100)</div>
+                    <div class="item"><div class="sw" style="background:var(--naranja)"></div> Moderado (101-400)</div>
+                    <div class="item"><div class="sw" style="background:var(--rojo)"></div> Severo (>400)</div>
+                </div>
+                <div class="calcium-bar-chart">
+                    <canvas id="calcioBar"></canvas>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="grid-summaries">
+                    <div>
+                        <h3>Función Ventricular</h3>
+                        <div class="chart-container fevi-chart-container">
+                            <canvas id="feviChart"></canvas>
+                            <div class="small chart-label">FEVI: <strong id="fevi-text"></strong></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Aorta Ascendente</h3>
+                        <div class="small">Diámetro tubular: <strong id="aorta-diameter"></strong></div>
+                        <div class="bar-container">
+                            <div class="bar-bg">
+                                <div id="aortaBar" class="bar-fg"></div>
+                            </div>
+                            <div class="small bar-label">Interpretación: <strong id="aorta-interpretation"></strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="legend">
+                    <div class="item"><div class="sw" style="background:var(--verde)"></div> Normal (>55%)</div>
+                    <div class="item"><div class="sw" style="background:var(--amarillo)"></div> Leve (45-54%)</div>
+                    <div class="item"><div class="sw" style="background:var(--naranja)"></div> Mod. (30-44%)</div>
+                    <div class="item"><div class="sw" style="background:var(--rojo)"></div> Sev. (&lt;30%)</div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Anatomía Cardiovascular</h3>
+                <div id="cardiac-anatomy" class="small"></div>
+            </section>
+
+            <section class="card">
+                <h3>Detalles Técnicos del Estudio</h3>
+                <div id="technical-details" class="small"></div>
+            </section>
+
+            <section class="card">
+                <h3>Hallazgos Extracardíacos</h3>
+                <p class="small" id="extracardiac-findings"></p>
+            </section>
+        </div>
     </main>
     
-    <section id="written-report" class="print-only">
-        <!-- Content will be generated by JavaScript -->
-    </section>
+    <div class="report-full-width-container">
+        <section id="written-report-container" class="card">
+            <!-- El contenido se generará con JavaScript -->
+        </section>
+    </div>
 
     <footer>
-        Informe generado automáticamente — Centro de Imágenes • Vivit Salud • Informe orientativo, confirmar con clínico
-        responsable
+        Informe generado con Vivit CardioTools — Este informe es una guía y debe ser interpretado por un profesional cualificado.
     </footer>
-    <script src="js/logic/informe.js"></script>
+    <script type="module" src="js/logic/informe.js"></script>
 </body>
 
 </html>

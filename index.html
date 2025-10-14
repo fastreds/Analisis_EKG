@@ -14,13 +14,13 @@
     <style>
         #sketch-container { perspective: 1000px; cursor: grab; }
         .segment-group:not(.edit-mode) { cursor: pointer; }
-        .segment-group { cursor: move; }
-        .segment-path { fill: none; stroke-width: 6px; stroke: #c73f3f; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.3s ease, stroke-width 0.3s ease; filter: url(#filtro-tubo); }
+        .segment-group { cursor: move; }        
         .segment-group:hover .segment-path { stroke-width: 7px; }
         .segment-label { font-size: 10px; font-weight: bold; fill: #1f2937; pointer-events: none; text-shadow: 0 0 2px white, 0 0 2px white, 0 0 2px white; }
         .control-handle { fill: #3b82f6; stroke: white; stroke-width: 2px; cursor: pointer; opacity: 0; transition: opacity 0.3s; }
         .segment-group.edit-mode .control-handle { opacity: 1; }
         .stent-marker { fill: none; stroke-width: 8px; stroke: #3b82f6; stroke-dasharray: 1 5; stroke-linecap: round; opacity: 0.9; pointer-events: none; }
+        
         .bridge-marker { fill: none; stroke: #9ca3af; stroke-width: 12px; opacity: 0.5; pointer-events: none; }
         .aneurysm-marker { fill: #ef4444; opacity: 0.6; pointer-events: none; }
         .bg-image { opacity: 0.2; pointer-events: none; }

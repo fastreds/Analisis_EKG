@@ -1,5 +1,8 @@
-        document.addEventListener('DOMContentLoaded', () => {
-            const data = JSON.parse(localStorage.getItem('savedAngioTACStudy'));
+import { reportStructure } from '../data.js';
+import { posicionesDerecha, posicionesIzquierda, posicionesCodominancia } from '../data/posicionesDominancia.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const data = JSON.parse(localStorage.getItem('savedAngioTACStudy'));
             if (!data) {
                 document.body.innerHTML = '<h1>No se encontraron datos para generar el informe.</h1>';
                 return;
@@ -10,14 +13,13 @@
 
             // --- Populate Patient Info ---
             const patient = data.datos_paciente || {};
-            const clinical = data.informacion_clinica || {};
+    const clinical = data.informacion_clinica || {};
             const study = data.protocolo_estudio || {};
-            const anatomy = data.anatomia_cardiovascular || {};
 
 
             document.title = `Informe AngioTAC Cardíaco — ${patient.nombre || 'Paciente'}`;
             document.getElementById('patient-name').textContent = patient.nombre || 'N/A';
-            document.getElementById('patient-id').textContent = `(ID: ${patient.id_paciente || 'N/A'})`;
+    document.getElementById('patient-id').textContent = `ID: ${patient.id_paciente || 'N/A'}`;
             document.getElementById('patient-details').textContent = `${patient.edad || 'N/A'} años • ${patient.genero || 'N/A'} • ${patient.peso || 'N/A'} kg`;
             document.getElementById('report-date').textContent = `Fecha del estudio: ${study.fecha_estudio ? new Date(study.fecha_estudio).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}`;
             document.getElementById('patient-indication').textContent = clinical.indicacion || 'N/A';
@@ -26,11 +28,12 @@
 
             const riskFactorsDiv = document.getElementById('risk-factors');
             if (clinical.factores_riesgo && clinical.factores_riesgo.length > 0) {
-                riskFactorsDiv.innerHTML = ''; // Clear previous
+        riskFactorsDiv.innerHTML = ''; // Clear previous
                 clinical.factores_riesgo.forEach(factor => {
                     const div = document.createElement('div');
-                    div.innerHTML = `${factor.split(' ')[0]}: <strong>Sí</strong>`;
-                    riskFactorsDiv.appendChild(div);
+            div.className = 'risk-factor';
+            div.innerHTML = `<span>${factor.split(' ')[0]}</span>`;
+            riskFactorsDiv.appendChild(div);
                 });
             } else {
                 riskFactorsDiv.innerHTML = '<div>Ninguno reportado</div>';
@@ -38,10 +41,10 @@
 
             // --- Helper to create detail items ---
             const createDetailItem = (container, label, value) => {
-                if (value) {
+        if (value && value !== 'N/A' && value !== '') {
                     const item = document.createElement('div');
                     item.className = 'detail-item';
-                    item.innerHTML = `<span>${label}</span><span>${Array.isArray(value) ? value.join(', ') : value}</span>`;
+            item.innerHTML = `<span>${label}</span><strong>${Array.isArray(value) ? value.join(', ') : value}</strong>`;
                     container.appendChild(item);
                 }
             };
@@ -49,7 +52,7 @@
             // --- Populate Technical Details ---
             const techContainer = document.getElementById('technical-details');
             techContainer.innerHTML = ''; // Clear previous
-            createDetailItem(techContainer, 'Tomógrafo', study.equipo);
+        createDetailItem(techContainer, 'Equipo', study.equipo);
             createDetailItem(techContainer, 'Tiempo de rotación', study.tiempo_rotacion);
             createDetailItem(techContainer, 'ECG-gating', study.adquisicion);
             createDetailItem(techContainer, 'Medio Contraste', `${study.medio_contraste || ''} (${study.contraste_iv || ''})`);
@@ -59,6 +62,7 @@
 
             // --- Populate Cardiac Anatomy ---
             const anatomyContainer = document.getElementById('cardiac-anatomy');
+    const anatomy = data.anatomia_cardiovascular || {};
             anatomyContainer.innerHTML = ''; // Clear previous
             createDetailItem(anatomyContainer, 'Venas Cavas', anatomy.venas_cavas);
             createDetailItem(anatomyContainer, 'Aurícula Derecha', anatomy.auricula_derecha);
@@ -76,13 +80,13 @@
             const aorta = data.valvula_aortica_diametros_aorta || {};
             if (aorta && aorta.porcion_tubular_ascendente_diametro) {
                 const val = parseInt(aorta.porcion_tubular_ascendente_diametro, 10);
-                const pct = Math.min(100, Math.round((val / 60) * 100));
+        const pct = Math.min(100, Math.max(0, ((val - 30) / (50 - 30)) * 100)); // Scale from 30mm to 50mm
                 document.getElementById('aortaBar').style.width = pct + '%';
                 document.getElementById('aorta-diameter').textContent = `${val} mm`;
                 const interpretation = aorta.porcion_tubular_ascendente_observaciones;
                 const interpretationEl = document.getElementById('aorta-interpretation');
                 interpretationEl.textContent = interpretation;
-                if (interpretation && (interpretation.includes('DILATADO') || interpretation.includes('ANEURISMÁTICO'))) {
+        if (interpretation && (interpretation.toUpperCase().includes('DILATADO') || interpretation.toUpperCase().includes('ANEURISMÁTICO'))) {
                     interpretationEl.style.color = getColor('--rojo');
                 }
             }
@@ -90,14 +94,14 @@
 
             // --- FEVI CHART ---
             const feviText = anatomy.ventriculo_izquierdo_fevi || '';
-            let feviValue = 55; // Default to normal
-            if (feviText.includes('Levemente')) feviValue = 50;
-            else if (feviText.includes('Moderadamente')) feviValue = 40;
-            else if (feviText.includes('Severamente')) feviValue = 25;
+    let feviValue = 55; // Default to normal
+    let feviColor = getColor('--verde');
+    if (feviText.includes('Levemente')) { feviValue = 50; feviColor = getColor('--amarillo'); }
+    else if (feviText.includes('Moderadamente')) { feviValue = 40; feviColor = getColor('--naranja'); }
+    else if (feviText.includes('Severamente')) { feviValue = 25; feviColor = getColor('--rojo'); }
 
-            const feviColor = feviValue >= 55 ? getColor('--verde') : (feviValue >= 45 ? getColor('--amarillo') : getColor('--rojo'));
 
-            document.getElementById('fevi-text').textContent = feviText || 'Normal (>55%)';
+    document.getElementById('fevi-text').textContent = feviText || 'Normal (>55%)';
             new Chart(document.getElementById('feviChart').getContext('2d'), {
                 type: 'doughnut',
                 data: {
@@ -108,7 +112,7 @@
                         borderWidth: 0
                     }]
                 },
-                options: {
+        options: {
                     circumference: 180, rotation: 270, cutout: '70%',
                     plugins: { legend: { display: false }, tooltip: { enabled: true } },
                 }
@@ -120,12 +124,12 @@
             if (calcium) {
                 const totalScoreEl = document.getElementById('calcium-score-total');
                 totalScoreEl.textContent = calcium.total || 0;
-                if (calcium.total > 400) totalScoreEl.style.color = getColor('--rojo');
-                else if (calcium.total > 100) totalScoreEl.style.color = getColor('--naranja');
-                else if (calcium.total > 0) totalScoreEl.style.color = getColor('--amarillo');
-                else totalScoreEl.style.color = getColor('--verde');
+        if (calcium.total > 400) totalScoreEl.style.color = getColor('--rojo');
+        else if (calcium.total > 100) totalScoreEl.style.color = getColor('--naranja');
+        else if (calcium.total > 10) totalScoreEl.style.color = getColor('--amarillo');
+        else totalScoreEl.style.color = getColor('--verde');
 
-                document.getElementById('calcium-percentile').textContent = calcium.percentil || 'N/A';
+        document.getElementById('calcium-percentile').textContent = `Percentil ${calcium.percentil || 'N/A'}`;
 
                 new Chart(document.getElementById('calcioBar').getContext('2d'), {
                     type: 'bar',
@@ -135,12 +139,13 @@
                             label: 'Score Agatston',
                             data: [calcium.tci || 0, calcium.da || 0, calcium.cx || 0, calcium.cd || 0],
                             backgroundColor: (context) => {
-                                const v = context.dataset.data[context.dataIndex];
-                                if (v < 100) return getColor('--verde');
-                                if (v < 400) return getColor('--amarillo');
-                                return getColor('--rojo');
+                const v = context.dataset.data[context.dataIndex];
+                if (v > 400) return getColor('--rojo');
+                if (v > 100) return getColor('--naranja');
+                if (v > 10) return getColor('--amarillo');
+                return getColor('--verde');
                             },
-                            borderRadius: 15
+                borderRadius: 6
                         }]
                     },
                     options: {
@@ -153,12 +158,16 @@
                     type: 'pie',
                     data: {
                         labels: ['DA', 'CD', 'CX', 'TCI'],
-                        datasets: [{
+                datasets: [{
                             data: [calcium.da || 0, calcium.cd || 0, calcium.cx || 0, calcium.tci || 0],
-                            backgroundColor: [getColor('--rojo'), getColor('--naranja'), getColor('--amarillo'), getColor('--verde')]
+                    backgroundColor: [getColor('--rojo'), getColor('--naranja'), getColor('--amarillo'), getColor('--verde')]
                         }]
                     },
-                    options: { plugins: { legend: { position: 'bottom' } } }
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } 
+            }
                 });
             }
 
@@ -172,11 +181,11 @@
             tableBody.innerHTML = ''; // Clear previous
             
             const severityToValue = {
-                'CAD-RADS 1: Mínima (1-24%)': 10,
-                'CAD-RADS 2: Leve (25-49%)': 35,
-                'CAD-RADS 3: Moderada (50-69%)': 60,
-                'CAD-RADS 4A: Severa (70-99%)': 85,
-                'CAD-RADS 5: Oclusión total (100%)': 100
+        'Mínima (1-24%)': 24,
+        'Leve (25-49%)': 49,
+        'Moderada (50-69%)': 69,
+        'Severa (70-99%)': 99,
+        'Oclusión total (100%)': 100
             };
 
             const getColorForStenosis = (v) => {
@@ -195,62 +204,61 @@
 
                     let maxStenosis = 0;
                     let hasFindings = false;
+                    const findingsForTable = [];
 
-                    // Placas
-                    if (segmentData.findings?.placas && segmentData.findings.placas.length > 0) {
-                        hasFindings = true;
-                        segmentData.findings.placas.forEach(plaque => {
+                    if (segmentData.estado_general === 'Con hallazgos patológicos' && segmentData.findings) {
+                        // Placas
+                        if (segmentData.findings.placas?.length > 0) {
+                            hasFindings = true;
+                            segmentData.findings.placas.forEach(plaque => {
+                                const stenosisValue = severityToValue[plaque.estenosis] || 0;
+                                if (stenosisValue > maxStenosis) maxStenosis = stenosisValue;
+                                findingsForTable.push({
+                                    hallazgo: `Placa ${plaque.composicion || ''}`,
+                                    localizacion: 'N/A',
+                                    estenosis: plaque.estenosis || 'N/A',
+                                    color: getColorForStenosis(stenosisValue)
+                                });
+                            });
+                        }
+
+                        // Stents
+                        if (segmentData.findings.stents?.length > 0) {
+                            hasFindings = true;
+                            segmentData.findings.stents.forEach(stent => {
+                                findingsForTable.push({ hallazgo: 'Stent', localizacion: 'Segmento', estenosis: stent.evaluacion || 'N/A' });
+                            });
+                        }
+
+                        // Puente Miocárdico
+                        if (segmentData.findings.has_puente) {
+                            hasFindings = true;
+                            findingsForTable.push({ hallazgo: 'Puente Miocárdico', localizacion: 'Segmento', estenosis: `Profundidad: ${segmentData.findings.puente_details?.profundidad || 'N/A'}` });
+                        }
+
+                        // Aneurisma
+                        if (segmentData.findings.has_aneurisma) {
+                            hasFindings = true;
+                            findingsForTable.push({ hallazgo: 'Aneurisma/Ectasia', localizacion: 'Segmento', estenosis: `Diámetro: ${segmentData.findings.aneurisma_details?.diametro || 'N/A'} mm` });
+                        }
+                    }
+
+                    if (hasFindings) {
+                        findingsForTable.forEach(finding => {
                             const row = tableBody.insertRow();
                             row.insertCell().textContent = segmentInfo.name;
-                            row.insertCell().textContent = `Placa ${plaque.composicion || ''}`;
-                            row.insertCell().textContent = 'Segmento'; // Localización es el propio segmento
+                            row.insertCell().textContent = finding.hallazgo;
+                            row.insertCell().textContent = finding.localizacion;
                             const stenosisCell = row.insertCell();
-                            stenosisCell.textContent = plaque.estenosis || 'N/A';
-                            
-                            const stenosisValue = severityToValue[plaque.estenosis] || 0;
-                            if (stenosisValue > maxStenosis) maxStenosis = stenosisValue;
-                            stenosisCell.style.color = getColorForStenosis(stenosisValue);
+                            stenosisCell.textContent = finding.estenosis;
+                            if (finding.color) stenosisCell.style.color = finding.color;
                         });
-                    }
-
-                    // Stents
-                    if (segmentData.findings?.stents && segmentData.findings.stents.length > 0) {
-                        hasFindings = true;
-                        segmentData.findings.stents.forEach(stent => {
-                            const row = tableBody.insertRow();
-                            row.insertCell().textContent = segmentInfo.name;
-                            row.insertCell().textContent = 'Stent';
-                            row.insertCell().textContent = 'Segmento';
-                            row.insertCell().textContent = stent.evaluacion || 'N/A';
-                        });
-                    }
-
-                    // Puente Miocárdico
-                    if (segmentData.findings?.has_puente) {
-                        hasFindings = true;
+                    } else if (segmentData.estado_general !== 'Sin hallazgos patológicos significativos') {
                         const row = tableBody.insertRow();
                         row.insertCell().textContent = segmentInfo.name;
-                        row.insertCell().textContent = 'Puente Miocárdico';
-                        row.insertCell().textContent = 'Segmento';
-                        row.insertCell().textContent = `Profundidad: ${segmentData.findings.puente_details?.profundidad || 'N/A'}`;
-                    }
-
-                    // Aneurisma
-                    if (segmentData.findings?.has_aneurisma) {
-                        hasFindings = true;
-                        const row = tableBody.insertRow();
-                        row.insertCell().textContent = segmentInfo.name;
-                        row.insertCell().textContent = 'Aneurisma/Ectasia';
-                        row.insertCell().textContent = 'Segmento';
-                        row.insertCell().textContent = `Diámetro: ${segmentData.findings.aneurisma_details?.diametro || 'N/A'} mm`;
-                    }
-
-                    if (!hasFindings && segmentData.estado_general !== 'Sin hallazgos patológicos significativos') {
-                         const row = tableBody.insertRow();
-                         row.insertCell().textContent = segmentInfo.name;
-                         row.insertCell().textContent = segmentData.estado_general || '---';
-                         row.insertCell().textContent = '---';
-                         row.insertCell().textContent = '---';
+                        row.insertCell().textContent = segmentData.estado_general || '---';
+                        row.insertCell().textContent = '---';
+                        row.insertCell().textContent = '---';
                     }
 
                     processedSegments[segmentId] = { ...segmentData, maxStenosis };
@@ -269,7 +277,7 @@
                         datasets: [{
                             label: '% Estenosis',
                             data: stenosisDataForChart.map(d => d.value),
-                            fill: true, tension: 0.3, pointRadius: 6, pointHoverRadius: 8, borderColor: '#444', borderWidth: 2
+                    fill: true, tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderColor: '#444', borderWidth: 2
                         }]
                     },
                     options: {
@@ -279,27 +287,106 @@
                 });
             }
 
-            // --- Coronary SVG schematic using D3 ---
-            d3.select('#coronarySVG').select('svg').remove(); // Clear previous SVG
-            // This part can be enhanced to use the real segment paths from `posicionesDominancia.js`
-            // For now, a simplified representation:
-            const svgData = allSegmentsInfo.map(segInfo => ({
-                id: segInfo.id,
-                name: segInfo.name.match(/\((.*?)\)/)?.[1] || segInfo.name,
-                sten: processedSegments[segInfo.id]?.maxStenosis || 0,
-                // Dummy points for simplified viz
-                points: [[Math.random()*400, Math.random()*300], [Math.random()*400, Math.random()*300]]
-            }));
+            // --- Coronary SVG schematic ---
+            function drawCoronaryMap() {
+                d3.select('#coronarySVG').select('svg').remove(); // Clear previous SVG
+                
+                const dominance = data.anatomia_general?.dominancia || 'Dominancia Derecha';
+                document.getElementById('coronary-map-dominance').textContent = `(${dominance})`;
+                let positions;
+                if (dominance.includes('Izquierda')) positions = posicionesIzquierda;
+                else if (dominance.includes('Codominancia')) positions = posicionesCodominancia;
+                else positions = posicionesDerecha;
 
-            const svg = d3.select('#coronarySVG').append('svg').attr('class', 'heart').attr('viewBox', `0 0 480 360`);
-            svg.append('path').attr('d', 'M240 60 C 280 20, 360 40, 360 110 C 360 190, 240 300, 240 300 C 240 300, 120 190, 120 110 C 120 40, 200 20, 240 60 Z').attr('fill', '#fff').attr('stroke', '#eee');
+                const svg = d3.select('#coronarySVG').append('svg').attr('viewBox', `0 0 400 400`).html(`
+                    <defs>
+                        <filter id="filtro-tubo" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="blur"/>
+                            <feOffset in="blur" dx="2" dy="3" result="offsetBlur"/>
+                            <feSpecularLighting in="blur" surfaceScale="7" specularConstant="1.2" specularExponent="40" lighting-color="#eeeeee" result="specOut">
+                                <fePointLight x="-5000" y="-10000" z="20000"/>
+                            </feSpecularLighting>
+                            <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut"/>
+                            <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litPaint"/>
+                            <feMerge>
+                                <feMergeNode in="offsetBlur"/>
+                                <feMergeNode in="litPaint"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                `);
+                
+                const pathGenerator = d3.line().curve(d3.curveBasis);
 
-            svgData.forEach(s => {
-                svg.append('path').attr('d', 'M' + s.points.map(p => p.join(',')).join(' L ')).attr('fill', 'none').attr('stroke', getColorForStenosis(s.sten)).attr('stroke-width', Math.max(6, (s.sten / 100) * 18)).attr('stroke-linecap', 'round');
-                const lp = s.points[Math.floor(s.points.length / 2)];
-                svg.append('text').attr('x', lp[0] + 8).attr('y', lp[1] - 6).text(`${s.name} ${s.sten}%`).attr('font-size', 12).attr('fill', '#222');
-            });
+                positions.forEach(seg => {
+                    const segmentData = processedSegments[seg.id] || {};
+                    const stenValue = segmentData.maxStenosis || 0;
+                    const group = svg.append('g').attr('class', 'segment-group');
 
+                    if (seg.transform) {
+                        group.attr('transform', seg.transform);
+                    }
+
+                    const path = group.append('path')
+                        .attr('d', pathGenerator(seg.points))
+                        .attr('class', `segment-path stenosis-${Math.ceil(stenValue / 25)}`);
+
+                    // Añadir marcadores de hallazgos
+                    if (segmentData.findings) {
+                        const pathNode = path.node();
+                        if (!pathNode) return;
+                        const totalLength = pathNode.getTotalLength();
+
+                        // Marcadores de Placa
+                        if (segmentData.findings.placas?.length > 0) {
+                            segmentData.findings.placas.forEach((plaque, index) => {
+                                const stenosisValue = severityToValue[plaque.estenosis] || 0;
+                                const point = pathNode.getPointAtLength(totalLength * (0.3 + index * 0.2));
+                                group.append('circle')
+                                    .attr('class', `plaque-marker stenosis-${Math.ceil(stenosisValue / 25)}`)
+                                    .attr('cx', point.x).attr('cy', point.y).attr('r', 5);
+                            });
+                        }
+                        // Marcador de Stent (círculos)
+                        if (segmentData.findings.stents?.length > 0) {
+                            const numCircles = Math.floor(totalLength / 10);
+                            for (let i = 0; i <= numCircles; i++) {
+                                const point = pathNode.getPointAtLength(i * (totalLength / numCircles));
+                                group.append('circle')
+                                    .attr('class', 'stent-circle-marker')
+                                    .attr('cx', point.x).attr('cy', point.y).attr('r', 4);
+                            }
+                        }
+                        // Marcador de Puente
+                        if (segmentData.findings.has_puente) {
+                            group.insert('path', ':first-child').attr('class', 'bridge-marker').attr('d', path.attr('d'));
+                        }
+                        // Marcador de Aneurisma
+                        if (segmentData.findings.has_aneurisma) {
+                            const point = pathNode.getPointAtLength(totalLength * 0.5);
+                            group.append('circle').attr('class', 'aneurysm-marker').attr('cx', point.x).attr('cy', point.y).attr('r', 8);
+                        }
+                    }
+                });
+            }
+            drawCoronaryMap();
+
+            // --- Build Legend for Coronary Map ---
+            function buildCoronaryLegend() {
+                const legendContainer = document.getElementById('legend-container');
+                if (!legendContainer) return;
+                legendContainer.innerHTML = `
+                    <div class="item"><div class="sw" style="background:var(--verde)"></div> Normal/Mínima</div>
+                    <div class="item"><div class="sw" style="background:var(--amarillo)"></div> Leve (25-49%)</div>
+                    <div class="item"><div class="sw" style="background:var(--naranja)"></div> Moderada (50-69%)</div>
+                    <div class="item"><div class="sw" style="background:var(--rojo)"></div> Severa (≥70%)</div>
+                    <div class="item"><svg class="sw-symbol" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" class="stent-circle-marker" stroke-width="2"/></svg> Stent</div>
+                    <div class="item"><svg class="sw-symbol" viewBox="0 0 20 20"><path d="M0 10 H 20" class="bridge-marker" stroke-width="8"/></svg> Puente</div>
+                    <div class="item"><svg class="sw-symbol" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" class="aneurysm-marker"/></svg> Aneurisma</div>
+                    <div class="item"><svg class="sw-symbol" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" class="plaque-marker stenosis-4"/></svg> Placa</div>
+                `;
+            }
+            buildCoronaryLegend();
 
             // --- CAD-RADS & Conclusion ---
             const cadRads = data.cad_rads;
@@ -309,11 +396,11 @@
                 document.getElementById('cad-rads-description').textContent = cadRads.description || '';
             }
 
-            document.getElementById('conclusion-text').textContent = data.conclusion?.texto_conclusion || 'No se generó conclusión.';
+    document.getElementById('conclusion-text').textContent = data.conclusion?.texto_conclusion || 'No se generó conclusión.';
             document.getElementById('extracardiac-findings').textContent = data.evaluacion_extracardiaca?.hallazgos?.join(', ') || 'Sin hallazgos significativos.';
 
             // --- Generate and inject written report for printing ---
-            function generateWrittenReport(data) {
+    function generateWrittenReport(data) {
                 const {
                     datos_paciente: patient = {},
                     informacion_clinica: clinical = {},
@@ -329,7 +416,7 @@
 
                 let report = `<h3>Informe Detallado</h3>`;
 
-                report += `
+        report += `
                     <h4>1. Datos del Paciente y Estudio</h4>
                     <p>
                         Informe correspondiente al paciente <strong>${patient.nombre || 'N/A'}</strong> (ID: ${patient.id_paciente || 'N/A'}), de ${patient.edad || 'N/A'} años, género ${patient.genero || 'N/A'}.
@@ -338,7 +425,7 @@
                     </p>
                 `;
 
-                report += `
+        report += `
                     <h4>2. Score de Calcio Coronario (Agatston)</h4>
                     <p>
                         El score de calcio total es de <strong>${calcium.total || 0}</strong>, lo que sitúa al paciente en el percentil <strong>${calcium.percentil || 'N/A'}</strong> para su edad y género.
@@ -346,10 +433,10 @@
                     </p>
                 `;
 
-                report += `<h4>3. Arterias Coronarias</h4>`;
+        report += `<h4>3. Arterias Coronarias</h4>`;
                 let findingsText = '';
                 Object.entries(segmentData.segments).forEach(([segmentId, segment]) => {
-                    const segmentInfo = allSegmentsInfo.find(s => s.id == segmentId);
+            const segmentInfo = allSegmentsInfo.find(s => s.id == segmentId);
                     if (!segmentInfo || segment.estado_general === 'Sin hallazgos patológicos significativos') return;
 
                     let segmentDesc = `<li><strong>${segmentInfo.name}:</strong> `;
@@ -371,10 +458,10 @@
                     }
                 });
 
-                report += `<ul>${findingsText || '<li>Sin evidencia de enfermedad coronaria obstructiva.</li>'}</ul>`;
+        report += `<ul>${findingsText || '<li>Sin evidencia de enfermedad coronaria obstructiva.</li>'}</ul>`;
 
 
-                report += `
+        report += `
                     <h4>4. Anatomía y Función Cardíaca</h4>
                     <p>
                         La fracción de eyección del ventrículo izquierdo (FEVI) se encuentra <strong>${anatomy.ventriculo_izquierdo_fevi || 'conservada'}</strong>.
@@ -382,7 +469,7 @@
                     </p>
                 `;
 
-                report += `
+        report += `
                     <h4>5. Clasificación CAD-RADS™ 2.0</h4>
                     <p>
                     El estudio se clasifica como <strong>${cadRads.score || 'N/A'}</strong>.
@@ -391,7 +478,7 @@
                     </p>
                 `;
 
-                report += `
+        report += `
                     <h4>6. Conclusión</h4>
                     <p>${conclusion.texto_conclusion || 'No se generó conclusión.'}</p>
                 `;
@@ -399,19 +486,24 @@
                 return report;
             }
 
-            document.getElementById('written-report').innerHTML = generateWrittenReport(data);
+    document.getElementById('written-report-container').innerHTML = generateWrittenReport(data);
 
     // --- Download Button ---
     document.getElementById('download-btn').addEventListener('click', () => {
-        const html = '<!doctype html>
-' + document.documentElement.outerHTML;
+        // Clonar el documento para no modificar el original
+        const printDoc = document.cloneNode(true);
+        // Cargar data.js para que window.reportStructure esté disponible en el contexto del nuevo documento
+        const scriptTag = printDoc.createElement('script');
+        scriptTag.src = 'js/data.js'; 
+        printDoc.head.appendChild(scriptTag);
+
+        const html = '<!doctype html>\n' + printDoc.documentElement.outerHTML;
         const blob = new Blob([html], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Informe_AngioTC_${(patient.nombre || 'Paciente').replace(' ', '_')}.html`;
+        a.download = `Informe_AngioTC_${(patient.nombre || 'Paciente').replace(/\s+/g, '_')}.html`;
         a.click();
         URL.revokeObjectURL(url);
     });
 });
-    

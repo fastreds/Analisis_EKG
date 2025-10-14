@@ -28,12 +28,19 @@
             background: #fff;
         }
 
+        main {
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            align-items: flex-start;
+        }
+
         .logo {
             height: 50px;
         }
 
         h1,
-        h2,
+        h2, 
         h3 {
             color: var(--texto-principal);
             font-weight: 600;
@@ -51,21 +58,21 @@
             padding: 16px 20px;
             border: 1px solid var(--gris-borde);
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+            margin-bottom: 16px;
         }
 
-        .left {
+        .card:last-child {
+            margin-bottom: 0;
+        }
+
+        .main-column {
             flex: 1;
-            min-width: 320px
+            min-width: 0; /* Prevent flexbox overflow */
         }
 
-        .right {
-            width: 520px
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px
+        .sidebar-column {
+            width: 380px;
+            flex-shrink: 0;
         }
 
         table {
@@ -138,19 +145,11 @@
             background-color: #003a8c;
         }
         
-        .print-only {
-            display: none;
-        }
-
         /* Print styles */
         @media print {
             body {
                 background: #fff;
                 color: #000;
-            }
-            
-            header {
-                display: flex !important;
             }
 
             .no-print, .controls {
@@ -163,12 +162,12 @@
                 padding: 18px !important;
             }
 
-            .right {
+            .sidebar-column {
                 width: 40% !important;
             }
 
-            .left {
-                width: 58% !important;
+            .main-column {
+                width: 57% !important;
             }
 
             .card,
@@ -177,26 +176,17 @@
                 border: 1px solid #ccc;
                 page-break-inside: avoid;
             }
-
-            .print-only {
-                display: block;
+            
+            #written-report-container {
                 page-break-before: always;
-                padding: 24px;
             }
-            .print-only h3, .print-only h4 {
+            #written-report-container h3, #written-report-container h4 {
                 color: #000;
             }
-            .print-only p, .print-only li {
+            #written-report-container p, #written-report-container li {
                  font-size: 12pt;
                  line-height: 1.5;
             }
-        }
-
-        /* Coronary schematic */
-        .coronary-wrap {
-            background: #fff;
-            padding: 8px;
-            border-radius: 8px
         }
 
         svg.heart {
@@ -204,11 +194,71 @@
             height: 360px
         }
 
+        .coronary-svg-container {
+            background-color: var(--gris-fondo);
+            border-radius: 8px;
+            min-height: 280px; /* Asegura una altura mínima razonable */
+            width: 100%;
+        }
+        .segment-path {
+            fill: none;
+            stroke-width: 6px; /* Aumentado para coincidir con el croquis original */
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.3s ease;
+            filter: url(#filtro-tubo);
+        }
+        .segment-path.stenosis-0 { stroke: #32be16; } /* Normal - verde claro */
+        .segment-path.stenosis-1 { stroke: var(--verde); } /* Mínima - verde oscuro */
+        .segment-path.stenosis-2 { stroke: var(--amarillo); }
+        .segment-path.stenosis-3 { stroke: var(--naranja); }
+        .segment-path.stenosis-4 { stroke: var(--rojo); }
+
+        .plaque-marker {
+            stroke: white;
+            stroke-width: 1px;
+            pointer-events: none;
+        }
+        .plaque-marker.stenosis-0 { fill: #32be16; }
+        .plaque-marker.stenosis-1 { fill: var(--verde); }
+        .plaque-marker.stenosis-2 { fill: var(--amarillo); }
+        .plaque-marker.stenosis-3 { fill: var(--naranja); }
+        .plaque-marker.stenosis-4 { fill: var(--rojo); }
+
+        .stent-marker {
+            fill: none;
+            stroke-width: 8px;
+            stroke: var(--azul);
+            stroke-dasharray: 1 5;
+            stroke-linecap: round;
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .stent-circle-marker {
+            fill: none;
+            stroke: var(--azul);
+            stroke-width: 1px;
+        }
+
+        .bridge-marker {
+            fill: none;
+            stroke: #9ca3af;
+            stroke-width: 12px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .aneurysm-marker {
+            fill: var(--rojo);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
         .legend {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-            margin-top: 8px
+            margin-top: 16px;
         }
 
         .legend .item {
@@ -223,6 +273,64 @@
             height: 12px;
             border-radius: 3px
         }
+
+        .legend .sw-symbol {
+            width: 18px;
+            height: 12px;
+        }
+
+        .patient-header { margin-bottom: 16px; }
+        .patient-info { display: flex; justify-content: space-between; align-items: flex-start; }
+        .patient-info h2 { margin: 4px 0 6px; font-size: 24px; }
+        .meta-info { margin-top: 12px; }
+        .patient-id-risk { text-align: right; }
+        .risk-factors-container { margin-top: 8px; }
+        #risk-factors { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin-top: 6px; }
+        .risk-factor { background-color: var(--gris-borde); color: var(--texto-secundario); font-size: 12px; padding: 3px 8px; border-radius: 12px; }
+        
+        .chart-container { position: relative; text-align: center; }
+        .chart-label { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); }
+
+        .bar-container { margin-top: 12px; }
+        .bar-bg { height: 14px; background: var(--gris-borde); border-radius: 8px; overflow: hidden; }
+        .bar-fg { height: 100%; width: 0%; background: linear-gradient(90deg, var(--amarillo), var(--rojo)); }
+        .bar-label { margin-top: 6px; }
+
+        .calcium-grid { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
+        .calcium-summary { text-align: center; }
+        .total-score { font-size: 28px; font-weight: 700; }
+        .calcium-pie-chart { position: relative; height: 100px; width: 100px; }
+        .calcium-bar-chart { margin-top: 16px; height: 140px; }
+        .calcium-legend { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--gris-borde); justify-content: center; }
+
+        .detail-item strong { font-weight: 600; }
+
+        .cad-rads-summary { display: flex; align-items: center; gap: 16px; }
+        .cad-rads-score { font-size: 28px; font-weight: 700; color: var(--azul-vivit); flex-shrink: 0; }
+        .cad-rads-details p { margin-top: 4px; }
+
+        .grid-summaries {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+        .fevi-chart-container {
+            height: 100px;
+        }
+
+        @media (max-width: 768px) {
+            main { flex-direction: column; }
+            .main-column, .sidebar-column { width: 100%; max-width: 100%; }
+            .grid-summaries { grid-template-columns: 1fr; }
+            .calcium-grid { grid-template-columns: 1fr; }
+        }
+
+        .report-full-width-container {
+            padding: 0 24px 24px 24px;
+            text-align: justify;
+        }
+
 
         footer {
             padding: 18px;

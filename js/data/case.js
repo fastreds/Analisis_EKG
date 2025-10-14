@@ -1,5 +1,5 @@
 export const sampleCases = {
-    case1: { // Caso Normal
+    caso_normal: {
         datos_paciente: {
             nombre: 'Juan Pérez',
             id_paciente: '1-1234-5678',
@@ -98,7 +98,7 @@ export const sampleCases = {
             texto_conclusion: 'Estudio de angiotomografía coronaria sin evidencia de enfermedad aterosclerótica. Score de calcio de 0. Anatomía coronaria sin variantes anómalas.'
         }
     },
-    case2: { // Caso Patológico
+    caso_patologico_moderado: {
         datos_paciente: {
             nombre: 'Ana Rodríguez',
             id_paciente: '9-8765-4321',
@@ -207,7 +207,7 @@ export const sampleCases = {
             texto_conclusion: 'Enfermedad coronaria no obstructiva significativa con placa moderada en ADA proximal. Stent en CD proximal permeable. FEVI levemente deprimida.'
         }
     },
-    case3: { // Caso Complejo y Severo
+    caso_severo: {
         datos_paciente: {
             nombre: 'Carlos Mendoza',
             id_paciente: '8-4567-1234',
@@ -334,7 +334,7 @@ export const sampleCases = {
         }
     },
 
-    case4: { // Caso Severo - Enfermedad de Tres Vasos con Disfunción Ventricular
+    caso_disfuncion_ventricular: {
         datos_paciente: {
             nombre: 'María Elena Soto',
             id_paciente: '2-9876-5432',
@@ -435,7 +435,7 @@ export const sampleCases = {
         }
     },
 
-    case5: { // Caso Crítico - Emergencia Compleja con Múltiples Complicaciones
+    caso_critico: {
         datos_paciente: {
             nombre: 'Roberto Jiménez',
             id_paciente: '5-4321-6789',
@@ -533,6 +533,110 @@ export const sampleCases = {
         },
         conclusion: {
             texto_conclusion: 'SÍNDROME AÓRTICO AGUDO CON DISECCIÓN AÓRTICA TIPO A Y COMPROMISO CORONARIO SEVERO. ENFERMEDAD CORONARIA TERMINAL CON OCLUSIONES MÚLTIPLES (TCI 100%, DA 100%) Y ESTENOSIS CRÍTICAS EN VASOS REMANENTES (CX 95%, CD 90%). ANEURISMA GIGANTE DE AORTA ASCENDENTE (68 mm) CON DISECCIÓN. SHOCK CARDIOGÉNICO ESTABLECIDO CON FEVI <30%. TROMBOS INTRACARDÍACOS MÚLTIPLES Y EMBOLISMO PULMONAR. EMERGENCIA QUIRÚRGICA DE MÁXIMA URGENCIA CON PRONÓSTICO EXTREMADAMENTE RESERVADO.'
+        }
+    },
+
+    caso_completo: { // Caso para probar todas las funcionalidades
+        datos_paciente: {
+            nombre: 'Auditoría Completa',
+            id_paciente: '0-0000-0000',
+            edad: '62',
+            genero: 'Masculino',
+            peso: '88',
+            talla: '175'
+        },
+        informacion_clinica: {
+            indicacion: 'Test de ciclo completo de guardado y carga',
+            factores_riesgo: ['Hipertensión arterial', 'Tabaquismo']
+        },
+        protocolo_estudio: {
+            fecha_estudio: '2025-10-01',
+            medico_referente: 'Dr. A. Uditor',
+            medico_especialidad: 'Cardiología',
+            equipo: "Canon Aquilion 160 cortes",
+            adquisicion: "Retrospectivo",
+            calidad_imagen: "Excelente"
+        },
+        score_calcio: {
+            tci: '10',
+            da: '20',
+            cx: '30',
+            cd: '40',
+            total: '100',
+            percentil: '50-75'
+        },
+        anatomia_general: {
+            origen_arterias: 'Anómalo',
+            anomalo_details: {
+                tipo_anomalia: ['Origen en seno coronario opuesto'],
+                seno_opuesto_details: {
+                    vaso_anomalo: 'ACD naciendo de Seno Izquierdo',
+                    trayecto_anomalo: 'Interarterial (entre Aorta y Pulmonar)'
+                }
+            },
+            dominancia: 'Dominancia Derecha',
+            ramificacion_tci: 'Bifurcación (en ADA y ACx)',
+            terminacion_ada: 'Tipo 2 (Llega hasta el ápex)'
+        },
+        evaluacion_segmento: {
+            segments: {
+                '6': { // pADA - Múltiples hallazgos
+                    estado_general: 'Con hallazgos patológicos',
+                    findings: {
+                        placas: [
+                            { composicion: 'No calcificada (blanda)', estenosis: 'Leve (25-49%)', has_hrp: [], comentario_placa: 'Placa 1' },
+                            { composicion: 'Calcificada', estenosis: 'Moderada (50-69%)', has_hrp: ['Remodelado Positivo'], comentario_placa: 'Placa 2' }
+                        ],
+                        stents: [
+                            { evaluacion: 'Permeable, sin reestenosis significativa', comentario_stent: 'Stent proximal' }
+                        ],
+                        has_puente: false,
+                        has_aneurisma: false
+                    }
+                },
+                '11': { // pACx - Stent con reestenosis
+                    estado_general: 'Con hallazgos patológicos',
+                    findings: {
+                        stents: [{
+                            evaluacion: 'Con reestenosis intra-stent',
+                            reestenosis_details: { grado: 'Moderada 50-69%', tipo: 'Focal' },
+                            comentario_stent: 'Reestenosis en stent de CX'
+                        }],
+                        has_puente: false,
+                        has_aneurisma: false
+                    }
+                },
+                '2': { // mACD - Puente y Aneurisma
+                    estado_general: 'Con hallazgos patológicos',
+                    findings: {
+                        has_puente: true,
+                        puente_details: { profundidad: 'Superficial', compresion: 'Leve <50%' },
+                        has_aneurisma: true,
+                        aneurisma_details: { diametro: '7' }
+                    }
+                },
+                '7': { // mADA - No valorable
+                    estado_general: 'No valorable',
+                    findings: null
+                }
+            }
+        },
+        bypass: {
+            antecedentes_bypass: 'Sí',
+            grafts_container: [
+                { tipo_conducto: 'Arteria Mamaria Interna Izquierda (LIMA)', anastomosis_proximal: 'In situ', anastomosis_distal: 'Segmento 7', estado_injerto: 'Permeable, sin estenosis' }
+            ]
+        },
+        cad_rads: {
+            score: 'CAD-RADS 3',
+            modifiers: ['S (Stent)', 'G (Bypass)'],
+            description: 'Test case'
+        },
+        evaluacion_extracardiaca: {
+            hallazgos: ['Hernia hiatal']
+        },
+        conclusion: {
+            texto_conclusion: 'Este es un caso de prueba para la auditoría.'
         }
     }
 
