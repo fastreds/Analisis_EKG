@@ -322,12 +322,6 @@ export function initCoronarySketch() {
         d3.selectAll('svg').selectAll('.segment-group').remove();
 
         segmentsData.forEach(seg => {
-            const formSegment = document.getElementById(`form-segment-${seg.id}`);
-            if (formSegment) {
-                const shouldShow = seg.dominance.includes(currentDominanceKey);
-                formSegment.style.display = shouldShow ? '' : 'none';
-            }
-
             if (seg.dominance.includes(currentDominanceKey)) {
                 const svg = d3.select(`svg:not(.hidden)`);
                 const group = svg.append('g').attr('id', `g-segment-${seg.id}`).attr('class', 'segment-group');

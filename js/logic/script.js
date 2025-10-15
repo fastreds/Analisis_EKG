@@ -143,38 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             } else if (section.type === 'segmented_group') {
-                // This section is now handled below, after the main loop
-            } else {
-                // This handles sections with a 'fields' array
-                if (sectionData) {
-                    Object.entries(sectionData).forEach(([key, value]) => {
-                        if ((value && value.length !== 0) || (key === 'total' && value !== '')) {
-                            const field = section.fields.find(f => f.id === key);
-                            if (field) {
-                                if (Array.isArray(value)) {
-                                    sectionHtml += `<p><strong>${field.label}:</strong> ${value.join(', ')}</p>`;
-                                } else {
-                                    sectionHtml += `<p><strong>${field.label}:</strong> ${value}${field.detail ? ` ${field.detail}` : ''}</p>`;
-                                }
-                                sectionHasContent = true;
-                            }
-                        }
-                    });
-                }
-            }
-
-            if (sectionHasContent) {
-                html += `<h3 class="report-title-clickable" data-scroll-to="form-section-${section.id}">${section.title}</h3>${sectionHtml}`;
-                hasContent = true;
-            }
-        });
-
+               
         // Add segment evaluation text
         const segmentData = data.evaluacion_segmento?.segments;
         if (segmentData) {
             const segmentSection = reportStructure.find(s => s.id === 'evaluacion_segmento');
             if (segmentSection) {
-                let segmentText = `<h3 class="text-lg font-semibold mb-2">${segmentSection.title}</h3>`;
+                let segmentText = `<h3 class="report-title-clickable" data-scroll-to="form-section-${segmentSection.id}">${segmentSection.title}</h3>`;
                 let findingsFound = false;
                 segmentSection.segments.forEach(segmentInfo => {
                     const segmentId = segmentInfo.id;
@@ -207,6 +182,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasContent = true;
             }
         }
+            } else {
+                // This handles sections with a 'fields' array
+                if (sectionData) {
+                    Object.entries(sectionData).forEach(([key, value]) => {
+                        if ((value && value.length !== 0) || (key === 'total' && value !== '')) {
+                            const field = section.fields.find(f => f.id === key);
+                            if (field) {
+                                if (Array.isArray(value)) {
+                                    sectionHtml += `<p><strong>${field.label}:</strong> ${value.join(', ')}</p>`;
+                                } else {
+                                    sectionHtml += `<p><strong>${field.label}:</strong> ${value}${field.detail ? ` ${field.detail}` : ''}</p>`;
+                                }
+                                sectionHasContent = true;
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (sectionHasContent) {
+                html += `<h3 class="report-title-clickable" data-scroll-to="form-section-${section.id}">${section.title}</h3>${sectionHtml}`;
+                hasContent = true;
+            }
+        });
+
 
 
         reportOutput.innerHTML = html;
@@ -395,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (section.type === 'segmented_group') {
                 section.segments.forEach(segment => {
+                
                     formHtml += `<div id="form-segment-${segment.id}" class="segment-container border-b pb-4 mb-4">
                         <h4 class="font-semibold text-blue-800 mb-2">${segment.name}</h4>
                         <div class="pl-2">`;
@@ -406,9 +407,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (section.fields) { // Solo procesar si la sección tiene un array de 'fields'
                 section.fields.forEach(field => {
                     formHtml += buildField(field, section.id);
+                   
                 });
             } else {
                 // Ignorar secciones que no tienen 'fields' ni son 'segmented_group'
+            
+
+                
             }
             formHtml += `</div></div>`;
         });
@@ -527,6 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData[section.id] = { segments: {} };
                 section.segments.forEach(segment => {
                     const segmentContainer = document.getElementById(`form-segment-${segment.id}`);
+             
                     if (segmentContainer) {
                         const segmentData = {};
                         section.template.forEach(field => {

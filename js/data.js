@@ -439,7 +439,7 @@ export const reportStructure = [{
     type: "segmented_group",
     segments: [
       // Arteria Coronaria Derecha (ACD)
-    { "id": 1, "name": "Segmento 1: ACD, Proximal (pACD)" },
+    { "id": 1, "name": "Segmendto 1: ACD, Proximal (pACD)" },
     { "id": 2, "name": "Segmento 2: ACD, Media (mACD)" },
     { "id": 21, "name": "Segmento 2.1: Rama Marginal Aguda (RMA)" },
     { "id": 3, "name": "Segmento 3: ACD, Distal (dACD)" },
@@ -459,13 +459,13 @@ export const reportStructure = [{
 
     // Arteria Circunfleja (ACx) y Ramas
     { "id": 11, "name": "Segmento 11: ACx, Proximal (pACx)" },
-    { "id": 125, "name": "Segmento 12.5: Rama Intermedia (RI)" },
+    { "id": 123, "name": "Segmento 12.3: Rama Intermedia (RI)" },
     { "id": 12, "name": "Segmento 12: Primera Obtusa Marginal (OM1)" },
     { "id": 121, "name": "Segmento 12.1: Segunda Obtusa Marginal (OM2)" },
     { "id": 122, "name": "Segmento 12.2: Tercera Obtusa Marginal (OM3)" },
     { "id": 13, "name": "Segmento 13: ACx, Distal (dACx)" },
     { "id": 14, "name": "Segmento 14: Rama Posterolateral Izquierda (RPLI)" },
-    { "id": 15, "name": "Segmento 15: Descendente Posterior Izquierda (DPI)" }
+    { "id": 15, "name": "Segmento 15: Descendente Posterior Izquierda (DPI)" },
     ],
     template: [
         {
