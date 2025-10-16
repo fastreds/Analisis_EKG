@@ -95,14 +95,14 @@ export function initCoronarySketch() {
              if (stentContainer && stentContainer.querySelector('.repeat-item')) {
                 const pathNode = path.node();
                 const totalLength = pathNode.getTotalLength();
-                const numCircles = Math.floor(totalLength / 10); // Un círculo cada 10px
+                const numCircles = Math.floor(totalLength / 8); // Un círculo cada 8px para mayor densidad
                 for (let i = 0; i <= numCircles; i++) {
                     const point = pathNode.getPointAtLength(i * (totalLength / numCircles));
                     group.append('circle')
                         .attr('class', 'stent-circle-marker')
                         .attr('cx', point.x)
                         .attr('cy', point.y)
-                        .attr('r', 4); // Radio de los círculos del stent
+                        .attr('r', 3.5); // Radio de los círculos del stent
                 }
             }
 
@@ -374,19 +374,21 @@ export function initCoronarySketch() {
             { class: 'stenosis-3', label: 'Moderada (50-69%)' },
             { class: 'stenosis-4', label: 'Severa/Oclusión (≥70%)' },
             { symbol: 'stent', label: 'Stent' },
+            { symbol: 'plaque', label: 'Placa' },
             { symbol: 'bridge', label: 'Puente Miocárdico' },
             { symbol: 'aneurysm', label: 'Aneurisma' },
         ];
         const container = document.getElementById('legend-container');
         if (!container) return;
-        let html = '<h4 class="font-semibold text-center mb-2">Simbología</h4><div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">';
+        let html = '<h4 class="font-semibold text-center mb-2">Simbología</h4><div class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">';
         legendData.forEach(item => {
             html += '<div class="flex items-center">';
             if (item.class) {
                 html += `<div class="w-4 h-4 rounded-full mr-2 legend-swatch ${item.class}"></div>`;
             } else {
                 html += `<svg class="w-4 h-4 mr-2" viewBox="0 0 20 20">`;
-                if(item.symbol === 'stent') html += `<path d="M0 10 H 20" class="stent-marker" stroke-width="5"/>`;
+                if(item.symbol === 'stent') html += `<circle cx="10" cy="10" r="8" class="stent-circle-marker" stroke-width="2"/>`;
+                if(item.symbol === 'plaque') html += `<circle cx="10" cy="10" r="5" class="plaque-marker stenosis-4"/>`;
                 if(item.symbol === 'bridge') html += `<path d="M0 10 H 20" class="bridge-marker" stroke-width="8"/>`;
                 if(item.symbol === 'aneurysm') html += `<circle cx="10" cy="10" r="8" class="aneurysm-marker"/>`;
                 html += `</svg>`;

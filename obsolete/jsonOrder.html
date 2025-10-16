@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prueba: Compactar JSON (una línea por objeto)</title>
+  <style>
+    body { 
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
+      background:#f7fafc; color:#0f172a; padding:20px; 
+      max-width: 1400px; margin: 0 auto;
+    }
+    h1 { margin:0 0 12px 0; font-size:20px; }
+    .grid { 
+      display:grid; 
+      gap:12px; 
+      grid-template-columns:1fr 1fr; 
+      margin-top: 10px;
+    }
+    textarea { 
+      width:100%; 
+      height:320px; 
+      padding:10px; 
+      font-family: monospace; 
+      font-size:13px; 
+      border:1px solid #cbd5e1; 
+      border-radius:6px; 
+      resize:vertical; 
+      background:#fff; 
+      box-sizing: border-box;
+    }
+    .controls { 
+      display:flex; 
+      gap:8px; 
+      flex-wrap:wrap; 
+      margin-top: 8px;
+    }
+    button { 
+      background:#0369a1; 
+      color:white; 
+      border:none; 
+      padding:8px 12px; 
+      border-radius:6px; 
+      cursor:pointer; 
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background:#0284c7;
+    }
+    button.secondary { background:#64748b; }
+    button.secondary:hover { background:#475569; }
+    button.success { background:#059669; }
+    button.success:hover { background:#047857; }
+    pre { 
+      background:#0f172a; 
+      color:#e6eef8; 
+      padding:12px; 
+      border-radius:6px; 
+      overflow:auto; 
+      max-height:420px; 
+      white-space:pre; 
+      margin-top: 0;
+      font-size: 13px;
+    }
+    .small { font-size:13px; color:#475569; }
+    footer { margin-top:14px; font-size:13px; color:#475569; }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 6px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .output-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .input-section, .output-section {
+      display: flex;
+      flex-direction: column;
+    }
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Prueba — Compactar JSON: "una línea por objeto"</h1>
+  <p class="small">Pega aquí tu array (JSON o <code>export const name = [...]</code>) y pulsa <strong>Compactar</strong>. No se modificarán los valores, sólo el formato.</p>
+
+  <div class="grid">
+    <div class="input-section">
+      <label><strong>Entrada (pega tu array aquí):</strong></label>
+      <textarea id="inputArea" spellcheck="false" placeholder="Pega tu array JSON aquí...">
+// Ejemplo corto por defecto — reemplázalo con tu array completo
+[
+  { "id": 1, "name": "CDp" },
+  { "id": 2, "name": "CDm" },
+  { "id": 3, "name": "CDd" }
+]
+      </textarea>
+
+      <div class="controls">
+        <button id="compactBtn">Compactar — 1 línea por objeto</button>
+        <button id="prettyBtn" class="secondary">Formatear bonito (indent)</button>
+        <button id="exportJsBtn" class="secondary">Mantener export const = [...]</button>
+        <button id="downloadBtn" class="secondary">Descargar resultado (.json)</button>
+        <button id="clearBtn" class="secondary">Limpiar</button>
+      </div>
+      <p class="small">Nota: si pegas código con <code>export const nombre = [...]</code>, el botón <em>Export</em> intentará preservar el <code>export const nombre =</code> en la salida.</p>
+    </div>
+
+    <div class="output-section">
+      <div class="section-header">
+        <label><strong>Salida / Resultado:</strong></label>
+        <div class="output-controls">
+          <button id="copyBtn" class="success">Copiar resultado</button>
+        </div>
+      </div>
+      <pre id="outputPre">Aquí aparecerá el resultado.</pre>
+    </div>
+  </div>
+
+  <div id="notification" class="notification">¡Copiado al portapapeles!</div>
+
+  <footer>
+    <span class="small">Hecho: compacta arrays sin cambiar valores. Ahora cada objeto queda en su propia línea 👌</span>
+  </footer>
+
+  <script>
+    const input = document.getElementById('inputArea');
+    const out = document.getElementById('outputPre');
+    const compactBtn = document.getElementById('compactBtn');
+    const prettyBtn = document.getElementById('prettyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const exportJsBtn = document.getElementById('exportJsBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const notification = document.getElementById('notification');
+
+    // Función para mostrar notificaciones
+    function showNotification(message) {
+      notification.textContent = message;
+      notification.classList.add('show');
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 2000);
+    }
+
+    // Función para extraer el prefijo de exportación
+    function extractExportPrefix(text) {
+      const m = text.match(/^([\s\S]*?export\s+const\s+([A-Za-z0-9_$]+)\s*=\s*)?([\s\S]*)$/);
+      return { prefix: m[1] || '', name: m[2] || null, body: m[3] || text };
+    }
+
+    // Función para intentar parsear JSON
+    function tryParseJsonish(raw) {
+      let s = raw.trim();
+      const { prefix, body } = extractExportPrefix(s);
+      let candidate = body.trim().replace(/;$/, '');
+      try {
+        const parsed = JSON.parse(candidate);
+        return { parsed, prefix };
+      } catch (e) {
+        const firstBracket = candidate.indexOf('[');
+        if (firstBracket >= 0) {
+          let depth = 0; let endIdx = -1;
+          for (let i = firstBracket; i < candidate.length; i++) {
+            if (candidate[i] === '[') depth++;
+            else if (candidate[i] === ']') {
+              depth--;
+              if (depth === 0) { endIdx = i; break; }
+            }
+          }
+          if (endIdx > firstBracket) {
+            const arrText = candidate.slice(firstBracket, endIdx + 1);
+            try {
+              const parsed = JSON.parse(arrText);
+              return { parsed, prefix };
+            } catch {
+              throw new Error('No se pudo parsear el array. Revisa que el JSON sea válido.');
+            }
+          }
+        }
+        throw new Error('JSON inválido. Revisa la sintaxis.');
+      }
+    }
+
+    // 💡 Aquí está la mejora: cada objeto en su propia línea
+    function compactOneLinePerObject(arr) {
+      const elements = arr.map(o => JSON.stringify(o));
+      return '[\n' + elements.join(',\n') + '\n]';
+    }
+
+    // Función para procesar y mostrar el resultado
+    function processInput(processor) {
+      try {
+        const { parsed, prefix } = tryParseJsonish(input.value);
+        if (!Array.isArray(parsed)) {
+          out.textContent = '⚠️ El contenido no es un array. Proporciona un array de objetos.';
+          return;
+        }
+        const result = processor(parsed);
+        out.textContent = prefix ? `${prefix}${result};` : result;
+        showNotification('¡Procesado correctamente!');
+      } catch (err) {
+        out.textContent = 'Error: ' + err.message;
+        showNotification('Error: ' + err.message);
+      }
+    }
+
+    // Función para copiar al portapapeles
+    function copyToClipboard() {
+      const text = out.textContent;
+      if (!text || text === 'Aquí aparecerá el resultado.') {
+        showNotification('No hay contenido para copiar');
+        return;
+      }
+      
+      navigator.clipboard.writeText(text).then(() => {
+        showNotification('¡Copiado al portapapeles!');
+      }).catch(err => {
+        // Fallback para navegadores más antiguos
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          showNotification('¡Copiado al portapapeles!');
+        } catch (e) {
+          showNotification('Error al copiar: ' + e);
+        }
+        document.body.removeChild(textArea);
+      });
+    }
+
+    // Función para limpiar el área de entrada
+    function clearInput() {
+      input.value = '';
+      out.textContent = 'Aquí aparecerá el resultado.';
+      input.focus();
+      showNotification('Área limpiada');
+    }
+
+    // Event Listeners
+    compactBtn.addEventListener('click', () => {
+      processInput(compactOneLinePerObject);
+    });
+
+    prettyBtn.addEventListener('click', () => {
+      processInput(arr => JSON.stringify(arr, null, 2));
+    });
+
+    exportJsBtn.addEventListener('click', () => {
+      try {
+        const { parsed, prefix, name } = (function(){
+          const r = extractExportPrefix(input.value.trim());
+          try {
+            return { parsed: JSON.parse(r.body.replace(/;$/, '')), prefix: r.prefix, name: r.name };
+          } catch(e){ return { parsed: null, prefix: r.prefix, name: r.name }; }
+        })();
+        if (!parsed) {
+          out.textContent = '⚠️ No pude parsear el body como JSON.';
+          return;
+        }
+        const compact = compactOneLinePerObject(parsed);
+        out.textContent = prefix ? `${prefix}${compact};` : `export const data = ${compact};`;
+        showNotification('Export JS procesado correctamente');
+      } catch (err) {
+        out.textContent = 'Error: ' + err.message;
+        showNotification('Error: ' + err.message);
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const text = out.textContent || '';
+      if (!text || text === 'Aquí aparecerá el resultado.') { 
+        showNotification('No hay resultado para descargar.');
+        return; 
+      }
+      const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'resultado.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showNotification('¡Archivo descargado!');
+    });
+
+    copyBtn.addEventListener('click', copyToClipboard);
+    
+    clearBtn.addEventListener('click', clearInput);
+
+    input.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') compactBtn.click();
+    });
+
+    // Mejora: Autoenfoque en el área de entrada al cargar la página
+    input.focus();
+    input.setSelectionRange(0, 0);
+  </script>
+</body>
+</html>
