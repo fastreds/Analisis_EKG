@@ -3,10 +3,10 @@ export const sampleCases = {
         datos_paciente: {
             nombre: 'Juan Pérez',
             id_paciente: '1-1234-5678',
-            edad: '55',
+            edad: 55,
             genero: 'Masculino',
-            peso: '75',
-            talla: '170'
+            peso: 75,
+            talla: 170
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-28',
@@ -17,8 +17,8 @@ export const sampleCases = {
             adquisicion: "Prospectivo",
             ecg_gating_detalles: "Ritmo sinusal estable",
             medio_contraste: "Ultravist 370",
-            contraste_iv: "70 ml",
-            velocidad_infusion: "5 ml/s",
+            contraste_iv: 70,
+            velocidad_infusion: 5,
             ritmo_estudio: "Ritmo sinusal normal",
             calidad_imagen: "Excelente"
         },
@@ -30,7 +30,7 @@ export const sampleCases = {
             descripcion_referencia: "Evaluación de riesgo cardiovascular en paciente con dolor torácico no característico.",
             consentimiento_informado: "Consentimiento informado obtenido.",
             tolerancia_estudio: "Buena tolerancia, sin reacciones adversas al medio contraste",
-            fc_durante_estudio: "60 lpm",
+            fc_durante_estudio: 60,
             medicamentos_usados: [],
             analisis_imagenes: "Vitrea"
         },
@@ -54,21 +54,21 @@ export const sampleCases = {
             cuspidies: "3 cúspides de conformación Normal",
             calcificaciones: "NO PRESENTA",
             morfologia_anillo: "Elíptica",
-            diametro_menor_anillo: "22",
-            diametro_mayor_anillo: "25",
-            senos_valsalva_diametro: "32",
+            diametro_menor_anillo: 22,
+            diametro_mayor_anillo: 25,
+            senos_valsalva_diametro: 32,
             senos_valsalva_observaciones: "NORMAL",
-            union_sinotubular_diametro: "28",
+            union_sinotubular_diametro: 28,
             union_sinotubular_observaciones: "NORMAL",
-            porcion_tubular_ascendente_diametro: "34",
+            porcion_tubular_ascendente_diametro: 34,
             porcion_tubular_ascendente_observaciones: "NORMAL"
         },
         score_calcio: {
-            tci: '0',
-            da: '0',
-            cx: '0',
-            cd: '0',
-            total: '0',
+            tci: 0,
+            da: 0,
+            cx: 0,
+            cd: 0,
+            total: 0,
             percentil: '<25'
         },
         anatomia_general: {
@@ -78,7 +78,7 @@ export const sampleCases = {
             terminacion_ada: 'Tipo 2 (Llega hasta el ápex)'
         },
         evaluacion_segmento: {
-            segments: {} // Todos los segmentos usarán su valor por defecto "Sin hallazgos"
+            segments: {}
         },
         bypass: {
             antecedentes_bypass: 'No'
@@ -90,22 +90,16 @@ export const sampleCases = {
         },
         evaluacion_extracardiaca: {
             hallazgos: ['Sin hallazgos patológicos significativos']
-        },
-        comentarios_adicionales: {
-            texto: 'Estudio normal, sin evidencia de enfermedad coronaria.'
-        },
-        conclusion: {
-            texto_conclusion: 'Estudio de angiotomografía coronaria sin evidencia de enfermedad aterosclerótica. Score de calcio de 0. Anatomía coronaria sin variantes anómalas.'
         }
     },
     caso_patologico_moderado: {
         datos_paciente: {
             nombre: 'Ana Rodríguez',
             id_paciente: '9-8765-4321',
-            edad: '68',
+            edad: 68,
             genero: 'Femenino',
-            peso: '82',
-            talla: '160'
+            peso: 82,
+            talla: 160
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-27',
@@ -116,8 +110,8 @@ export const sampleCases = {
             adquisicion: "Retrospectivo",
             ecg_gating_detalles: "Frecuencia cardíaca variable",
             medio_contraste: "Omnipaque 350",
-            contraste_iv: "80 ml",
-            velocidad_infusion: "4 ml/s",
+            contraste_iv: 80,
+            velocidad_infusion: 4,
             ritmo_estudio: "Ritmo sinusal normal",
             calidad_imagen: "Buena"
         },
@@ -129,16 +123,45 @@ export const sampleCases = {
             descripcion_referencia: "Paciente programada para reemplazo de cadera, con múltiples factores de riesgo cardiovascular.",
             consentimiento_informado: "Consentimiento informado obtenido.",
             tolerancia_estudio: "Buena tolerancia, sin reacciones adversas al medio contraste",
-            fc_durante_estudio: "75 lpm",
+            fc_durante_estudio: 75,
             medicamentos_usados: ["Beta-bloqueadores"],
             analisis_imagenes: "Syngo.via"
         },
+        anatomia_cardiovascular: {
+            venas_cavas: ["Ambas no dilatadas drenando en la aurícula derecha"],
+            auricula_derecha: "No dilatada",
+            septum_interauricular: "No se visualizan defectos",
+            seno_coronario: "Drenando a la AD en forma habitual sin dilatación o anomalías",
+            valvula_tricuspide: "No se visualizan defectos por este método",
+            ventriculo_derecho: "No dilatado ni hipertrófico",
+            arteria_pulmonar: "Diámetro Normal",
+            venas_pulmonares: "Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas",
+            auricula_izquierda: "No se observan trombos en la orejuela izquierda, ni masas o lesiones intracardiacas",
+            ventriculo_izquierdo_size: "No dilatado",
+            ventriculo_izquierdo_hipertrofia: "Ninguna",
+            ventriculo_izquierdo_motilidad: "Global y regional conservada",
+            ventriculo_izquierdo_fevi: "Levemente reducida (45-54%)",
+            hallazgos_extracardiacos: "Ninguno"
+        },
+        valvula_aortica_diametros_aorta: {
+            cuspidies: "3 cúspides de conformación Normal",
+            calcificaciones: "NO PRESENTA",
+            morfologia_anillo: "Elíptica",
+            diametro_menor_anillo: 23,
+            diametro_mayor_anillo: 26,
+            senos_valsalva_diametro: 33,
+            senos_valsalva_observaciones: "NORMAL",
+            union_sinotubular_diametro: 29,
+            union_sinotubular_observaciones: "NORMAL",
+            porcion_tubular_ascendente_diametro: 42,
+            porcion_tubular_ascendente_observaciones: "DILATADO (>35 mm)"
+        },
         score_calcio: {
-            tci: '15',
-            da: '350',
-            cx: '120',
-            cd: '250',
-            total: '735',
+            tci: 15,
+            da: 350,
+            cx: 120,
+            cd: 250,
+            total: 735,
             percentil: '>90'
         },
         anatomia_general: {
@@ -149,48 +172,48 @@ export const sampleCases = {
         },
         evaluacion_segmento: {
             segments: {
-                '6': { // pADA
+                '6': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
                         placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'Moderada (50-69%)', has_hrp: ['Remodelado Positivo'], comentario_placa: 'Placa blanda en ADA proximal.' }],
+                        stents: [],
+                        has_puente: false,
+                        has_aneurisma: false
                     }
                 },
-                '1': { // pACD
+                '1': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
-                        stents: [{ evaluacion: 'Permeable, sin reestenosis significativa', comentario_stent: 'Stent permeable en CD proximal.' }]
+                        placas: [],
+                        stents: [{ evaluacion: 'Permeable, sin reestenosis significativa', comentario_stent: 'Stent permeable en CD proximal.' }],
+                        has_puente: false,
+                        has_aneurisma: false
                     }
                 },
-                '7': { // mADA
+                '7': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
+                        placas: [],
+                        stents: [],
                         has_puente: true,
-                        puente_details: {
-                            profundidad: 'Superficial',
-                            compresion: 'Leve <50%'
-                        }
+                        puente_details: { profundidad: 'Superficial', compresion: 'Leve <50%' },
+                        has_aneurisma: false
                     }
                 },
-                '11': { // pACx
+                '11': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
+                        placas: [],
+                        stents: [],
+                        has_puente: false,
                         has_aneurisma: true,
-                        aneurisma_details: {
-                            diametro: '6'
-                        }
+                        aneurisma_details: { diametro: 6 }
                     }
                 }
             }
         },
         bypass: {
             antecedentes_bypass: 'No'
-        },
-        anatomia_cardiovascular: {
-            ventriculo_izquierdo_fevi: "Levemente reducida (45-54%)"
-        },
-        valvula_aortica_diametros_aorta: {
-            porcion_tubular_ascendente_observaciones: "DILATADO (>35 mm)",
-            porcion_tubular_ascendente_diametro: "42"
         },
         cad_rads: {
             score: 'CAD-RADS 3',
@@ -199,25 +222,16 @@ export const sampleCases = {
         },
         evaluacion_extracardiaca: {
             hallazgos: ['Hernia hiatal']
-        },
-        comentarios_adicionales: {
-            texto: 'Se recomienda optimizar tratamiento médico antes de la cirugía de cadera.'
-        },
-        conclusion: {
-            texto_conclusion: 'Enfermedad coronaria no obstructiva significativa con placa moderada en ADA proximal. Stent en CD proximal permeable. FEVI levemente deprimida.'
         }
     },
     caso_severo: {
         datos_paciente: {
             nombre: 'Carlos Mendoza',
             id_paciente: '8-4567-1234',
-            edad: '72',
+            edad: 72,
             genero: 'Masculino',
-            peso: '94'
-        },
-         informacion_clinica: {
-            indicacion: 'Dolor torácico anginoso en reposo de 2 horas de evolución, con irradiación a brazo izquierdo y diaforesis. ECG con supradesnivel del ST en cara anterior',
-            factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Dislipidemia', 'Tabaquismo', 'Obesidad']
+            peso: 94,
+            talla: 172
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-29',
@@ -228,28 +242,32 @@ export const sampleCases = {
             adquisicion: "Retrospectivo",
             ecg_gating_detalles: "Taquicardia sinusal persistente con variabilidad respiratoria moderada",
             medio_contraste: "Ultravist 370",
-            contraste_iv: "95 ml",
-            velocidad_infusion: "6 ml/s",
+            contraste_iv: 95,
+            velocidad_infusion: 6,
             ritmo_estudio: "Taquicardia sinusal",
             calidad_imagen: "Diagnóstica"
         },
-         motivo_generalidades: {
+        informacion_clinica: {
+            indicacion: 'Dolor torácico anginoso en reposo de 2 horas de evolución, con irradiación a brazo izquierdo y diaforesis. ECG con supradesnivel del ST en cara anterior',
+            factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Dislipidemia', 'Tabaquismo', 'Obesidad']
+        },
+        motivo_generalidades: {
             descripcion_referencia: "Paciente con dolor torácico típico en reposo, marcadores de daño miocárdico elevados (Troponina I: 8.5 ng/mL), requiere evaluación urgente de arterias coronarias antes de posible intervención coronaria percutánea",
             consentimiento_informado: "Consentimiento informado de emergencia obtenido por riesgo vital inminente. Se explicaron riesgos de contraste y radiación versus beneficio diagnóstico crucial.",
             tolerancia_estudio: "Reacciones moderadas (vómitos, broncoespasmo)",
-            fc_durante_estudio: "105-120 lpm",
+            fc_durante_estudio: 112,
             medicamentos_usados: ["Nitroglicerina sublingual"],
             analisis_imagenes: "Vitrea"
         },
-         anatomia_cardiovascular: {
+        anatomia_cardiovascular: {
             venas_cavas: ["Ambas no dilatadas drenando en la aurícula derecha"],
-            auricula_derecha: "No dilatada",
+            auricula_derecha: "Dilatada",
             septum_interauricular: "No se visualizan defectos",
             seno_coronario: "Drenando a la AD en forma habitual sin dilatación o anomalías",
             valvula_tricuspide: "No se visualizan defectos por este método",
             ventriculo_derecho: "No dilatado ni hipertrófico",
             arteria_pulmonar: "Diámetro Normal",
-            venas_pulmonares: ["Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas"],
+            venas_pulmonares: "Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas",
             auricula_izquierda: "Dilatada",
             ventriculo_izquierdo_size: "Dilatado",
             ventriculo_izquierdo_hipertrofia: "Concéntrica moderada",
@@ -257,94 +275,85 @@ export const sampleCases = {
             ventriculo_izquierdo_fevi: "Severamente reducida (<30%)",
             hallazgos_extracardiacos: "Derrame pleural bilateral mínimo"
         },
-         valvula_aortica_diametros_aorta: {
+        valvula_aortica_diametros_aorta: {
             cuspidies: "3 cúspides de conformación Normal",
-            calcificaciones: "Moderada (400-1300 AU en mujeres, 1000-2000 AU en hombres)",
+            calcificaciones: "Moderada",
             morfologia_anillo: "Elíptica",
-            diametro_menor_anillo: "24",
-            diametro_mayor_anillo: "28",
-            senos_valsalva_diametro: "38",
-            senos_valsalva_indexado: "19",
-            senos_valsalva_referencia: "16±2 (15-18)",
-            senos_valsalva_aneurismatico: "24",
+            diametro_menor_anillo: 24,
+            diametro_mayor_anillo: 28,
+            senos_valsalva_diametro: 38,
             senos_valsalva_observaciones: "DILATADO",
-            union_sinotubular_diametro: "35",
-            union_sinotubular_indexado: "17",
-            union_sinotubular_referencia: "14±2 (13-15)",
-            union_sinotubular_aneurismatico: "21",
+            union_sinotubular_diametro: 35,
             union_sinotubular_observaciones: "DILATADO",
-            porcion_tubular_ascendente_diametro: "42",
-            porcion_tubular_ascendente_indexado: "21",
-            porcion_tubular_ascendente_referencia: "14±2 (13-17)",
-            porcion_tubular_ascendente_aneurismatico: "24",
+            porcion_tubular_ascendente_diametro: 42,
             porcion_tubular_ascendente_observaciones: "DILATADO (>35 mm)"
         },
         score_calcio: {
-            tci: '45',
-            da: '1250',
-            cx: '480',
-            cd: '890',
-            total: '2665',
+            tci: 45,
+            da: 1250,
+            cx: 480,
+            cd: 890,
+            total: 2665,
             percentil: '>90'
         },
         anatomia_general: {
+            origen_arterias: 'Normal',
             dominancia: 'Codominancia',
             ramificacion_tci: 'Trifurcación (presencia de Ramo Intermedio)',
             terminacion_ada: 'Tipo 3 ("Wraparound")'
         },
         evaluacion_segmento: {
             segments: {
-                '5': { // TCI
+                '5': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
-                        placas: [{ composicion: 'Parcialmente calcificada (mixta)', estenosis: 'Severa (70-99%)', has_hrp: ['Remodelado Positivo', 'Placa de Baja Atenuación'] }]
+                        placas: [{ composicion: 'Parcialmente calcificada (mixta)', estenosis: 'Severa (70-99%)', has_hrp: ['Remodelado Positivo', 'Placa de Baja Atenuación'] }],
+                        stents: [],
+                        has_puente: false,
+                        has_aneurisma: false
                     }
                 },
-                '6': { // pADA
+                '6': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
-                        placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'Oclusión total (100%)' }]
+                        placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'Oclusión total (100%)' }],
+                        stents: [],
+                        has_puente: false,
+                        has_aneurisma: false
                     }
                 },
-                '11': { // pACx
+                '11': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
+                        placas: [],
                         stents: [{ evaluacion: 'Con reestenosis intra-stent', reestenosis_details: { grado: 'Moderada 50-69%', tipo: 'Focal' } }],
+                        has_puente: false,
                         has_aneurisma: true,
-                        aneurisma_details: {
-                            diametro: '8'
-                        }
+                        aneurisma_details: { diametro: 8 }
                     }
                 }
             }
+        },
+        bypass: {
+            antecedentes_bypass: 'No'
         },
         cad_rads: {
             score: 'CAD-RADS 5',
             modifiers: ['V (Placa Vulnerable)'],
             description: 'Enfermedad coronaria multivaso severa con oclusión total de la DA proximal y estenosis críticas en TCI, CX y CD. Múltiples placas vulnerables con alto contenido lipídico y ulceraciones. Hallazgos compatibles con síndrome coronario agudo.'
         },
-         evaluacion_extracardiaca: {
+        evaluacion_extracardiaca: {
             hallazgos: ['Aneurisma/dilatación de aorta torácica', 'Derrame pleural']
-        },
-        comentarios_adicionales: {
-            texto: 'Paciente de alto riesgo con enfermedad coronaria extensa y severa. Se recomienda cateterismo cardíaco urgente y evaluación por cirugía cardíaca. Función ventricular severamente deprimida. Aorta ascendente dilatada que requiere seguimiento.'
-        },
-        conclusion: {
-            texto_conclusion: 'ENFERMEDAD CORONARIA MULTIVASO SEVERA CON OCUSIÓN TOTAL DE LA ARTERIA DESCENDENTE ANTERIOR PROXIMAL Y ESTENOSIS CRÍTICAS EN TRONCO CORONARIO IZQUIERDO (65%), CIRCUNFLEJA (85%) Y CORONARIA DERECHA (75%). FUNCIÓN VENTRICULAR IZQUIERDA SEVERAMENTE DEPRIMIDA (FEVI <30%) CON ACINESIA ANTERIOR. DILATACIÓN MODERADA DE AORTA ASCENDENTE (42 mm). HALLAZGOS COMPATIBLES CON SÍNDROME CORONARIO AGUDO EN EVOLUCIÓN. SE RECOMIENDA INTERVENCIÓN CORONARIA PERCUTÁNEA URGENTE Y EVALUACIÓN CARDIOLÓGICA INMEDIATA.'
         }
     },
-
     caso_disfuncion_ventricular: {
         datos_paciente: {
             nombre: 'María Elena Soto',
             id_paciente: '2-9876-5432',
-            edad: '65',
+            edad: 65,
             genero: 'Femenino',
-            peso: '78'
-        },
-        informacion_clinica: {
-            indicacion: 'Paciente con insuficiencia cardíaca clase NYHA III, disnea de esfuerzo progresiva, edemas en miembros inferiores. Evaluación de enfermedad coronaria como causa de disfunción ventricular.',
-            factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Dislipidemia', 'Obesidad', 'Sedentarismo']
+            peso: 78,
+            talla: 162
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-25',
@@ -355,33 +364,32 @@ export const sampleCases = {
             adquisicion: "Retrospectivo",
             ecg_gating_detalles: "Fibrilación auricular con respuesta ventricular rápida",
             medio_contraste: "Omnipaque 350",
-            contraste_iv: "80 ml",
-            velocidad_infusion: "5 ml/s",
+            contraste_iv: 80,
+            velocidad_infusion: 5,
             ritmo_estudio: "Fibrilación auricular",
             calidad_imagen: "Buena"
+        },
+        informacion_clinica: {
+            indicacion: 'Paciente con insuficiencia cardíaca clase NYHA III, disnea de esfuerzo progresiva, edemas en miembros inferiores. Evaluación de enfermedad coronaria como causa de disfunción ventricular.',
+            factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Dislipidemia', 'Obesidad', 'Sedentarismo']
         },
         motivo_generalidades: {
             descripcion_referencia: "Paciente con insuficiencia cardíaca descompensada, fracción de eyección reducida en ecocardiograma transtorácico (30-35%). Evaluar viabilidad miocárdica y enfermedad coronaria extensa.",
             consentimiento_informado: "Consentimiento informado obtenido tras explicar riesgos y beneficios. Paciente consciente de necesidad de posible revascularización quirúrgica.",
             tolerancia_estudio: "Buena tolerancia, sin reacciones adversas al medio contraste",
-            fc_durante_estudio: "90-110 lpm (fibrilación auricular)",
+            fc_durante_estudio: 100,
             medicamentos_usados: [],
             analisis_imagenes: "Syngo.via"
         },
-        anatomia_general: {
-            dominancia: 'Dominancia Derecha',
-            ramificacion_tci: 'Bifurcación (en ADA y ACx)',
-            terminacion_ada: 'Tipo 2 (Llega hasta el ápex)'
-        },
         anatomia_cardiovascular: {
-            venas_cavas: ["Dilatada superior o inferior"],
+            venas_cavas: ["Vena cava superior dilatada"],
             auricula_derecha: "Dilatada",
-            septum_interauricular: "Aneurisma septal",
+            septum_interauricular: "Aneurisma septal atrial",
             seno_coronario: "Dilatado",
             valvula_tricuspide: "Regurgitación funcional",
             ventriculo_derecho: "Dilatado",
             arteria_pulmonar: "Dilatada (>34 mm)",
-            venas_pulmonares: ["Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas"],
+            venas_pulmonares: "Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas",
             auricula_izquierda: "Dilatada",
             ventriculo_izquierdo_size: "Dilatado",
             ventriculo_izquierdo_hipertrofia: "Excéntrica",
@@ -391,134 +399,139 @@ export const sampleCases = {
         },
         valvula_aortica_diametros_aorta: {
             cuspidies: "2 cúspides (bicúspide R-L)",
-            calcificaciones: "Severa (>1300 AU en mujeres, >2000 AU en hombres)",
+            calcificaciones: "Severa",
             morfologia_anillo: "Circular",
-            diametro_menor_anillo: "26",
-            diametro_mayor_anillo: "28",
-            senos_valsalva_diametro: "45",
-            senos_valsalva_indexado: "24",
-            senos_valsalva_referencia: "16±2 (15-18)",
-            senos_valsalva_aneurismatico: "24",
+            diametro_menor_anillo: 26,
+            diametro_mayor_anillo: 28,
+            senos_valsalva_diametro: 45,
             senos_valsalva_observaciones: "ANEURISMÁTICO",
-            union_sinotubular_diametro: "42",
-            union_sinotubular_indexado: "22",
-            union_sinotubular_referencia: "14±2 (13-15)",
-            union_sinotubular_aneurismatico: "21",
+            union_sinotubular_diametro: 42,
             union_sinotubular_observaciones: "ANEURISMÁTICO",
-            porcion_tubular_ascendente_diametro: "48",
-            porcion_tubular_ascendente_indexado: "25",
-            porcion_tubular_ascendente_referencia: "14±2 (13-17)",
-            porcion_tubular_ascendente_aneurismatico: "24",
+            porcion_tubular_ascendente_diametro: 48,
             porcion_tubular_ascendente_observaciones: "ANEURISMÁTICO (>45 mm)"
         },
         score_calcio: {
-            tci: '320',
-            da: '1850',
-            cx: '920',
-            cd: '1100',
-            total: '4190',
+            tci: 320,
+            da: 1850,
+            cx: 920,
+            cd: 1100,
+            total: 4190,
             percentil: '>90'
+        },
+        anatomia_general: {
+            origen_arterias: 'Normal',
+            dominancia: 'Dominancia Derecha',
+            ramificacion_tci: 'Bifurcación (en ADA y ACx)',
+            terminacion_ada: 'Tipo 2 (Llega hasta el ápex)'
+        },
+        evaluacion_segmento: {
+            segments: {
+                '5': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'Calcificada', estenosis: 'Severa (70-99%)' }], stents: [], has_puente: false, has_aneurisma: false } },
+                '6': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'Calcificada', estenosis: 'Oclusión total (100%)' }], stents: [], has_puente: false, has_aneurisma: false } },
+                '11': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'Calcificada', estenosis: 'Severa (70-99%)' }], stents: [], has_puente: false, has_aneurisma: false } },
+                '4': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'Calcificada', estenosis: 'Severa (70-99%)' }], stents: [], has_puente: false, has_aneurisma: false } }
+            }
+        },
+        bypass: {
+            antecedentes_bypass: 'No'
         },
         cad_rads: {
             score: 'CAD-RADS 4B',
             modifiers: ['G (Bypass)'],
-            description: 'Enfermedad coronaria de tres vasos severamente calcificada con estenosis críticas en todos los territorios. TCI con estenosis del 80%, DA 90%, CX 85%, CD 75%. Oclusión total de ramos diagonales. Enfermedad difusa y calcificada que sugiere necesidad de cirugía de revascularización miocárdica.'
+            description: 'Enfermedad coronaria de tres vasos severamente calcificada con estenosis críticas en todos los territorios. TCI con estenosis del 80%, DA 90%, CX 85%, CD 75%. Oclusión total de ramos diagonales.'
         },
         evaluacion_extracardiaca: {
             hallazgos: ['Aneurisma/dilatación de aorta torácica', 'Derrame pericárdico', 'Derrame pleural', 'Linfadenopatías mediastinales']
-        },
-        comentarios_adicionales: {
-            texto: 'Paciente con cardiomiopatía isquémica avanzada. Enfermedad coronaria difusamente calcificada que limita opciones de intervención percutánea. Válvula aórtica bicúspide con estenosis aórtica severa por calcificación. Aneurisma de aorta ascendente que requiere corrección quirúrgica combinada.'
-        },
-        conclusion: {
-            texto_conclusion: 'ENFERMEDAD CORONARIA DE TRES VASOS SEVERAMENTE CALCIFICADA CON ESTENOSIS CRÍTICAS MULTIPLES (TCI 80%, DA 90%, CX 85%, CD 75%). FUNCIÓN VENTRICULAR IZQUIERDA SEVERAMENTE DEPRIMIDA (FEVI <30%) CON HIPOCINESIA GLOBAL. VÁLVULA AÓRTICA BICÚSPIDE CON ESTENOSIS AÓRTICA SEVERA CALCIFICADA. ANEURISMA DE AORTA ASCENDENTE (48 mm). CARDIOMIOPATÍA ISQUÉMICA AVANZADA. SE RECOMIENDA EVALUACIÓN PARA CIRUGÍA DE REVASCULARIZACIÓN MIOCÁRDICA Y REEMPLAZO VALVULAR AÓRTICO CON REPARACIÓN DE AORTA ASCENDENTE.'
         }
     },
-
     caso_critico: {
         datos_paciente: {
             nombre: 'Roberto Jiménez',
             id_paciente: '5-4321-6789',
-            edad: '58',
+            edad: 58,
             genero: 'Masculino',
-            peso: '102'
-        },
-        informacion_clinica: {
-            indicacion: 'Paciente con dolor torácico severo, hipotensión y shock cardiogénico. Sospecha de disección aórtica complicada con compromiso coronario. Evaluación prequirúrgica urgente.',
-            factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Dislipidemia', 'Tabaquismo', 'Obesidad', 'Historia familiar de enfermedad coronaria']
+            peso: 102,
+            talla: 168
         },
         protocolo_estudio: {
             fecha_estudio: '2025-09-30',
             medico_referente: 'Dr. U. Rgente',
-            medico_especialidad: 'Cirugía General',
+            medico_especialidad: 'Cirugía Cardiovascular',
             equipo: "GE Revolution",
             tiempo_rotacion: "0.28/seg",
             adquisicion: "Retrospectivo",
             ecg_gating_detalles: "Extrema inestabilidad hemodinámica con artefactos por movimiento",
             medio_contraste: "Visipaque 320",
-            contraste_iv: "100 ml",
-            velocidad_infusion: "6 ml/s",
+            contraste_iv: 100,
+            velocidad_infusion: 6,
             ritmo_estudio: "Taquicardia sinusal",
             calidad_imagen: "Limitada por artefactos"
+        },
+        informacion_clinica: {
+            indicacion: 'Paciente con dolor torácico severo, hipotensión y shock cardiogénico. Sospecha de disección aórtica complicada con compromiso coronario. Evaluación prequirúrgica urgente.',
+            factores_riesgo: ['Hipertensión arterial', 'Diabetes mellitus', 'Dislipidemia', 'Tabaquismo', 'Obesidad', 'Historia familiar de enfermedad coronaria']
         },
         motivo_generalidades: {
             descripcion_referencia: "Paciente en shock cardiogénico con sospecha de síndrome aórtico agudo. Requiere evaluación urgente de aorta, arterias coronarias y función ventricular para decisión quirúrgica inmediata.",
             consentimiento_informado: "Consentimiento de emergencia por riesgo vital. Familia informada de alta probabilidad de mortalidad perioperatoria.",
             tolerancia_estudio: "Reacciones severas (anafilaxia)",
-            fc_durante_estudio: "130-145 lpm",
+            fc_durante_estudio: 137,
             medicamentos_usados: ["Nitroglicerina sublingual", "Beta-bloqueadores"],
             analisis_imagenes: "IntelliSpace Portal"
         },
+        anatomia_cardiovascular: {
+            venas_cavas: ["Vena cava inferior con trombo", "Vena cava superior con estenosis"],
+            auricula_derecha: "Dilatada con trombo",
+            septum_interauricular: "Defecto septal atrial",
+            seno_coronario: "Obstrucción por compresión externa",
+            valvula_tricuspide: "Regurgitación funcional severa",
+            ventriculo_derecho: "Disfunción severa con hipocinesia",
+            arteria_pulmonar: "Tromboembolismo bilateral",
+            venas_pulmonares: ["Estenosis de vena pulmonar superior izquierda", "Oclusión parcial vena pulmonar inferior derecha"],
+            auricula_izquierda: "Dilatada con trombo en orejuela",
+            ventriculo_izquierdo_size: "Dilatado",
+            ventriculo_izquierdo_hipertrofia: "Asimétrica septal",
+            ventriculo_izquierdo_motilidad: "Acinesia anteroseptal",
+            ventriculo_izquierdo_fevi: "Severamente reducida (<20%)",
+            hallazgos_extracardiacos: ["Aneurisma/dilatación de aorta torácica", "Embolismo pulmonar", "Derrame pericárdico", "Derrame pleural", "Linfadenopatías mediastinales"]
+        },
+        valvula_aortica_diametros_aorta: {
+            cuspidies: "3 cúspides con fusión parcial de coronarias",
+            calcificaciones: "Pesada",
+            morfologia_anillo: "Irregular por disección",
+            diametro_menor_anillo: 29,
+            diametro_mayor_anillo: 32,
+            senos_valsalva_diametro: 62,
+            senos_valsalva_observaciones: "ANEURISMÁTICO",
+            union_sinotubular_diametro: 55,
+            union_sinotubular_observaciones: "ANEURISMÁTICO",
+            porcion_tubular_ascendente_diametro: 68,
+            porcion_tubular_ascendente_observaciones: "DISSECCIÓN TIPO A"
+        },
+        score_calcio: {
+            tci: 180,
+            da: 2100,
+            cx: 750,
+            cd: 1450,
+            total: 4480,
+            percentil: '>90'
+        },
         anatomia_general: {
+            origen_arterias: 'Normal',
             dominancia: 'Dominancia Izquierda',
             ramificacion_tci: 'Bifurcación (en ADA y ACx)',
             terminacion_ada: 'Tipo 1 (Termina antes de llegar al ápex)'
         },
-        anatomia_cardiovascular: {
-            venas_cavas: ["Thrombus", "Stenosis o compresión"],
-            auricula_derecha: "Thrombus",
-            septum_interauricular: "Defecto septal atrial",
-            seno_coronario: "Obstrucción o compresión",
-            valvula_tricuspide: "Regurgitación funcional",
-            ventriculo_derecho: "Disfunción o hipocinesia",
-            arteria_pulmonar: "Tromboembolismo",
-            venas_pulmonares: ["Estenosis u oclusión"],
-            auricula_izquierda: "Thrombus en orejuela",
-            ventriculo_izquierdo_size: "Dilatado",
-            ventriculo_izquierdo_hipertrofia: "Asimétrica",
-            ventriculo_izquierdo_motilidad: "Acinesia",
-            ventriculo_izquierdo_fevi: "Severamente reducida (<30%)",
-            hallazgos_extracardiacos: ["Aneurisma/dilatación de aorta torácica", "Embolismo pulmonar", "Derrame pericárdico", "Derrame pleural", "Linfadenopatías mediastinales"]
+        evaluacion_segmento: {
+            segments: {
+                '5': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'Calcificada', estenosis: 'Oclusión total (100%)' }], stents: [], has_puente: false, has_aneurisma: false } },
+                '6': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'Calcificada', estenosis: 'Oclusión total (100%)' }], stents: [], has_puente: false, has_aneurisma: false } },
+                '11': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'Severa (70-99%)' }], stents: [], has_puente: false, has_aneurisma: false } },
+                '4': { estado_general: 'Con hallazgos patológicos', findings: { placas: [{ composicion: 'No calcificada (blanda)', estenosis: 'Severa (70-99%)' }], stents: [], has_puente: false, has_aneurisma: false } }
+            }
         },
-        valvula_aortica_diametros_aorta: {
-            cuspidies: "3 cúspides con fusión parcial",
-            calcificaciones: "Pesada (sugiere estenosis severa)",
-            morfologia_anillo: "Irregular",
-            diametro_menor_anillo: "29",
-            diametro_mayor_anillo: "32",
-            senos_valsalva_diametro: "62",
-            senos_valsalva_indexado: "28",
-            senos_valsalva_referencia: "16±2 (15-18)",
-            senos_valsalva_aneurismatico: "24",
-            senos_valsalva_observaciones: "ANEURISMÁTICO",
-            union_sinotubular_diametro: "55",
-            union_sinotubular_indexado: "25",
-            union_sinotubular_referencia: "14±2 (13-15)",
-            union_sinotubular_aneurismatico: "21",
-            union_sinotubular_observaciones: "ANEURISMÁTICO",
-            porcion_tubular_ascendente_diametro: "68",
-            porcion_tubular_ascendente_indexado: "31",
-            porcion_tubular_ascendente_referencia: "14±2 (13-17)",
-            porcion_tubular_ascendente_aneurismatico: "24",
-            porcion_tubular_ascendente_observaciones: "DISSECCIÓN POSIBLE"
-        },
-        score_calcio: {
-            tci: '180',
-            da: '2100',
-            cx: '750',
-            cd: '1450',
-            total: '4480',
-            percentil: '>90'
+        bypass: {
+            antecedentes_bypass: 'No'
         },
         cad_rads: {
             score: 'CAD-RADS 5',
@@ -527,42 +540,78 @@ export const sampleCases = {
         },
         evaluacion_extracardiaca: {
             hallazgos: ['Aneurisma/dilatación de aorta torácica', 'Embolismo pulmonar', 'Derrame pericárdico', 'Derrame pleural', 'Linfadenopatías mediastinales']
-        },
-        comentarios_adicionales: {
-            texto: 'Paciente en shock cardiogénico por disección aórtica tipo A complicada con compromiso coronario severo. Trombos intracardiacos múltiples. Embolismo pulmonar asociado. Pronóstico extremadamente reservado. Requiere cirugía de Bentall o procedimiento de David con revascularización miocárdica compleja.'
-        },
-        conclusion: {
-            texto_conclusion: 'SÍNDROME AÓRTICO AGUDO CON DISECCIÓN AÓRTICA TIPO A Y COMPROMISO CORONARIO SEVERO. ENFERMEDAD CORONARIA TERMINAL CON OCLUSIONES MÚLTIPLES (TCI 100%, DA 100%) Y ESTENOSIS CRÍTICAS EN VASOS REMANENTES (CX 95%, CD 90%). ANEURISMA GIGANTE DE AORTA ASCENDENTE (68 mm) CON DISECCIÓN. SHOCK CARDIOGÉNICO ESTABLECIDO CON FEVI <30%. TROMBOS INTRACARDÍACOS MÚLTIPLES Y EMBOLISMO PULMONAR. EMERGENCIA QUIRÚRGICA DE MÁXIMA URGENCIA CON PRONÓSTICO EXTREMADAMENTE RESERVADO.'
         }
     },
-
-    caso_completo: { // Caso para probar todas las funcionalidades
+    caso_completo: {
         datos_paciente: {
             nombre: 'Auditoría Completa',
             id_paciente: '0-0000-0000',
-            edad: '62',
+            edad: 62,
             genero: 'Masculino',
-            peso: '88',
-            talla: '175'
-        },
-        informacion_clinica: {
-            indicacion: 'Test de ciclo completo de guardado y carga',
-            factores_riesgo: ['Hipertensión arterial', 'Tabaquismo']
+            peso: 88,
+            talla: 175
         },
         protocolo_estudio: {
             fecha_estudio: '2025-10-01',
             medico_referente: 'Dr. A. Uditor',
             medico_especialidad: 'Cardiología',
             equipo: "Canon Aquilion 160 cortes",
+            tiempo_rotacion: "0.35/seg",
             adquisicion: "Retrospectivo",
+            ecg_gating_detalles: "Ritmo sinusal estable",
+            medio_contraste: "Ultravist 370",
+            contraste_iv: 70,
+            velocidad_infusion: 5,
+            ritmo_estudio: "Ritmo sinusal normal",
             calidad_imagen: "Excelente"
         },
+        informacion_clinica: {
+            indicacion: 'Test de ciclo completo de guardado y carga',
+            factores_riesgo: ['Hipertensión arterial', 'Tabaquismo']
+        },
+        motivo_generalidades: {
+            descripcion_referencia: "Caso de prueba para todas las funcionalidades del sistema.",
+            consentimiento_informado: "Consentimiento informado obtenido.",
+            tolerancia_estudio: "Buena tolerancia, sin reacciones adversas al medio contraste",
+            fc_durante_estudio: 68,
+            medicamentos_usados: [],
+            analisis_imagenes: "Vitrea"
+        },
+        anatomia_cardiovascular: {
+            venas_cavas: ["Ambas no dilatadas drenando en la aurícula derecha"],
+            auricula_derecha: "No dilatada",
+            septum_interauricular: "No se visualizan defectos",
+            seno_coronario: "Drenando a la AD en forma habitual sin dilatación o anomalías",
+            valvula_tricuspide: "No se visualizan defectos por este método",
+            ventriculo_derecho: "No dilatado ni hipertrófico",
+            arteria_pulmonar: "Diámetro Normal",
+            venas_pulmonares: "Cuatro drenando a la aurícula izquierda, dos derechas y dos izquierdas",
+            auricula_izquierda: "No se observan trombos en la orejuela izquierda, ni masas o lesiones intracardiacas",
+            ventriculo_izquierdo_size: "No dilatado",
+            ventriculo_izquierdo_hipertrofia: "Ninguna",
+            ventriculo_izquierdo_motilidad: "Global y regional conservada",
+            ventriculo_izquierdo_fevi: "Normal (>55%)",
+            hallazgos_extracardiacos: "Ninguno"
+        },
+        valvula_aortica_diametros_aorta: {
+            cuspidies: "3 cúspides de conformación Normal",
+            calcificaciones: "NO PRESENTA",
+            morfologia_anillo: "Elíptica",
+            diametro_menor_anillo: 24,
+            diametro_mayor_anillo: 27,
+            senos_valsalva_diametro: 34,
+            senos_valsalva_observaciones: "NORMAL",
+            union_sinotubular_diametro: 30,
+            union_sinotubular_observaciones: "NORMAL",
+            porcion_tubular_ascendente_diametro: 36,
+            porcion_tubular_ascendente_observaciones: "NORMAL"
+        },
         score_calcio: {
-            tci: '10',
-            da: '20',
-            cx: '30',
-            cd: '40',
-            total: '100',
+            tci: 10,
+            da: 20,
+            cx: 30,
+            cd: 40,
+            total: 100,
             percentil: '50-75'
         },
         anatomia_general: {
@@ -580,23 +629,22 @@ export const sampleCases = {
         },
         evaluacion_segmento: {
             segments: {
-                '6': { // pADA - Múltiples hallazgos
+                '6': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
                         placas: [
                             { composicion: 'No calcificada (blanda)', estenosis: 'Leve (25-49%)', has_hrp: [], comentario_placa: 'Placa 1' },
                             { composicion: 'Calcificada', estenosis: 'Moderada (50-69%)', has_hrp: ['Remodelado Positivo'], comentario_placa: 'Placa 2' }
                         ],
-                        stents: [
-                            { evaluacion: 'Permeable, sin reestenosis significativa', comentario_stent: 'Stent proximal' }
-                        ],
+                        stents: [{ evaluacion: 'Permeable, sin reestenosis significativa', comentario_stent: 'Stent proximal' }],
                         has_puente: false,
                         has_aneurisma: false
                     }
                 },
-                '11': { // pACx - Stent con reestenosis
+                '11': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
+                        placas: [],
                         stents: [{
                             evaluacion: 'Con reestenosis intra-stent',
                             reestenosis_details: { grado: 'Moderada 50-69%', tipo: 'Focal' },
@@ -606,16 +654,18 @@ export const sampleCases = {
                         has_aneurisma: false
                     }
                 },
-                '2': { // mACD - Puente y Aneurisma
+                '2': {
                     estado_general: 'Con hallazgos patológicos',
                     findings: {
+                        placas: [],
+                        stents: [],
                         has_puente: true,
                         puente_details: { profundidad: 'Superficial', compresion: 'Leve <50%' },
                         has_aneurisma: true,
-                        aneurisma_details: { diametro: '7' }
+                        aneurisma_details: { diametro: 7 }
                     }
                 },
-                '7': { // mADA - No valorable
+                '7': {
                     estado_general: 'No valorable',
                     findings: null
                 }
@@ -624,20 +674,21 @@ export const sampleCases = {
         bypass: {
             antecedentes_bypass: 'Sí',
             grafts_container: [
-                { tipo_conducto: 'Arteria Mamaria Interna Izquierda (LIMA)', anastomosis_proximal: 'In situ', anastomosis_distal: 'Segmento 7', estado_injerto: 'Permeable, sin estenosis' }
+                {
+                    tipo_conducto: 'Arteria Mamaria Interna Izquierda (LIMA)',
+                    anastomosis_proximal: 'In situ',
+                    anastomosis_distal: 'Segmento 7',
+                    estado_injerto: 'Permeable, sin estenosis'
+                }
             ]
         },
         cad_rads: {
             score: 'CAD-RADS 3',
             modifiers: ['S (Stent)', 'G (Bypass)'],
-            description: 'Test case'
+            description: 'Test case con anomalía coronaria, múltiples placas, stents, puente miocárdico, aneurisma y bypass permeable.'
         },
         evaluacion_extracardiaca: {
             hallazgos: ['Hernia hiatal']
-        },
-        conclusion: {
-            texto_conclusion: 'Este es un caso de prueba para la auditoría.'
         }
     }
-
 };

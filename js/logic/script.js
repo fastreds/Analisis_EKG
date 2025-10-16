@@ -2,12 +2,22 @@ import { reportStructure } from '../data.js';
 import { sampleCases } from '../data/case.js';
 import { initCoronarySketch } from './arbolCoronarioLogic.js';
 import { posicionesDerecha } from '../data/posicionesDominancia.js';
+import { generateConclusion } from './conclusionLogic.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const formContainer = document.getElementById('form-container');
     const reportOutput = document.getElementById('report-output');
     const copyBtn = document.getElementById('copy-report-btn');
     const saveBtn = document.getElementById('save-study-btn');
+    const caseControlsTitle = document.querySelector('#case-controls h2');
+
+    // Inicializar Notyf para notificaciones
+    const notyf = new Notyf({
+        duration: 5000,
+        position: { x: 'right', y: 'top' },
+        dismissible: true,
+        types: [{ type: 'error', background: '#EF4444', icon: false }]
+    });
 
     let formData = {};
     let cadRadsManualOverride = false;
@@ -79,6 +89,21 @@ document.addEventListener('DOMContentLoaded', () => {
     window.calculateCadRads = calculateCadRads; // Expose for audit.js
 
     const updateReport = () => {
+        const updateCaseControlsTitle = () => {
+            if (!caseControlsTitle) return;
+    
+            const patientName = document.getElementById('datos_paciente-nombre')?.value.trim() || '';
+            const patientId = document.getElementById('datos_paciente-id_paciente')?.value.trim() || '';
+    
+            if (patientName || patientId) {
+                const displayName = patientName || 'Paciente sin nombre';
+                const displayId = patientId ? `(C.I. ${patientId})` : '';
+                caseControlsTitle.textContent = `${displayName} ${displayId}`;
+            } else {
+                caseControlsTitle.textContent = 'Casos de Ejemplo y Guardado';
+            }
+        };
+
         let data = gatherData();
         updateCalciumScore();
         
@@ -92,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+
+        updateCaseControlsTitle();
 
         let html = '';
         let hasContent = false;
@@ -159,14 +186,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (segment.findings.placas && segment.findings.placas.length > 0) {
                             segment.findings.placas.forEach(p => {
                                 let estenosisText = p.estenosis_porcentaje ? `${p.estenosis_porcentaje}%` : p.estenosis;
-                                let placaText = `Placa ${p.composicion || ''} que produce estenosis de ${estenosisText}`;
+                                let placaText = `Placa ${p.composicion || ''} que produce estenosis ${estenosisText || 'no especificada'}`;
                                 if (p.has_hrp && p.has_hrp.length > 0) {
                                     placaText += ` con características de alto riesgo (${p.has_hrp.join(', ')})`;
                                 }
                                 findingsList.push(placaText);
                             });
                         }
-                        // Future logic for stents, bridges, etc. can be added here
+                        if (segment.findings.stents && segment.findings.stents.length > 0) {
+                            segment.findings.stents.forEach(s => {
+                                let stentText = 'Stent preexistente';
+                                if (s.evaluacion === 'Con reestenosis intra-stent' && s.reestenosis_details) {
+                                    stentText += ` con reestenosis ${s.reestenosis_details.grado || 'no especificada'}`;
+                                } else {
+                                    stentText += ` (${s.evaluacion || 'permeable'})`;
+                                }
+                                findingsList.push(stentText);
+                            });
+                        }
+                        if (segment.findings.has_puente && segment.findings.puente_details) {
+                            findingsList.push(`Puente miocárdico con compresión sistólica ${segment.findings.puente_details.compresion || 'no especificada'}`);
+                        }
+                        if (segment.findings.has_aneurisma && segment.findings.aneurisma_details) {
+                            findingsList.push(`Aneurisma/ectasia con diámetro de ${segment.findings.aneurisma_details.diametro || 'N/A'} mm`);
+                        }
                         
                         if (findingsList.length > 0) {
                             segmentText += `<p><strong>${segmentInfo.name}:</strong> ${findingsList.join('. ')}.</p>`;
@@ -232,74 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const generateConclusion = () => {
-        const data = formData;
-        let conclusion = "Estudio de angiotomografía coronaria muestra los siguientes hallazgos:\n\n";
 
-        const scoreData = data.score_calcio;
-        if (scoreData && scoreData.total) {
-            const score = scoreData.total;
-            conclusion += `- Score de calcio coronario total de ${score} (Agatston), lo que indica `;
-            if (score == 0) conclusion += "ausencia de placa coronaria calcificada. ";
-            else if (score >= 1 && score <= 10) conclusion += "placa mínima. ";
-            else if (score >= 11 && score <= 100) conclusion += "placa leve. ";
-            else if (score >= 101 && score <= 400) conclusion += "placa moderada. ";
-            else conclusion += "placa severa. ";
-            conclusion += `Percentil ${scoreData.percentil} para edad y género.\n`;
-        }
-        
-        // CAD-RADS in conclusion
-        const cadRadsData = data.cad_rads;
-        if (cadRadsData && cadRadsData.score) {
-            conclusion += `- Clasificación según CAD-RADS™ 2.0: ${cadRadsData.score}.`;
-            if (cadRadsData.modifiers && cadRadsData.modifiers.length > 0) {
-                conclusion += ` Modificadores: ${cadRadsData.modifiers.join(', ')}.`;
-            }
-            conclusion += '\n';
-        }
-
-
-        const arteriasData = data.arterias_coronarias;
-        if (arteriasData && arteriasData.items) {
-            const estenosisSevera = [];
-            arteriasData.items.forEach(item => {
-                if (item.placas) {
-                    item.placas.forEach(plaque => {
-                        if (plaque.estenosis_severidad && (plaque.estenosis_severidad.includes('Moderna') || plaque.estenosis_severidad.includes('Severa') || placa.estenosis_severidad.includes('Oclusión'))) {
-                            estenosisSevera.push(`Estenosis ${plaque.estenosis_severidad} en ${item.nombre}, segmento ${plaque.localizacion}.`);
-                        }
-                    });
-                }
-            });
-
-            if (estenosisSevera.length > 0) {
-                conclusion += "- Se observa enfermedad coronaria obstructiva con las siguientes lesiones:\n"
-                estenosisSevera.forEach(lesion => {
-                    conclusion += `  - ${lesion}\n`;
-                });
-            } else {
-                conclusion += "- No se observa enfermedad arterial coronaria obstructiva significativa.\n"
-            }
-        }
-
-        const anatomiaData = data.anatomia_cardiovascular;
-        if (anatomiaData && anatomiaData.ventriculo_izquierdo_fevi) {
-            conclusion += `- Fracción de eyección del ventrículo izquierdo (FEVI) estimada como ${anatomiaData.ventriculo_izquierdo_fevi}.\n`;
-        }
-
-        const aortaData = data.valvula_aortica_diametros_aorta;
-        if (aortaData && aortaData.porcion_tubular_ascendente_observaciones && aortaData.porcion_tubular_ascendente_observaciones !== 'NORMAL' && aortaData.porcion_tubular_ascendente_observaciones !== 'SIN DILATACIÓN') {
-            conclusion += `- Aorta ascendente con ${aortaData.porcion_tubular_ascendente_observaciones.toLowerCase()} (${aortaData.porcion_tubular_ascendente_diametro} mm).\n`;
-        }
-
-        const extraData = data.evaluacion_extracardiaca;
-        if (extraData && extraData.hallazgos && extraData.hallazgos.length > 0 && extraData.hallazgos[0] !== 'Sin hallazgos patológicos significativos') {
-            conclusion += `- Hallazgos extracardíacos relevantes: ${extraData.hallazgos.join(', ')}.\n`;
-        }
-
-        document.getElementById('conclusion-texto_conclusion').value = conclusion;
-        updateReport();
-    };
 
     const buildField = (field, prefix) => {
         let fieldHtml = '';
@@ -350,9 +326,23 @@ document.addEventListener('DOMContentLoaded', () => {
              case 'text':
              case 'textarea':
                 fieldHtml = `<div class="mb-4">
-                   <label for="${id}" class="block text-sm font-medium text-gray-600 mb-1">${field.label}</label>
-                   <${field.type === 'textarea' ? 'textarea' : `input type="${field.type}"`} id="${id}" name="${id}" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" ${field.rows ? `rows="${field.rows}"` : ''} placeholder="${field.placeholder || ''}"></${field.type === 'textarea' ? 'textarea' : 'input'}>
-                </div>`;
+                   <label for="${id}" class="block text-sm font-medium text-gray-600 mb-1">${field.label}</label>`;
+                
+                fieldHtml += `<${field.type === 'textarea' ? 'textarea' : `input type="${field.type}"`} id="${id}" name="${id}" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" ${field.rows ? `rows="${field.rows}"` : ''} placeholder="${field.placeholder || ''}"></${field.type === 'textarea' ? 'textarea' : 'input'}>`;
+
+                if ((field.type === 'textarea' || field.type === 'text') && field.options && Array.isArray(field.options)) {
+                    fieldHtml += '<div class="mt-2 space-y-1">';
+                    field.options.forEach((option) => {
+                        fieldHtml += `
+                            <label class="flex items-center text-sm text-gray-600 hover:bg-gray-50 p-1 rounded-md cursor-pointer">
+                                <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" data-target-id="${id}" data-text-content="${option.replace(/"/g, '&quot;')}">
+                                <span class="ml-2">${option}</span>
+                            </label>
+                        `;
+                    });
+                    fieldHtml += '</div>';
+                }
+                fieldHtml += `</div>`;
                 break;
             case 'conditional_group':
                 const innerFields = field.fields.map(f => buildField(f, id)).join('');
@@ -423,6 +413,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- BUILD AND INITIALIZE ---
     buildForm();
     initCoronarySketch();
+
+    // --- Event Listener para el botón de Autogenerar Conclusión ---
+    // Se añade aquí después de que buildForm() ha creado el botón en el DOM.
+    const autogenerateBtn = document.getElementById('conclusion-autogenerate_conclusion');
+    if (autogenerateBtn) {
+        autogenerateBtn.addEventListener('click', () => {
+            const conclusionText = generateConclusion(formData, reportStructure);
+            document.getElementById('conclusion-texto_conclusion').value = conclusionText;
+            updateReport();
+        });
+    }
 
     // Trigger initial draw after a short delay to ensure DOM is ready
     setTimeout(() => {
@@ -862,16 +863,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const saveInformeBtn = document.getElementById('save-informe-btn');
     if(saveInformeBtn) {
-        saveInformeBtn.addEventListener('click', () => {
+        const validateRequiredFields = () => {
+            const missingFields = [];
+            reportStructure.forEach(section => {
+                if (section.fields) {
+                    section.fields.forEach(field => {
+                        if (field.required) {
+                            const el = document.getElementById(`${section.id}-${field.id}`);
+                            if (el) {
+                                // Reset styles
+                                el.classList.remove('field-error');
+                            }
+                            if (el && (!el.value || !el.value.trim())) {
+                                missingFields.push({ label: field.label, element: el });
+                            }
+                        }
+                    });
+                }
+            });
+            return missingFields;
+        };
+
+        saveInformeBtn.addEventListener('click', (e) => {
+            const missing = validateRequiredFields();
+            if (missing.length > 0) {
+                e.preventDefault();
+                const fieldLabels = missing.map(f => `<li>${f.label}</li>`).join('');
+                notyf.error(`Por favor, complete los campos obligatorios:<ul>${fieldLabels}</ul>`);
+                
+                missing[0].element.focus();
+                missing.forEach(f => f.element.classList.add('field-error'));
+                return;
+            }
+
             const currentData = gatherData();
             localStorage.setItem('savedAngioTACStudy', JSON.stringify(currentData));
     
             saveInformeBtn.textContent = '¡Guardado!';
-            saveInformeBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-            saveInformeBtn.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white', 'transition-colors');
-    
             setTimeout(() => {
-                window.location.href = 'informe.html';
+                window.open('informe.html', '_blank');
             }, 1000);
         });
     }
@@ -923,6 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id.startsWith('score_calcio-')) {
             updateCalciumScore();
         }
+        // La actualización del título se maneja dentro de updateReport()
         updateReport();
     });
 
@@ -947,6 +978,29 @@ document.addEventListener('DOMContentLoaded', () => {
             croquisPanel.classList.add('hidden');
         });
     }
+
+    // Listener para checkboxes que añaden texto a textareas/inputs
+    formContainer.addEventListener('change', (e) => {
+        if (e.target.matches('input[type="checkbox"][data-target-id]')) {
+            const targetId = e.target.dataset.targetId;
+            const textContent = e.target.dataset.textContent;
+            const targetInput = document.getElementById(targetId);
+
+            if (targetInput) {
+                const currentValue = targetInput.value;
+                if (e.target.checked) {
+                    // Añadir texto si no está ya presente
+                    if (!currentValue.includes(textContent)) {
+                        targetInput.value = currentValue ? `${currentValue}\n${textContent}` : textContent;
+                    }
+                } else {
+                    // Eliminar texto
+                    targetInput.value = currentValue.replace(textContent, '').replace(/\n\n/g, '\n').trim();
+                }
+                targetInput.dispatchEvent(new Event('input', { bubbles: true })); // Para que se actualice el reporte
+            }
+        }
+    });
 
     updateReport(); // Initial call
 });

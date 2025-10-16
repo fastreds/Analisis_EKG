@@ -5,12 +5,14 @@ export const reportStructure = [{
         id: 'nombre',
         label: 'Nombre',
         type: 'text',
-        placeholder: 'Nombre completo del paciente'
+        placeholder: 'Nombre completo del paciente',
+        required: true
     }, {
         id: 'id_paciente',
         label: 'Identificación',
         type: 'text',
-        placeholder: 'Cédula o ID'
+        placeholder: 'Cédula o ID',
+        required: true
     }, {
         id: 'edad',
         label: 'Edad',
@@ -20,7 +22,7 @@ export const reportStructure = [{
     }, {
         id: 'genero',
         label: 'Género',
-        type: 'select',
+        type: 'checkbox',
         options: ['Masculino', 'Femenino', 'Otro']
     }, {
         id: 'peso',
@@ -43,7 +45,8 @@ export const reportStructure = [{
         "label": "Indicación del Estudio",
         "type": "textarea",
         "placeholder": "Ej: Dolor torácico atípico, evaluación de riesgo cardiovascular...",
-        "rows": 3
+        "rows": 3,
+        options: ["SOLICITUD DE ANGIOTAC CORONARIO POR:", "Dolor torácico", "Evaluación de riesgo cardiovascular", "Seguimiento de enfermedad coronaria conocida", "Evaluación preoperatoria", "Otros"]
     }, {
         "id": "factores_riesgo",
         "label": "Factores de Riesgo Cardiovascular",
@@ -56,7 +59,8 @@ export const reportStructure = [{
     "fields": [{
         id: 'fecha_estudio',
         label: 'Fecha del Estudio',
-        type: 'date'
+        type: 'date',
+        required: true
     }, {
         id: 'medico_referente',
         label: 'Médico Referente',
@@ -65,7 +69,8 @@ export const reportStructure = [{
     }, {
         id: 'medico_especialidad',
         label: 'Espedialidad del Médico referente',
-        type: 'select',
+        type: 'text',
+        placeholder: 'Especialidad',
         options: ['Cardiología', 'Medicina Interna', 'Cirugía General', 'Medicina Familiar', 'Otra']
     }, {
         "id": "equipo",
@@ -126,8 +131,8 @@ export const reportStructure = [{
         "id": "consentimiento_informado",
         "label": "Consentimiento informado",
         "type": "textarea",
-        "placeholder": "Después de explicar al paciente los riesgos potenciales y los beneficios que obtendrá del estudio y siguiendo en todo momento los principios éticos respectivos y normados, se firma el consentimiento informado para realizar el estudio.",
-        "rows": 3
+        "placeholder": " Puede seleccionar una o varias opciones o digitar una personalizada",
+        "options": ["Después de explicar al paciente los riesgos potenciales y los beneficios que obtendrá del estudio y siguiendo en todo momento los principios éticos respectivos y normados, se firma el consentimiento informado para realizar el estudio."]
     }, {
         "id": "tolerancia_estudio",
         "label": "Tolerancia al estudio",
