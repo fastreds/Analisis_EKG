@@ -2,43 +2,18 @@ import { reportStructure } from '../data.js';
 import { sampleCases } from '../data/case.js';
 import { initCoronarySketch } from './arbolCoronarioLogic.js';
 import { posicionesDerecha } from '../data/posicionesDominancia.js';
-import { generateConclusion } from './conclusionLogic.js';
-import { auth, saveStudy, getStudies, getStudy, updateStudy } from './firebaseLogic.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { generateConclusion } from './conclusionLogic.js'; // Asumo que este archivo existe o existirá
+import { saveStudy, getStudy, updateStudy } from './firebaseLogic.js';
+import { getCurrentUser } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const mainContent = document.getElementById('main-content');
-    const userInfo = document.getElementById('user-info');
-    const userEmail = document.getElementById('user-email');
-    const logoutBtn = document.getElementById('logout-btn');
     const formContainer = document.getElementById('form-container');
     const reportOutput = document.getElementById('report-output');
     const copyBtn = document.getElementById('copy-report-btn');
     const saveBtn = document.getElementById('save-study-btn');
     const caseControlsTitle = document.querySelector('#case-controls h2');
-
     let currentStudyId = null;
-
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            mainContent.classList.remove('hidden');
-            userInfo.classList.remove('hidden');
-            userEmail.textContent = user.email;
-        } else {
-            window.location.href = 'index.html';
-        }
-    });
-
-    if(logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                // The onAuthStateChanged listener will handle the redirect
-            } catch (error) {
-                console.error("Logout failed:", error);
-            }
-        });
-    }
 
     const notyf = new Notyf({
         duration: 5000,

@@ -1,12 +1,31 @@
 import { getStudies, deleteStudy, updateStudy } from './firebaseLogic.js';
+import { getCurrentUser } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // La autenticación y visibilidad del body/user-info ahora es manejada por auth.js
+    const user = await getCurrentUser();
+    if (user) {
+        // Solo necesitamos mostrar el cuerpo de la página si el usuario está autenticado.
+        document.body.classList.remove('hidden');
+    } // auth.js se encarga de la redirección si no hay usuario.
+
     const searchInput = document.getElementById('search-input');
     const tableBody = document.getElementById('studies-table-body');
     const tableHeaders = document.querySelectorAll('th[data-sort-key]');
+    const emailModal = document.getElementById('email-modal');
+    const emailModalTitle = document.getElementById('email-modal-title');
+    const emailModalCloseBtn = document.getElementById('email-modal-close-btn');
+    const emailForm = document.getElementById('email-form');
+    const emailInputModal = document.getElementById('email-input-modal');
+    const saveEmailBtn = document.getElementById('save-email-btn');
+    const itemsPerPageSelect = document.getElementById('items-per-page');
+    const pageNavigation = document.getElementById('page-navigation');
+    const totalItemsInfo = document.getElementById('total-items-info');
     let allStudies = [];
     let sortKey = 'protocolo_estudio.fecha_estudio';
     let sortDirection = 'desc';
+    let currentPage = 1;
+    let itemsPerPage = 12;
 
     const notyf = new Notyf({
         duration: 5000,
@@ -34,15 +53,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    const renderTable = (studies) => {
+    const renderTable = (studiesToRender) => {
         tableBody.innerHTML = ''; // Clear existing rows
 
-        if (studies.length === 0) {
+        const paginatedStudies = studiesToRender.slice(
+            (currentPage - 1) * itemsPerPage,
+            currentPage * itemsPerPage
+        );
+
+        if (studiesToRender.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No hay estudios que coincidan con la búsqueda.</td></tr>';
             return;
         }
 
-        studies.forEach(study => {
+        totalItemsInfo.textContent = `Mostrando ${paginatedStudies.length} de ${studiesToRender.length} estudios.`;
+
+
+        paginatedStudies.forEach(study => {
             const datosPaciente = study.datos_paciente || {};
             const protocoloEstudio = study.protocolo_estudio || {};
             const medicoReferente = study.protocolo_estudio || {};
@@ -53,9 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const reportStatus = study.reportStatus || 'borrador';
             const patientEmailStatus = study.patientEmailStatus || 'no enviado';
             const doctorEmailStatus = study.doctorEmailStatus || 'no enviado';
-
-            const patientEmail = datosPaciente.paciente_email || null;
-            const doctorEmail = medicoReferente.medico_email || null; // Asumiendo que el email del médico está aquí
+            
+            const patientEmail = datosPaciente.paciente_email || null; // Corregido para usar datosPaciente
+            const doctorEmail = protocoloEstudio.doctorEmail || null; // Corregido para usar protocoloEstudio
 
             const getStatusBadge = (status) => {
                 const isFinalizado = status.toLowerCase() === 'finalizado';
@@ -63,21 +90,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return `<span class="${bgColor} py-1 px-3 rounded-full text-xs">${status}</span>`;
             };
 
-            const getEmailButton = (type, status, email, sentDate) => {
+            const getEmailButton = (type, status, email, sentDate, reportStatus) => {
                 const isSent = status.toLowerCase() === 'enviado';
-                const isDisabled = !email || isSent;
-                const buttonClass = isSent ? 'bg-green-500 text-white' : (email ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed');
-                const buttonText = isSent ? 'Enviado' : 'Enviar';
+                const isReportFinalized = reportStatus.toLowerCase() === 'finalizado';
+                const isDisabled = !isReportFinalized;
+                let buttonClass, buttonText, action;
+
+                if (isDisabled) {
+                    buttonClass = 'bg-gray-300 text-gray-500 cursor-not-allowed';
+                    buttonText = isSent ? 'Enviado' : 'Enviar'; // Mantenemos el texto para consistencia visual
+                } else {
+                    if (isSent) {
+                        buttonClass = 'bg-green-500 hover:bg-green-600 text-white';
+                        buttonText = 'Enviado';
+                    } else if (email) {
+                        buttonClass = 'bg-blue-500 hover:bg-blue-600 text-white';
+                        buttonText = 'Enviar';
+                    } else {
+                        buttonClass = 'bg-yellow-500 hover:bg-yellow-600 text-white';
+                        buttonText = 'Añadir y Enviar';
+                    }
+                }
                 const icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>`;
                 
                 let titleAttr = '';
-                if (isSent && sentDate) {
+                if (isDisabled) {
+                    titleAttr = `title="El informe debe estar 'Finalizado' para poder enviar correos."`;
+                } else if (isSent && sentDate) {
                     const date = new Date(sentDate);
                     const formattedDate = `${date.toLocaleDateString('es-ES')} ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
                     titleAttr = `title="Enviado el: ${formattedDate}"`;
                 }
 
-                return `<button data-action="send-email" data-email-type="${type}" class="flex items-center justify-center px-3 py-1 rounded-md text-xs transition-colors ${buttonClass}" ${isDisabled ? 'disabled' : ''} ${titleAttr}>${icon} <span>${buttonText}</span></button>`;
+                return `<button data-action="handle-email" data-email-type="${type}" class="flex items-center justify-center px-3 py-1 rounded-md text-xs transition-colors ${buttonClass}" ${isDisabled ? 'disabled' : ''} ${titleAttr}>${icon} <span>${buttonText}</span></button>`;
             };
 
             row.innerHTML = `
@@ -93,10 +138,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </td>
                 <td class="py-3 px-6 text-left">${protocoloEstudio.medico_interpreta || 'N/A'}</td>
                 <td class="py-3 px-6 text-center">
-                    ${getEmailButton('patient', patientEmailStatus, patientEmail, study.datePAtienteEmailSent)}
+                    ${getEmailButton('patient', patientEmailStatus, patientEmail, study.datePAtienteEmailSent, reportStatus)}
                 </td>
                 <td class="py-3 px-6 text-center">
-                    ${getEmailButton('doctor', doctorEmailStatus, doctorEmail, study.dateDoctorEmailSent)}
+                    ${getEmailButton('doctor', doctorEmailStatus, doctorEmail, study.dateDoctorEmailSent, reportStatus)}
                 </td>
                 <td class="py-3 px-6 text-center">
                     <div class="flex item-center justify-center gap-2">
@@ -138,35 +183,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        document.querySelectorAll('[data-action="send-email"]').forEach(button => {
+        document.querySelectorAll('[data-action="handle-email"]').forEach(button => {
             button.addEventListener('click', async (e) => {
+                const button = e.currentTarget;
                 const studyId = e.target.closest('tr').dataset.studyId;
-                const emailType = e.currentTarget.dataset.emailType;
+                const emailType = button.dataset.emailType;
                 const study = allStudies.find(s => s.id === studyId);
 
                 if (study) {
-                    const fieldToUpdate = emailType === 'patient' ? 'patientEmailStatus' : 'doctorEmailStatus';
-                    const dateFieldToUpdate = emailType === 'patient' ? 'datePAtienteEmailSent' : 'dateDoctorEmailSent';
-                    
-                    // Simulate sending email
-                    console.log(`Simulando envío de email a ${emailType} para el estudio ${studyId}`);
-                    
-                    try {
-                        await updateStudy(studyId, { 
-                            [fieldToUpdate]: 'enviado',
-                            [dateFieldToUpdate]: new Date().toISOString()
-                        });
-                        notyf.success(`Email para ${emailType} marcado como enviado.`);
-                        const buttonTextSpan = e.currentTarget.querySelector('span');
-                        if (buttonTextSpan) {
-                            buttonTextSpan.textContent = 'Enviado';
-                        }
-                        e.currentTarget.classList.replace('bg-blue-500', 'bg-green-500');
-                        e.currentTarget.disabled = true;
-                    } catch (error) {
-                        console.error(`Error al actualizar estado de email para ${emailType}:`, error);
-                        notyf.error('Error al actualizar el estado del email.');
+                    // Validación: El informe debe estar finalizado para enviar correos.
+                    if (study.reportStatus?.toLowerCase() !== 'finalizado') {
+                        notyf.error("El informe debe estar en estado 'Finalizado' para enviar el correo.");
+                        return;
                     }
+
+                    // Obtenemos el email actual para pre-rellenar el modal
+                    const emailField = emailType === 'patient' ? 'paciente_email' : 'doctorEmail';
+                    const currentEmail = getValueFromPath(study, `datos_paciente.${emailField}`) || getValueFromPath(study, `protocolo_estudio.${emailField}`);
+                    const isSent = study.doctorEmailStatus === 'enviado' || study.patientEmailStatus === 'enviado';
+
+                    // Siempre abrimos la modal
+                    const titleAction = currentEmail ? (isSent ? 'Editar y Reenviar' : 'Editar y Enviar') : 'Añadir';
+                    const titleEntity = emailType === 'patient' ? 'Paciente' : 'Médico';
+                    emailModalTitle.textContent = `${titleAction} Correo para ${titleEntity}`;
+                    
+                    emailForm.dataset.studyId = studyId;
+                    emailForm.dataset.emailType = emailType;
+                    emailInputModal.value = currentEmail || ''; // Precargamos el email si existe
+                    saveEmailBtn.textContent = isSent ? 'Guardar y Reenviar' : 'Guardar y Enviar';
+                    emailModal.classList.remove('hidden');
+                    emailInputModal.focus();
                 }
             });
         });
@@ -189,7 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    const sortAndRender = () => {
+    const sortAndRender = (resetPage = false) => {
         const sortedStudies = [...allStudies].sort((a, b) => {
             const valA = getValueFromPath(a, sortKey);
             const valB = getValueFromPath(b, sortKey);
@@ -215,8 +261,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             return patientName.includes(searchTerm) || patientId.includes(searchTerm) || studyDate.includes(searchTerm);
         });
 
+        if (resetPage) {
+            currentPage = 1;
+        }
+
         renderTable(filteredStudies);
+        updatePaginationControls(filteredStudies.length);
         updateHeaderArrows();
+    };
+
+    const updatePaginationControls = (totalItems) => {
+        pageNavigation.innerHTML = '';
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        if (totalPages <= 1) {
+            totalItemsInfo.textContent = `Total: ${totalItems} estudios.`;
+            return;
+        }
+
+        const createButton = (text, page, isDisabled = false, isActive = false) => {
+            const button = document.createElement('button');
+            button.innerHTML = text;
+            button.dataset.page = page;
+            button.disabled = isDisabled;
+            button.className = `px-3 py-1 rounded-md transition-colors ${isDisabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : (isActive ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-100 border')}`;
+            return button;
+        };
+
+        pageNavigation.appendChild(createButton('Anterior', currentPage - 1, currentPage === 1));
+
+        for (let i = 1; i <= totalPages; i++) {
+            pageNavigation.appendChild(createButton(i, i, false, i === currentPage));
+        }
+
+        pageNavigation.appendChild(createButton('Siguiente', currentPage + 1, currentPage === totalPages));
+
+        pageNavigation.querySelectorAll('button[data-page]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                currentPage = parseInt(e.currentTarget.dataset.page);
+                sortAndRender();
+            });
+        });
     };
 
     tableHeaders.forEach(header => {
@@ -232,7 +317,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    searchInput.addEventListener('input', sortAndRender);
+    // --- Email Modal Logic ---
+    emailModalCloseBtn.addEventListener('click', () => {
+        emailModal.classList.add('hidden');
+    });
+
+    emailForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const studyId = emailForm.dataset.studyId;
+        const emailType = emailForm.dataset.emailType;
+        const newEmail = emailInputModal.value;
+
+        if (!studyId || !emailType || !newEmail) return;
+
+        saveEmailBtn.disabled = true;
+        saveEmailBtn.textContent = 'Guardando...';
+
+        const emailField = emailType === 'patient' ? 'datos_paciente.paciente_email' : 'protocolo_estudio.doctorEmail';
+        const statusField = emailType === 'patient' ? 'patientEmailStatus' : 'doctorEmailStatus';
+        const dateField = emailType === 'patient' ? 'datePAtienteEmailSent' : 'dateDoctorEmailSent';
+
+        try {
+            // Actualizar el email en el estudio y marcar como enviado
+            await updateStudy(studyId, {
+                [emailField]: newEmail,
+                [statusField]: 'enviado',
+                [dateField]: new Date().toISOString()
+            });
+
+            notyf.success(`Correo guardado y enviado.`);
+            emailModal.classList.add('hidden');
+
+            // Actualizar la UI sin recargar todo
+            const study = allStudies.find(s => s.id === studyId);
+            if (study) {
+                const pathParts = emailField.split('.');
+                study[pathParts[0]][pathParts[1]] = newEmail;
+                study[statusField] = 'enviado';
+                sortAndRender(); // Re-render para reflejar el cambio
+            }
+        } catch (error) {
+            console.error('Error al guardar el email:', error);
+            notyf.error('No se pudo guardar el correo.');
+        } finally {
+            saveEmailBtn.disabled = false;
+            // El texto del botón se actualiza al abrir el modal
+        }
+    });
+
+    searchInput.addEventListener('input', () => sortAndRender(true));
+
+    itemsPerPageSelect.addEventListener('change', (e) => {
+        itemsPerPage = parseInt(e.target.value, 10);
+        currentPage = 1;
+        sortAndRender();
+    });
 
     // Initial Load
     try {

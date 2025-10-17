@@ -22,7 +22,7 @@ export const reportStructure = [{
     }, {
         id: 'genero',
         label: 'Género',
-        type: 'checkbox',
+        type: 'select',
         options: ['Masculino', 'Femenino', 'Otro']
     }, {
         id: 'peso',
@@ -80,6 +80,14 @@ export const reportStructure = [{
         type: 'text',
         placeholder: 'Especialidad',
         options: ['Cardiología', 'Medicina Interna', 'Cirugía General', 'Medicina Familiar', 'Otra']
+    },{
+        id: 'doctorEmail',
+        label: 'Email del Doctor',
+        type: 'text',
+        placeholder: 'doctor@email.d',
+        detail: '',
+        reportAvoid: true,
+        required: false
     }, {
         id: 'medico_interpreta',
         label: 'Médico que Interpreta',
