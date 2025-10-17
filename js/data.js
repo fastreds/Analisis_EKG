@@ -73,6 +73,11 @@ export const reportStructure = [{
         placeholder: 'Especialidad',
         options: ['Cardiología', 'Medicina Interna', 'Cirugía General', 'Medicina Familiar', 'Otra']
     }, {
+        id: 'medico_interpreta',
+        label: 'Médico que Interpreta',
+        type: 'text',
+        placeholder: 'Dr(a). Apellido'
+    }, {
         "id": "equipo",
         "label": "Tomógrafo",
         "type": "select",

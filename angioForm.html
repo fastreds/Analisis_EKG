@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivit CardioTools - Reporte Dinámico AngioTAC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        #sketch-container {
+            perspective: 1000px;
+            cursor: grab;
+        }
+
+        .segment-group:not(.edit-mode) {
+            cursor: pointer;
+        }
+
+        .segment-group {
+            cursor: move;
+        }
+
+        .segment-group:hover .segment-path {
+            stroke-width: 7px;
+        }
+
+        .segment-label {
+            font-size: 10px;
+            font-weight: bold;
+            fill: #1f2937;
+            pointer-events: none;
+            text-shadow: 0 0 2px white, 0 0 2px white, 0 0 2px white;
+        }
+
+        .control-handle {
+            fill: #3b82f6;
+            stroke: white;
+            stroke-width: 2px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .segment-group.edit-mode .control-handle {
+            opacity: 1;
+        }
+
+        .stent-marker {
+            fill: none;
+            stroke-width: 8px;
+            stroke: #3b82f6;
+            stroke-dasharray: 1 5;
+            stroke-linecap: round;
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .bridge-marker {
+            fill: none;
+            stroke: #9ca3af;
+            stroke-width: 12px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .aneurysm-marker {
+            fill: #ef4444;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .bg-image {
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: #6B7280;
+            /* gray-500 */
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #1F2937;
+            /* gray-800 */
+        }
+
+        .tab-btn.active {
+            color: #3B82F6;
+            /* blue-500 */
+            border-bottom-color: #3B82F6;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="main-content" class="hidden">
+        <div class="container mx-auto p-4 lg:p-8">
+            <header class="app-header">
+                <img src="https://i0.wp.com/vivitsalud.com/wp-content/uploads/2023/01/Diseno-sin-titulo-9.png?w=200&ssl=1"
+                    alt="Vivit Salud Logo" class="app-logo">
+                <div>
+                    <h1 class="text-3xl lg:text-4xl font-bold text-gray-800">Vivit CardioTools - Reporte Dinámico
+                        AngioTAC</h1>
+                    <p class="text-gray-500 mt-1">Herramienta creación de informes tomografía Coronaria.</p>
+                </div>
+            </header>
+
+            <div id="case-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-8">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3">Nuevo Estudio</h2>
+                <div class="relative">
+                    <div id="case-buttons-container" class="flex flex-wrap gap-3 items-center">
+                        <!-- Buttons will be dynamically inserted here -->
+                    </div>
+                    <div id="case-tooltip"
+                        class="hidden absolute z-10 w-64 p-3 -mt-2 text-sm font-normal text-left text-gray-600 bg-white border border-gray-200 rounded-lg shadow-lg">
+                        <!-- Tooltip content will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3 items-center mt-4">
+                    <a href="estudios.html" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">Mantenimiento de Estudios</a>
+                    <button id="load-saved-btn"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">Cargar
+                        Estudio Guardado</button>
+                    <button id="save-study-btn" class="btn btn-primary">Guardar Estudio</button>
+                    <button id="save-informe-btn"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">Generar
+                        Informe Visual</button>
+                </div>
+            </div>
+
+            <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Columna del Formulario -->
+                <div id="form-container" class="bg-white p-6 rounded-2xl shadow-lg">
+                    <!-- El formulario se generará aquí -->
+                </div>
+
+                <!-- Columna del Reporte -->
+                <div class="sticky top-8 self-start">
+                    <!-- Contenedor de Pestañas -->
+                    <div class="bg-white rounded-2xl shadow-lg">
+                        <!-- Botones de Pestañas -->
+                        <div class="flex border-b border-gray-200 px-4">
+                            <button id="tab-btn-croquis" class="tab-btn active">Croquis Interactivo</button>
+                            <button id="tab-btn-reporte" class="tab-btn">Vista Previa del Reporte</button>
+                        </div>
+
+                        <!-- Paneles de Contenido de las Pestañas -->
+                        <div id="tab-content-panels">
+                            <!-- Panel del Croquis -->
+                            <div id="tab-panel-croquis" class="tab-panel">
+                                <div id="croquis-wrapper" class="p-4">
+                                    <h4 id="dominance-title"
+                                        class="text-md font-semibold text-blue-800 mb-2 text-center"></h4>
+                                    <div id="sketch-container"
+                                        class="relative bg-gray-100 rounded-lg overflow-hidden">
+                                        <!-- SVGs se inyectarán aquí -->
+                                    </div>
+                                    <div class="mt-4 grid grid-cols-2 gap-2">
+                                        <input type="file" id="image-upload" class="hidden" accept="image/*">
+                                        <button onclick="document.getElementById('image-upload').click()"
+                                            class="flex-1 btn btn-secondary text-sm">Cargar Fondo</button>
+                                        <button id="toggle-labels-btn" class="flex-1 btn btn-secondary text-sm">Ocultar
+                                            Etiquetas</button>
+                                        <button id="edit-positions-btn"
+                                            class="flex-1 btn btn-secondary text-sm">Editar Posiciones</button>
+                                        <button id="reset-positions-btn"
+                                            class="flex-1 btn btn-secondary text-sm">Restablecer
+                                            Posiciones</button>
+                                    </div>
+                                    <div id="legend-container"
+                                        class="mt-4 border-t pt-4 bg-gray-50 p-4 rounded-lg">
+                                        <!-- La leyenda se generará aquí -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Panel del Reporte -->
+                            <div id="tab-panel-reporte" class="tab-panel hidden">
+
+
+
+                                <div id="report-preview-container" class="p-6"> <button id="copy-report-btn"
+                                        class="bg-blue-600 text-white px-4 py-2 rounded-lg 
+                                hover:bg-blue-700 transition-colors duration-300 flex items-center gap-2 float-right mb-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                            fill="currentColor">
+                                            <path
+                                                d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                            <path
+                                                d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                                        </svg>
+
+                                    </button>
+                                    <div id="report-output"
+                                        class="prose max-w-none bg-gray-50 p-4 rounded-lg h-[80vh] overflow-y-auto report-placeholder">
+                                        <!-- El reporte generado se mostrará aquí -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+        </div>
+    </div>
+
+    <div id="user-info" class="fixed top-4 right-4 bg-white p-3 rounded-lg shadow-lg hidden">
+        <p id="user-email" class="text-sm font-semibold"></p>
+        <button id="logout-btn" class="text-sm text-blue-500 hover:underline mt-1">Cerrar Sesión</button>
+    </div>
+
+    <!-- Modal Structure for Coronary Sketch -->
+    <div id="segment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 id="modal-title" class="text-xl leading-6 font-bold text-gray-900">Editar Segmento</h3>
+                    <button id="modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+                </div>
+                <div id="modal-content" class="mt-4 max-h-[60vh] overflow-y-auto p-2">
+                    <!-- Dynamic form content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script type="module" src="js/logic/form.js"></script>
+    <!-- <script src="js/utils/audit.js"></script> -->
+
+    <!-- Modal for loading saved studies -->
+    <div id="load-study-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-xl leading-6 font-bold text-gray-900">Cargar Estudio Guardado</h3>
+                    <button id="load-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+                </div>
+                <div id="load-modal-content" class="mt-4 max-h-[60vh] overflow-y-auto p-2">
+                    <!-- Study list will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

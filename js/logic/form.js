@@ -3,20 +3,51 @@ import { sampleCases } from '../data/case.js';
 import { initCoronarySketch } from './arbolCoronarioLogic.js';
 import { posicionesDerecha } from '../data/posicionesDominancia.js';
 import { generateConclusion } from './conclusionLogic.js';
+import { auth, saveStudy, getStudies, getStudy, updateStudy } from './firebaseLogic.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    const mainContent = document.getElementById('main-content');
+    const userInfo = document.getElementById('user-info');
+    const userEmail = document.getElementById('user-email');
+    const logoutBtn = document.getElementById('logout-btn');
     const formContainer = document.getElementById('form-container');
     const reportOutput = document.getElementById('report-output');
     const copyBtn = document.getElementById('copy-report-btn');
     const saveBtn = document.getElementById('save-study-btn');
     const caseControlsTitle = document.querySelector('#case-controls h2');
 
-    // Inicializar Notyf para notificaciones
+    let currentStudyId = null;
+
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            mainContent.classList.remove('hidden');
+            userInfo.classList.remove('hidden');
+            userEmail.textContent = user.email;
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+
+    if(logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // The onAuthStateChanged listener will handle the redirect
+            } catch (error) {
+                console.error("Logout failed:", error);
+            }
+        });
+    }
+
     const notyf = new Notyf({
         duration: 5000,
         position: { x: 'right', y: 'top' },
         dismissible: true,
-        types: [{ type: 'error', background: '#EF4444', icon: false }]
+        types: [
+            { type: 'error', background: '#EF4444', icon: false },
+            { type: 'success', background: '#10B981', icon: false }
+        ]
     });
 
     let formData = {};
@@ -45,13 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let maxStenosis = 0;
         let leftMainStenosis = 0;
         const severeVessels = new Set();
-        // Mapeo de IDs de segmentos principales a nombres para la lógica de 3 vasos
-        const mainVesselIds = { '6': 'DA', '7': 'DA', '8': 'DA', '11': 'CX', '13': 'CX', '1': 'CD', '2': 'CD', '3': 'CD' }; // IDs de segmentos proximales y medios
+        const mainVesselIds = { '6': 'DA', '7': 'DA', '8': 'DA', '11': 'CX', '13': 'CX', '1': 'CD', '2': 'CD', '3': 'CD' };
 
         Object.entries(segmentData).forEach(([segmentId, segment]) => {
             if (segment.findings?.placas) {
                 segment.findings.placas.forEach(plaque => {
-                    let currentStenosis = 0;                    if (plaque.estenosis) {
+                    let currentStenosis = 0;
+                    if (plaque.estenosis) {
                         currentStenosis = severityToMaxPercent[plaque.estenosis] || 0;
                     }
 
@@ -59,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         maxStenosis = currentStenosis;
                     }
 
-                    if (segmentId === '5' && currentStenosis > leftMainStenosis) { // TCI es segmento 5
+                    if (segmentId === '5' && currentStenosis > leftMainStenosis) {
                         leftMainStenosis = currentStenosis;
                     }
 
@@ -73,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (maxStenosis === 100) return 'CAD-RADS 5';
         if (leftMainStenosis >= 50 || severeVessels.size >= 3) return 'CAD-RADS 4B';
         if (severeVessels.size === 1 || severeVessels.size === 2) return 'CAD-RADS 4A';
-        if (maxStenosis >= 70) return 'CAD-RADS 4A'; // Catch-all for severe in non-main vessels
+        if (maxStenosis >= 70) return 'CAD-RADS 4A';
         if (maxStenosis >= 50) return 'CAD-RADS 3';
         if (maxStenosis >= 25) return 'CAD-RADS 2';
         if (maxStenosis >= 1) return 'CAD-RADS 1';
@@ -81,20 +112,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'CAD-RADS 0';
     };
 
-    // --- DEBUG: Expose modules to global scope for audit.js ---
     window.reportStructure = reportStructure;
     window.sampleCases = sampleCases;
     window.initCoronarySketch = initCoronarySketch;
-    window.posicionesDerecha = posicionesDerecha; // For audit.js check
-    window.calculateCadRads = calculateCadRads; // Expose for audit.js
+    window.posicionesDerecha = posicionesDerecha;
+    window.calculateCadRads = calculateCadRads;
 
     const updateReport = () => {
         const updateCaseControlsTitle = () => {
             if (!caseControlsTitle) return;
-    
             const patientName = document.getElementById('datos_paciente-nombre')?.value.trim() || '';
             const patientId = document.getElementById('datos_paciente-id_paciente')?.value.trim() || '';
-    
             if (patientName || patientId) {
                 const displayName = patientName || 'Paciente sin nombre';
                 const displayId = patientId ? `(C.I. ${patientId})` : '';
@@ -106,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let data = gatherData();
         updateCalciumScore();
-        
         if (!cadRadsManualOverride) {
             const calculatedScore = calculateCadRads(data);
             const cadRadsSelect = document.getElementById('cad_rads-score');
@@ -117,17 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-
         updateCaseControlsTitle();
 
         let html = '';
         let hasContent = false;
-
         reportStructure.forEach(section => {
             const sectionData = data[section.id];
             let sectionHtml = '';
             let sectionHasContent = false;
-
             if (section.type === 'repeatableGroup') {
                 if (sectionData && sectionData.items) {
                     sectionData.items.forEach(item => {
@@ -136,13 +160,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         Object.entries(item).forEach(([key, value]) => {
                             if (key !== 'nombre' && key !== 'placas' && value) {
                                 const fieldLabel = section.template.find(f => f.id === key)?.label;
-                                if(fieldLabel){
+                                if (fieldLabel) {
                                     itemHtml += `<li><strong>${fieldLabel}:</strong> ${value}</li>`;
                                     itemHasContentInThisItem = true;
                                 }
                             }
                         });
-
                         if (item.placas && item.placas.length > 0) {
                             itemHtml += `<h5>Placas Ateromatosas:</h5>`;
                             item.placas.forEach((plaque, index) => {
@@ -170,63 +193,58 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             } else if (section.type === 'segmented_group') {
-               
-        // Add segment evaluation text
-        const segmentData = data.evaluacion_segmento?.segments;
-        if (segmentData) {
-            const segmentSection = reportStructure.find(s => s.id === 'evaluacion_segmento');
-            if (segmentSection) {
-                let segmentText = `<h3 class="report-title-clickable" data-scroll-to="form-section-${segmentSection.id}">${segmentSection.title}</h3>`;
-                let findingsFound = false;
-                segmentSection.segments.forEach(segmentInfo => {
-                    const segmentId = segmentInfo.id;
-                    const segment = segmentData[segmentId];
-                    if (segment && segment.estado_general === 'Con hallazgos patológicos' && segment.findings) {
-                        let findingsList = [];
-                        if (segment.findings.placas && segment.findings.placas.length > 0) {
-                            segment.findings.placas.forEach(p => {
-                                let estenosisText = p.estenosis_porcentaje ? `${p.estenosis_porcentaje}%` : p.estenosis;
-                                let placaText = `Placa ${p.composicion || ''} que produce estenosis ${estenosisText || 'no especificada'}`;
-                                if (p.has_hrp && p.has_hrp.length > 0) {
-                                    placaText += ` con características de alto riesgo (${p.has_hrp.join(', ')})`;
+                const segmentData = data.evaluacion_segmento?.segments;
+                if (segmentData) {
+                    const segmentSection = reportStructure.find(s => s.id === 'evaluacion_segmento');
+                    if (segmentSection) {
+                        let segmentText = `<h3 class="report-title-clickable" data-scroll-to="form-section-${segmentSection.id}">${segmentSection.title}</h3>`;
+                        let findingsFound = false;
+                        segmentSection.segments.forEach(segmentInfo => {
+                            const segmentId = segmentInfo.id;
+                            const segment = segmentData[segmentId];
+                            if (segment && segment.estado_general === 'Con hallazgos patológicos' && segment.findings) {
+                                let findingsList = [];
+                                if (segment.findings.placas && segment.findings.placas.length > 0) {
+                                    segment.findings.placas.forEach(p => {
+                                        let estenosisText = p.estenosis_porcentaje ? `${p.estenosis_porcentaje}%` : p.estenosis;
+                                        let placaText = `Placa ${p.composicion || ''} que produce estenosis ${estenosisText || 'no especificada'}`;
+                                        if (p.has_hrp && p.has_hrp.length > 0) {
+                                            placaText += ` con características de alto riesgo (${p.has_hrp.join(', ')})`;
+                                        }
+                                        findingsList.push(placaText);
+                                    });
                                 }
-                                findingsList.push(placaText);
-                            });
-                        }
-                        if (segment.findings.stents && segment.findings.stents.length > 0) {
-                            segment.findings.stents.forEach(s => {
-                                let stentText = 'Stent preexistente';
-                                if (s.evaluacion === 'Con reestenosis intra-stent' && s.reestenosis_details) {
-                                    stentText += ` con reestenosis ${s.reestenosis_details.grado || 'no especificada'}`;
-                                } else {
-                                    stentText += ` (${s.evaluacion || 'permeable'})`;
+                                if (segment.findings.stents && segment.findings.stents.length > 0) {
+                                    segment.findings.stents.forEach(s => {
+                                        let stentText = 'Stent preexistente';
+                                        if (s.evaluacion === 'Con reestenosis intra-stent' && s.reestenosis_details) {
+                                            stentText += ` con reestenosis ${s.reestenosis_details.grado || 'no especificada'}`;
+                                        } else {
+                                            stentText += ` (${s.evaluacion || 'permeable'})`;
+                                        }
+                                        findingsList.push(stentText);
+                                    });
                                 }
-                                findingsList.push(stentText);
-                            });
+                                if (segment.findings.has_puente && segment.findings.puente_details) {
+                                    findingsList.push(`Puente miocárdico con compresión sistólica ${segment.findings.puente_details.compresion || 'no especificada'}`);
+                                }
+                                if (segment.findings.has_aneurisma && segment.findings.aneurisma_details) {
+                                    findingsList.push(`Aneurisma/ectasia con diámetro de ${segment.findings.aneurisma_details.diametro || 'N/A'} mm`);
+                                }
+                                if (findingsList.length > 0) {
+                                    segmentText += `<p><strong>${segmentInfo.name}:</strong> ${findingsList.join('. ')}.</p>`;
+                                    findingsFound = true;
+                                }
+                            }
+                        });
+                        if (!findingsFound) {
+                            segmentText += "<p>No se encontraron hallazgos patológicos significativos en los segmentos evaluados.</p>";
                         }
-                        if (segment.findings.has_puente && segment.findings.puente_details) {
-                            findingsList.push(`Puente miocárdico con compresión sistólica ${segment.findings.puente_details.compresion || 'no especificada'}`);
-                        }
-                        if (segment.findings.has_aneurisma && segment.findings.aneurisma_details) {
-                            findingsList.push(`Aneurisma/ectasia con diámetro de ${segment.findings.aneurisma_details.diametro || 'N/A'} mm`);
-                        }
-                        
-                        if (findingsList.length > 0) {
-                            segmentText += `<p><strong>${segmentInfo.name}:</strong> ${findingsList.join('. ')}.</p>`;
-                            findingsFound = true;
-                        }
+                        html += segmentText;
+                        hasContent = true;
                     }
-                });
-
-                if (!findingsFound) {
-                    segmentText += "<p>No se encontraron hallazgos patológicos significativos en los segmentos evaluados.</p>";
                 }
-                html += segmentText;
-                hasContent = true;
-            }
-        }
             } else {
-                // This handles sections with a 'fields' array
                 if (sectionData) {
                     Object.entries(sectionData).forEach(([key, value]) => {
                         if ((value && value.length !== 0) || (key === 'total' && value !== '')) {
@@ -243,15 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             }
-
             if (sectionHasContent) {
                 html += `<h3 class="report-title-clickable" data-scroll-to="form-section-${section.id}">${section.title}</h3>${sectionHtml}`;
                 hasContent = true;
             }
         });
-
-
-
         reportOutput.innerHTML = html;
         if (hasContent) {
             reportOutput.classList.remove('report-placeholder');
@@ -265,26 +279,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetId = e.target.dataset.scrollTo;
             const targetElement = document.getElementById(targetId);
             if (targetElement) {
-                const content = targetElement.querySelector('[id^="section-content-"]'); // The collapsible content
+                const content = targetElement.querySelector('[id^="section-content-"]');
                 if (content && content.classList.contains('hidden')) {
                     const header = targetElement.querySelector('h3');
-                    header.click(); // Simulate click to expand
+                    header.click();
                 }
                 targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
     });
 
-
-
     const buildField = (field, prefix) => {
         let fieldHtml = '';
         const id = `${prefix}-${field.id}`;
-
-        switch(field.type) {
+        switch (field.type) {
             case 'radio':
                 const radioOptions = field.options.map(opt => {
-                    const inputName = `${prefix}-${field.id}`; // Usar el mismo nombre para todo el grupo
+                    const inputName = `${prefix}-${field.id}`;
                     const isChecked = opt === field.default ? 'checked' : '';
                     return `<label class="flex items-center">
                         <input type="radio" name="${inputName}" value="${opt}" class="form-radio" data-triggers="${field.triggers && field.triggers[opt] ? field.triggers[opt] : ''}" ${isChecked}>
@@ -297,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
                 break;
             case 'checkbox':
-                 const checkOptions = field.options.map(opt => `
+                const checkOptions = field.options.map(opt => `
                     <label class="flex items-center">
                         <input type="checkbox" name="${id}" value="${opt}" class="form-checkbox" data-triggers="${field.triggers && field.triggers[opt] ? field.triggers[opt] : ''}">
                         <span class="ml-2 text-sm text-gray-700">${opt}</span>
@@ -308,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${checkOptions}</div>
                 </div>`;
                 break;
-             case 'master_checkbox':
+            case 'master_checkbox':
                 fieldHtml = `<div class="mb-2"><label class="flex items-center font-semibold">
                     <input type="checkbox" id="${id}" name="${id}" value="${field.label}" class="form-checkbox" data-triggers="${field.triggers && field.triggers.checked ? field.triggers.checked : ''}">
                     <span class="ml-2">${field.label}</span>
@@ -327,15 +338,14 @@ document.addEventListener('DOMContentLoaded', () => {
              case 'textarea':
                 fieldHtml = `<div class="mb-4">
                    <label for="${id}" class="block text-sm font-medium text-gray-600 mb-1">${field.label}</label>`;
-                
                 fieldHtml += `<${field.type === 'textarea' ? 'textarea' : `input type="${field.type}"`} id="${id}" name="${id}" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" ${field.rows ? `rows="${field.rows}"` : ''} placeholder="${field.placeholder || ''}"></${field.type === 'textarea' ? 'textarea' : 'input'}>`;
-
                 if ((field.type === 'textarea' || field.type === 'text') && field.options && Array.isArray(field.options)) {
                     fieldHtml += '<div class="mt-2 space-y-1">';
                     field.options.forEach((option) => {
+                        const escapedOption = option.split('"').join('&quot;');
                         fieldHtml += `
                             <label class="flex items-center text-sm text-gray-600 hover:bg-gray-50 p-1 rounded-md cursor-pointer">
-                                <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" data-target-id="${id}" data-text-content="${option.replace(/"/g, '&quot;')}">
+                                <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" data-target-id="${id}" data-text-content="${escapedOption}">
                                 <span class="ml-2">${option}</span>
                             </label>
                         `;
@@ -348,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const innerFields = field.fields.map(f => buildField(f, id)).join('');
                 fieldHtml = `<div id="${id}" class="hidden mt-4 pl-6 border-l-2 border-gray-200 space-y-4">${innerFields}</div>`;
                 break;
-             case 'repeatable_block':
+            case 'repeatable_block':
                 fieldHtml = `
                     <div class="mb-4">
                          <h5 class="font-semibold text-gray-800">${field.title}</h5>
@@ -365,8 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 break;
             case 'button':
-                 fieldHtml = `<button type="button" id="${id}" class="w-full mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">${field.label}</button>`;
-                 break;
+                fieldHtml = `<button type="button" id="${id}" class="w-full mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">${field.label}</button>`;
+                break;
         }
         return fieldHtml;
     };
@@ -374,18 +384,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const buildForm = () => {
         let formHtml = '';
         reportStructure.forEach((section, index) => {
-            const isCollapsible = true; 
-            const isCollapsed = index !== 0; // Colapsar todas excepto la primera
+            const isCollapsible = true;
+            const isCollapsed = index !== 0;
             formHtml += `<div id="form-section-${section.id}" class="form-section-container border border-gray-200 rounded-lg mb-6">
-                <h3 class="text-lg font-semibold p-4 bg-gray-50 border-b flex justify-between items-center ${isCollapsible ? 'cursor-pointer' : ''}" ${isCollapsible ? `data-collapsible-target="section-content-${section.id}"` : ''}>
+                <h3 class="text-lg font-semibold p-4 bg-gray-50 border-b flex justify-between items-center ${isCollapsible ? 'cursor-pointer' : ''}" ${isCollapsible ? `data-collapsible-target="section-content-${section.id}"` : ''}> 
                     <span class="flex items-center">${index + 1}. ${section.title}</span>
                     <span class="collapsible-arrow transform ${isCollapsed ? '-rotate-90' : 'rotate-0'} transition-transform duration-300">&#9660;</span>
                 </h3>
                 <div id="section-content-${section.id}" class="p-6 space-y-4 ${isCollapsed ? 'hidden' : ''}">`;
-            
             if (section.type === 'segmented_group') {
                 section.segments.forEach(segment => {
-                
                     formHtml += `<div id="form-segment-${segment.id}" class="segment-container border-b pb-4 mb-4">
                         <h4 class="font-semibold text-blue-800 mb-2">${segment.name}</h4>
                         <div class="pl-2">`;
@@ -394,28 +402,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     formHtml += `</div></div>`;
                 });
-            } else if (section.fields) { // Solo procesar si la sección tiene un array de 'fields'
+            } else if (section.fields) {
                 section.fields.forEach(field => {
                     formHtml += buildField(field, section.id);
-                   
                 });
-            } else {
-                // Ignorar secciones que no tienen 'fields' ni son 'segmented_group'
-            
-
-                
             }
             formHtml += `</div></div>`;
         });
         formContainer.innerHTML = formHtml;
     };
-    
-    // --- BUILD AND INITIALIZE ---
+
     buildForm();
     initCoronarySketch();
 
-    // --- Event Listener para el botón de Autogenerar Conclusión ---
-    // Se añade aquí después de que buildForm() ha creado el botón en el DOM.
     const autogenerateBtn = document.getElementById('conclusion-autogenerate_conclusion');
     if (autogenerateBtn) {
         autogenerateBtn.addEventListener('click', () => {
@@ -425,16 +424,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Trigger initial draw after a short delay to ensure DOM is ready
     setTimeout(() => {
         const dominanceRadio = document.querySelector('input[name="anatomia_general-dominancia"]:checked');
         if (dominanceRadio) {
             dominanceRadio.dispatchEvent(new Event('change', { bubbles: true }));
         }
-        updateReport(); // To draw initial report state
+        updateReport();
     }, 100);
 
-    // Collapsible sections
     formContainer.querySelectorAll('[data-collapsible-target]').forEach(header => {
         header.addEventListener('click', () => {
             const targetId = header.dataset.collapsibleTarget;
@@ -446,8 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- DATA GATHERING & LOADING ---
-
     const getRepeatableBlockData = (containerId) => {
         const container = document.getElementById(containerId);
         if (!container) return [];
@@ -455,14 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
         container.querySelectorAll('.repeat-item').forEach(itemNode => {
             const itemData = {};
             const processedNames = new Set();
-
             itemNode.querySelectorAll('input, select, textarea').forEach(input => {
                 const name = input.name || input.id;
                 if (!name || processedNames.has(name)) return;
-
                 const nameParts = name.split('-');
                 const key = nameParts[nameParts.length - 1];
-                
                 if (input.type === 'radio') {
                     const checkedRadio = itemNode.querySelector(`input[name="${name}"]:checked`);
                     if (checkedRadio) {
@@ -476,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     itemData[key] = values;
                     processedNames.add(name);
-                } else { // select, text, textarea, etc.
+                } else {
                     itemData[key] = input.value;
                     processedNames.add(name);
                 }
@@ -527,13 +519,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const gatherData = () => {
         formData = {};
         reportStructure.forEach(section => {
-            if (!section.id) return; // Skip sections without an ID
-    
+            if (!section.id) return;
             if (section.type === 'segmented_group') {
                 formData[section.id] = { segments: {} };
                 section.segments.forEach(segment => {
                     const segmentContainer = document.getElementById(`form-segment-${segment.id}`);
-             
                     if (segmentContainer) {
                         const segmentData = {};
                         section.template.forEach(field => {
@@ -580,40 +570,29 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadCase = (caseData) => {
-        // 1. Reset the form completely
         formContainer.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], textarea').forEach(el => el.value = '');
         formContainer.querySelectorAll('select').forEach(el => {
             el.selectedIndex = 0;
-            // Manually trigger change for selects to reset dependent UI
             el.dispatchEvent(new Event('change', { bubbles: true }));
         });
         formContainer.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(el => {
             el.checked = false;
-            // Dispatch change to hide conditional fields
             el.dispatchEvent(new Event('change', { bubbles: true }));
         });
         formContainer.querySelectorAll('[id^="repeat-container-"]').forEach(el => el.innerHTML = '');
 
-        // 2. Populate form with case data and dispatch events
         reportStructure.forEach(section => {
             const sectionData = caseData[section.id];
             if (!sectionData) return;
-
-            // Handle regular fields in sections
             if (section.fields) {
                 Object.entries(sectionData).forEach(([fieldId, value]) => {
                     if (value === undefined) return;
-                    
                     const fieldDef = section.fields.find(f => f.id === fieldId);
                     const elId = `${section.id}-${fieldId}`;
                     const el = document.getElementById(elId);
-
-                    if (!fieldDef && !el) return; // Skip if field doesn't exist in structure or DOM
-
+                    if (!fieldDef && !el) return;
                     if (fieldDef?.type === 'checkbox' && Array.isArray(value)) {
-                        // First, uncheck all options in the group
                         document.querySelectorAll(`input[name^="${elId}"]`).forEach(cb => cb.checked = false);
-                        // Then, check the ones from the case data
                         value.forEach(opt => {
                             const checkbox = document.querySelector(`input[name="${elId}"][value="${opt}"]`);
                             if (checkbox) {
@@ -622,17 +601,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         });
                     } else if (fieldDef?.type === 'radio') {
-                        const radio = document.querySelector(`input[name="${elId}"][value="${value.replace(/"/g, '\\"')}"]`);
+                        const radio = document.querySelector(`input[name="${elId}"][value="${value.replace(/"/g, '\"')}"]`);
                         if (radio) {
                             radio.checked = true;
-                            // This is critical for updating the sketch dominance and other conditional UI
                             radio.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     } else if (fieldDef?.type === 'repeatable_block' && Array.isArray(value)) {
                         const addBtn = document.querySelector(`button[data-template-id="${elId}-template"]`);
                         if (addBtn) {
                             value.forEach(itemData => {
-                                addBtn.click(); // This will create the new item structure
+                                addBtn.click();
                                 const container = document.getElementById(`repeat-container-${elId}`);
                                 const newItem = container.querySelector('.repeat-item:last-child');
                                 if (newItem) {
@@ -640,7 +618,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                         const input = newItem.querySelector(`[id$="-${key}"]`);
                                         if (input) {
                                             if (input.type === 'checkbox' || input.type === 'radio') {
-                                                // Handle checkboxes/radios within repeatable blocks
                                                 if ((Array.isArray(val) && val.includes(input.value)) || val === input.value) {
                                                     input.checked = true;
                                                 } else {
@@ -656,32 +633,25 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             });
                         }
-                    } else if (el) { // For text, number, select, textarea etc.
+                    } else if (el) {
                         el.value = value;
                         el.dispatchEvent(new Event('input', { bubbles: true }));
                         el.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 });
             }
-
-            // Handle segmented group separately
             if (section.type === 'segmented_group' && sectionData.segments) {
                 Object.entries(sectionData.segments).forEach(([segmentId, segmentValues]) => {
                     const prefix = `${section.id}-${segmentId}`;
-                    
-                    // Set estado_general
                     const estadoRadio = document.querySelector(`input[name="${prefix}-estado_general"][value="${segmentValues.estado_general}"]`);
                     if (estadoRadio) {
                         estadoRadio.checked = true;
                         estadoRadio.dispatchEvent(new Event('change', { bubbles: true }));
                     }
-
-                    // Handle findings within the segment
                     if (segmentValues.findings) {
                         Object.entries(segmentValues.findings).forEach(([findingKey, findingValue]) => {
                             const findingDef = section.template.find(t => t.id === 'findings')?.fields.find(f => f.id === findingKey);
                             if (!findingDef) return;
-
                             if (findingDef.type === 'repeatable_block' && Array.isArray(findingValue)) {
                                 const addBtn = document.querySelector(`button[data-template-id="${prefix}-findings-${findingKey}-template"]`);
                                 if (addBtn) {
@@ -700,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     } else if (input.type === 'checkbox' && Array.isArray(val)) {
                                                         val.forEach(v => {
                                                             const cb = newItem.querySelector(`input[name="${input.name}"][value="${v}"]`);
-                                                            if(cb) cb.checked = true;
+                                                            if (cb) cb.checked = true;
                                                         });
                                                     } else {
                                                         input.value = val;
@@ -716,12 +686,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (masterCheckbox) {
                                     masterCheckbox.checked = !!findingValue;
                                     masterCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-
-                                    if (findingValue && segmentValues.findings[findingKey+'_details']) {
-                                        const details = segmentValues.findings[findingKey+'_details'];
+                                    if (findingValue && segmentValues.findings[findingKey + '_details']) {
+                                        const details = segmentValues.findings[findingKey + '_details'];
                                         Object.entries(details).forEach(([detailKey, detailValue]) => {
                                             const detailInput = document.getElementById(`${prefix}-findings-${findingKey}_details-${detailKey}`);
-                                            if(detailInput) {
+                                            if (detailInput) {
                                                 detailInput.value = detailValue;
                                                 detailInput.dispatchEvent(new Event('change', { bubbles: true }));
                                             }
@@ -734,22 +703,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-
-        // 3. Final update
-        // A small timeout can help ensure all DOM updates and event dispatches from the loading process are settled
         setTimeout(() => {
             cadRadsManualOverride = false;
-            updateReport(); // This will also trigger sketch updates via its internal calls
-            
-            // Explicitly trigger a final change on the dominance radio to be sure the sketch is correct
+            updateReport();
             const dominanceRadio = document.querySelector('input[name="anatomia_general-dominancia"]:checked');
             if (dominanceRadio) {
                 dominanceRadio.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }, 100);
     };
-
-    // --- EVENT LISTENERS ---
 
     copyBtn.addEventListener('click', () => {
         const textToCopy = reportOutput.innerText;
@@ -769,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     Copiar`;
                 }, 2000);
             });
-        } else { 
+        } else {
             const textArea = document.createElement("textarea");
             textArea.value = textToCopy;
             document.body.appendChild(textArea);
@@ -790,19 +752,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const buttonsContainer = document.getElementById('case-buttons-container');
         const tooltip = document.getElementById('case-tooltip');
         if (!buttonsContainer || !tooltip) return;
-
         Object.keys(sampleCases).forEach((caseKey, index) => {
             const caseData = sampleCases[caseKey];
             const button = document.createElement('button');
             button.dataset.case = caseKey;
             button.className = 'case-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors';
             button.textContent = index + 1;
-
             button.addEventListener('mouseenter', () => {
                 const patient = caseData.datos_paciente || {};
                 const clinInfo = caseData.informacion_clinica || {};
                 const cadRads = caseData.cad_rads || {};
-
                 let tooltipHtml = `<p class="font-bold">${patient.nombre || 'Caso ' + (index + 1)}</p>`;
                 if (patient.edad || patient.genero) {
                     tooltipHtml += `<p class="text-xs">${patient.edad || ''} años, ${patient.genero || ''}</p>`;
@@ -813,40 +772,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cadRads.score) {
                     tooltipHtml += `<p class="mt-1 text-xs"><strong>CAD-RADS:</strong> ${cadRads.score}</p>`;
                 }
-
                 tooltip.innerHTML = tooltipHtml;
                 tooltip.classList.remove('hidden');
-
                 const btnRect = button.getBoundingClientRect();
                 const containerRect = buttonsContainer.parentElement.getBoundingClientRect();
                 tooltip.style.left = `${btnRect.left - containerRect.left}px`;
-                tooltip.style.top = `${btnRect.bottom - containerRect.top + 8}px`; // 8px for margin
+                tooltip.style.top = `${btnRect.bottom - containerRect.top + 8}px`;
             });
-
             button.addEventListener('mouseleave', () => {
                 tooltip.classList.add('hidden');
             });
-            
             button.addEventListener('click', (e) => {
                 const caseKey = e.target.dataset.case;
                 if (sampleCases[caseKey]) {
                     loadCase(sampleCases[caseKey]);
                 }
             });
-
             buttonsContainer.appendChild(button);
         });
     };
 
     buildCaseButtons();
 
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         const currentData = gatherData();
-        localStorage.setItem('savedAngioTACStudy', JSON.stringify(currentData));
-        saveBtn.textContent = '¡Guardado!';
-        setTimeout(() => {
-            saveBtn.textContent = 'Guardar Estudio';
-        }, 2000);
+        const patientId = currentData.datos_paciente?.id_paciente;
+
+        if (!patientId) {
+            notyf.error('El C.I./ID del paciente es requerido para poder guardar el estudio.');
+            const patientIdInput = document.getElementById('datos_paciente-id_paciente');
+            if(patientIdInput) {
+                patientIdInput.focus();
+                patientIdInput.classList.add('field-error');
+            }
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = currentStudyId ? 'Actualizando...' : 'Guardando...';
+
+        try {
+            if (currentStudyId) {
+                await updateStudy(currentStudyId, currentData);
+                notyf.open({type: 'success', message: '¡Estudio actualizado en la nube!'});
+                saveBtn.textContent = '¡Actualizado!';
+            } else {
+                const newId = await saveStudy(currentData);
+                currentStudyId = newId; // Update the ID for subsequent saves
+                notyf.open({type: 'success', message: '¡Estudio guardado en la nube!'});
+                saveBtn.textContent = '¡Guardado!';
+                 // Update URL to reflect the new study ID, so a refresh doesn't create a new one
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('studyId', newId);
+                window.history.replaceState({ path: newUrl.href }, '', newUrl.href);
+                saveBtn.textContent = 'Actualizar Estudio'; // Change button text after first save
+            }
+            localStorage.setItem('savedAngioTACStudy', JSON.stringify(currentData)); // Keep local save as fallback
+        } catch (error) {
+            console.error("Error saving study to Firebase:", error);
+            notyf.error('Error al guardar en la nube. Verifique la consola.');
+            saveBtn.textContent = 'Error';
+        } finally {
+            setTimeout(() => {
+                saveBtn.disabled = false;
+                saveBtn.textContent = currentStudyId ? 'Actualizar Estudio' : 'Guardar Estudio';
+            }, 2000);
+        }
     });
 
     const loadSavedBtn = document.getElementById('load-saved-btn');
@@ -856,13 +847,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (savedData) {
                 loadCase(JSON.parse(savedData));
             } else {
-                alert('No hay ningún estudio guardado.');
+                notyf.error('No hay ningún estudio guardado localmente.');
             }
         });
     }
 
     const saveInformeBtn = document.getElementById('save-informe-btn');
-    if(saveInformeBtn) {
+    if (saveInformeBtn) {
         const validateRequiredFields = () => {
             const missingFields = [];
             reportStructure.forEach(section => {
@@ -871,7 +862,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (field.required) {
                             const el = document.getElementById(`${section.id}-${field.id}`);
                             if (el) {
-                                // Reset styles
                                 el.classList.remove('field-error');
                             }
                             if (el && (!el.value || !el.value.trim())) {
@@ -883,22 +873,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             return missingFields;
         };
-
         saveInformeBtn.addEventListener('click', (e) => {
             const missing = validateRequiredFields();
             if (missing.length > 0) {
                 e.preventDefault();
                 const fieldLabels = missing.map(f => `<li>${f.label}</li>`).join('');
                 notyf.error(`Por favor, complete los campos obligatorios:<ul>${fieldLabels}</ul>`);
-                
                 missing[0].element.focus();
                 missing.forEach(f => f.element.classList.add('field-error'));
                 return;
             }
-
             const currentData = gatherData();
             localStorage.setItem('savedAngioTACStudy', JSON.stringify(currentData));
-    
             saveInformeBtn.textContent = '¡Guardado!';
             setTimeout(() => {
                 window.open('informe.html', '_blank');
@@ -915,25 +901,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     const updateCalciumScore = () => {
         const tci = parseFloat(document.getElementById('score_calcio-tci')?.value) || 0;
         const da = parseFloat(document.getElementById('score_calcio-da')?.value) || 0;
         const cx = parseFloat(document.getElementById('score_calcio-cx')?.value) || 0;
         const cd = parseFloat(document.getElementById('score_calcio-cd')?.value) || 0;
-
         const total = tci + da + cx + cd;
-
         const totalEl = document.getElementById('score_calcio-total');
         if (totalEl) {
             totalEl.value = total;
         }
-
         const data = gatherData();
         const age = data.datos_paciente?.edad;
         const gender = data.datos_paciente?.genero;
         const percentile = calculatePercentile(total, age, gender);
-
         const percentileEl = document.getElementById('score_calcio-percentil');
         if (percentileEl) {
             percentileEl.value = percentile;
@@ -941,7 +922,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const calculatePercentile = (score, age, gender) => {
-        // Placeholder logic for percentile calculation
         if (score > 400) return '>90';
         if (score > 100) return '75-90';
         if (score > 10) return '50-75';
@@ -953,12 +933,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id.startsWith('score_calcio-')) {
             updateCalciumScore();
         }
-        // La actualización del título se maneja dentro de updateReport()
         updateReport();
     });
 
     formContainer.addEventListener('change', updateReport);
-    
+
     const croquisTabBtn = document.getElementById('tab-btn-croquis');
     const reporteTabBtn = document.getElementById('tab-btn-reporte');
     const croquisPanel = document.getElementById('tab-panel-croquis');
@@ -979,28 +958,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Listener para checkboxes que añaden texto a textareas/inputs
     formContainer.addEventListener('change', (e) => {
         if (e.target.matches('input[type="checkbox"][data-target-id]')) {
             const targetId = e.target.dataset.targetId;
             const textContent = e.target.dataset.textContent;
             const targetInput = document.getElementById(targetId);
-
             if (targetInput) {
                 const currentValue = targetInput.value;
                 if (e.target.checked) {
-                    // Añadir texto si no está ya presente
                     if (!currentValue.includes(textContent)) {
                         targetInput.value = currentValue ? `${currentValue}\n${textContent}` : textContent;
                     }
                 } else {
-                    // Eliminar texto
                     targetInput.value = currentValue.replace(textContent, '').replace(/\n\n/g, '\n').trim();
                 }
-                targetInput.dispatchEvent(new Event('input', { bubbles: true })); // Para que se actualice el reporte
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
         }
     });
 
-    updateReport(); // Initial call
+    // Check for studyId in URL for editing
+    const urlParams = new URLSearchParams(window.location.search);
+    const studyId = urlParams.get('studyId');
+    if (studyId) {
+        currentStudyId = studyId;
+        saveBtn.textContent = 'Actualizar Estudio';
+        try {
+            const studyData = await getStudy(studyId);
+            if (studyData) {
+                loadCase(studyData);
+            } else {
+                notyf.error('No se pudo encontrar el estudio para editar.');
+            }
+        } catch (error) {
+            console.error("Error loading study for editing:", error);
+            notyf.error('Error al cargar el estudio. Verifique la consola.');
+        }
+    }
+
+    updateReport();
 });
