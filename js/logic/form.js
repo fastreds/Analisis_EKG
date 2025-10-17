@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const displayId = patientId ? `(C.I. ${patientId})` : '';
                 caseControlsTitle.textContent = `${displayName} ${displayId}`;
             } else {
-                caseControlsTitle.textContent = 'Casos de Ejemplo y Guardado';
+                caseControlsTitle.textContent = 'Nuevo Estudio / Digite los datos del paciente';
             }
         };
 
