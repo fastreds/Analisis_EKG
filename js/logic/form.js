@@ -1,5 +1,5 @@
 import { reportStructure } from '../data.js';
-import { sampleCases } from '../data/case.js';
+import { sampleCases } from '../data/case.js'; // Asegúrate que la ruta a data.js sea correcta. Si está en el mismo nivel, debería ser './data.js'
 import { initCoronarySketch } from './arbolCoronarioLogic.js';
 import { posicionesDerecha } from '../data/posicionesDominancia.js';
 import { generateConclusion } from './conclusionLogic.js'; // Asumo que este archivo existe o existirá
@@ -7,6 +7,13 @@ import { saveStudy, getStudy, updateStudy } from './firebaseLogic.js';
 import { getCurrentUser } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Primero, verificamos la autenticación del usuario.
+    const user = await getCurrentUser();
+    if (user) {
+        // Si el usuario está autenticado, mostramos el contenido principal.
+        document.getElementById('main-content').classList.remove('hidden');
+    } // auth.js se encargará de redirigir si no hay usuario.
+
     const mainContent = document.getElementById('main-content');
     const formContainer = document.getElementById('form-container');
     const reportOutput = document.getElementById('report-output');

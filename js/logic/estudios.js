@@ -145,6 +145,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </td>
                 <td class="py-3 px-6 text-center">
                     <div class="flex item-center justify-center gap-2">
+                        <button data-study-id="${study.id}" data-action="view-report" class="w-6 h-6 text-blue-600 hover:text-blue-800 transform hover:scale-110" title="Ver Informe">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                        </button>
                         <a href="angioForm.html?studyId=${study.id}" class="w-6 h-6 text-yellow-600 hover:text-yellow-800 transform hover:scale-110" title="Editar">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 5.232z" />
@@ -213,6 +218,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     saveEmailBtn.textContent = isSent ? 'Guardar y Reenviar' : 'Guardar y Enviar';
                     emailModal.classList.remove('hidden');
                     emailInputModal.focus();
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-action="view-report"]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const studyId = e.currentTarget.dataset.studyId;
+                const study = allStudies.find(s => s.id === studyId);
+                if (study) {
+                    // Guardar los datos del estudio en localStorage para que informe.html los pueda leer
+                    localStorage.setItem('savedAngioTACStudy', JSON.stringify(study));
+                    // Abrir la página del informe en una nueva pestaña
+                    window.open('informe.html', '_blank');
+                } else {
+                    notyf.error('No se pudieron cargar los datos del estudio para generar el informe.');
                 }
             });
         });
