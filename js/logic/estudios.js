@@ -3,7 +3,10 @@ import { getStudies, deleteStudy } from './firebaseLogic.js';
 document.addEventListener('DOMContentLoaded', async () => {
     const searchInput = document.getElementById('search-input');
     const tableBody = document.getElementById('studies-table-body');
+    const tableHeaders = document.querySelectorAll('th[data-sort-key]');
     let allStudies = [];
+    let sortKey = 'protocolo_estudio.fecha_estudio';
+    let sortDirection = 'desc';
 
     const notyf = new Notyf({
         duration: 5000,
@@ -13,6 +16,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             { type: 'error', background: 'indianred', duration: 8000, dismissible: true }
         ]
     });
+
+    const getValueFromPath = (obj, path) => {
+        return path.split('.').reduce((res, prop) => res?.[prop], obj) || '';
+    }
+
+    const updateHeaderArrows = () => {
+        tableHeaders.forEach(header => {
+            const arrow = header.querySelector('.sort-arrow');
+            if (header.dataset.sortKey === sortKey) {
+                arrow.classList.add('active');
+                arrow.innerHTML = sortDirection === 'asc' ? '&#9650;' : '&#9660;';
+            } else {
+                arrow.classList.remove('active');
+                arrow.innerHTML = '';
+            }
+        });
+    };
 
     const renderTable = (studies) => {
         tableBody.innerHTML = ''; // Clear existing rows
@@ -28,7 +48,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const row = document.createElement('tr');
             row.className = 'border-b border-gray-200 hover:bg-gray-100';
 
-            // Status Badge
             const status = study.status || 'Borrador';
             const statusColor = status === 'Finalizado' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800';
 
@@ -59,7 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             tableBody.appendChild(row);
         });
 
-        // Add event listeners to delete buttons
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const studyId = e.currentTarget.dataset.studyId;
@@ -67,9 +85,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         await deleteStudy(studyId);
                         notyf.success('Estudio eliminado con éxito.');
-                        // Refetch and re-render data
-                        allStudies = await getStudies();
-                        renderTable(allStudies);
+                        allStudies = allStudies.filter(s => s.id !== studyId);
+                        sortAndRender();
                     } catch (error) {
                         console.error('Error al eliminar el estudio:', error);
                         notyf.error('Error al eliminar el estudio.');
@@ -79,9 +96,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    const filterStudies = () => {
+    const sortAndRender = () => {
+        const sortedStudies = [...allStudies].sort((a, b) => {
+            const valA = getValueFromPath(a, sortKey);
+            const valB = getValueFromPath(b, sortKey);
+
+            const direction = sortDirection === 'asc' ? 1 : -1;
+
+            if (sortKey === 'protocolo_estudio.fecha_estudio') {
+                return (new Date(valA) - new Date(valB)) * direction;
+            }
+
+            return valA.localeCompare(valB, 'es', { sensitivity: 'base' }) * direction;
+        });
+        
         const searchTerm = searchInput.value.toLowerCase();
-        const filteredStudies = allStudies.filter(study => {
+        const filteredStudies = sortedStudies.filter(study => {
             const datosPaciente = study.datos_paciente || {};
             const protocoloEstudio = study.protocolo_estudio || {};
             const patientName = (datosPaciente.nombre || '').toLowerCase();
@@ -89,16 +119,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             const studyDate = (protocoloEstudio.fecha_estudio || '').toLowerCase();
             return patientName.includes(searchTerm) || patientId.includes(searchTerm) || studyDate.includes(searchTerm);
         });
+
         renderTable(filteredStudies);
+        updateHeaderArrows();
     };
 
-    searchInput.addEventListener('input', filterStudies);
+    tableHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const key = header.dataset.sortKey;
+            if (sortKey === key) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortKey = key;
+                sortDirection = 'asc';
+            }
+            sortAndRender();
+        });
+    });
+
+    searchInput.addEventListener('input', sortAndRender);
 
     // Initial Load
     try {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Cargando estudios...</td></tr>';
         allStudies = await getStudies();
-        renderTable(allStudies);
+        sortAndRender();
     } catch (error) {
         console.error('Error al obtener los estudios:', error);
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Error al cargar los estudios.</td></tr>';

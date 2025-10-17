@@ -11,6 +11,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .sortable:hover {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+        .sort-arrow {
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .sort-arrow.active {
+            opacity: 1;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 text-gray-800">
@@ -47,11 +59,21 @@
                 <table class="min-w-full bg-white">
                     <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
                         <tr>
-                            <th class="py-3 px-6 text-left">Nombre del Paciente</th>
-                            <th class="py-3 px-6 text-left">Cédula</th>
-                            <th class="py-3 px-6 text-center">Fecha</th>
-                            <th class="py-3 px-6 text-center">Estado</th>
-                            <th class="py-3 px-6 text-left">Médico que Interpreta</th>
+                            <th class="py-3 px-6 text-left cursor-pointer sortable" data-sort-key="datos_paciente.nombre">
+                                <span class="flex items-center">Nombre del Paciente <span class="sort-arrow ml-2"></span></span>
+                            </th>
+                            <th class="py-3 px-6 text-left cursor-pointer sortable" data-sort-key="datos_paciente.id_paciente">
+                                <span class="flex items-center">Cédula <span class="sort-arrow ml-2"></span></span>
+                            </th>
+                            <th class="py-3 px-6 text-center cursor-pointer sortable" data-sort-key="protocolo_estudio.fecha_estudio">
+                                <span class="flex items-center justify-center">Fecha <span class="sort-arrow ml-2"></span></span>
+                            </th>
+                            <th class="py-3 px-6 text-center cursor-pointer sortable" data-sort-key="status">
+                                <span class="flex items-center justify-center">Estado <span class="sort-arrow ml-2"></span></span>
+                            </th>
+                            <th class="py-3 px-6 text-left cursor-pointer sortable" data-sort-key="protocolo_estudio.medico_interpreta">
+                                <span class="flex items-center">Médico que Interpreta <span class="sort-arrow ml-2"></span></span>
+                            </th>
                             <th class="py-3 px-6 text-center">Acciones</th>
                         </tr>
                     </thead>
