@@ -36,6 +36,14 @@ export const reportStructure = [{
         type: 'number',
         placeholder: '(170) cm',
         detail: 'cm'
+    },{
+        id: 'paciente_email',
+        label: 'Email del Paciente',
+        type: 'text',
+        placeholder: 'paciente@email.d',
+        detail: '',
+        reportAvoid: true,
+        required: true
     }]
 }, {
     "title": "Información Clínica",

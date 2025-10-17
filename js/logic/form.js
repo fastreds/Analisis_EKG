@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     Object.entries(sectionData).forEach(([key, value]) => {
                         if ((value && value.length !== 0) || (key === 'total' && value !== '')) {
                             const field = section.fields.find(f => f.id === key);
-                            if (field) {
+                            if (field && !field.reportAvoid) {
                                 if (Array.isArray(value)) {
                                     sectionHtml += `<p><strong>${field.label}:</strong> ${value.join(', ')}</p>`;
                                 } else {
@@ -517,7 +517,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const gatherData = () => {
-        formData = {};
+        // Preserve existing status fields if they exist (e.g., when updating)
+        const existingStatuses = {
+            reportStatus: formData.reportStatus || 'borrador',
+            patientEmailStatus: formData.patientEmailStatus || 'no enviado',
+            datePAtienteEmailSent: formData.datePAtienteEmailSent || '',
+            doctorEmailStatus: formData.doctorEmailStatus || 'no enviado',
+            dateDoctorEmailSent: formData.dateDoctorEmailSent || '',
+        };
+
+        formData = { ...existingStatuses };
+
         reportStructure.forEach(section => {
             if (!section.id) return;
             if (section.type === 'segmented_group') {

@@ -1,4 +1,4 @@
-import { getStudies, deleteStudy } from './firebaseLogic.js';
+import { getStudies, deleteStudy, updateStudy } from './firebaseLogic.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const searchInput = document.getElementById('search-input');
@@ -38,29 +38,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         tableBody.innerHTML = ''; // Clear existing rows
 
         if (studies.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No hay estudios que coincidan con la búsqueda.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No hay estudios que coincidan con la búsqueda.</td></tr>';
             return;
         }
 
         studies.forEach(study => {
             const datosPaciente = study.datos_paciente || {};
             const protocoloEstudio = study.protocolo_estudio || {};
+            const medicoReferente = study.protocolo_estudio || {};
             const row = document.createElement('tr');
+            row.dataset.studyId = study.id;
             row.className = 'border-b border-gray-200 hover:bg-gray-100';
 
-            const status = study.status || 'Borrador';
-            const statusColor = status === 'Finalizado' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800';
+            const reportStatus = study.reportStatus || 'borrador';
+            const patientEmailStatus = study.patientEmailStatus || 'no enviado';
+            const doctorEmailStatus = study.doctorEmailStatus || 'no enviado';
+
+            const patientEmail = datosPaciente.paciente_email || null;
+            const doctorEmail = medicoReferente.medico_email || null; // Asumiendo que el email del médico está aquí
+
+            const getStatusBadge = (status) => {
+                const isFinalizado = status.toLowerCase() === 'finalizado';
+                const bgColor = isFinalizado ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800';
+                return `<span class="${bgColor} py-1 px-3 rounded-full text-xs">${status}</span>`;
+            };
+
+            const getEmailButton = (type, status, email, sentDate) => {
+                const isSent = status.toLowerCase() === 'enviado';
+                const isDisabled = !email || isSent;
+                const buttonClass = isSent ? 'bg-green-500 text-white' : (email ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed');
+                const buttonText = isSent ? 'Enviado' : 'Enviar';
+                const icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>`;
+                
+                let titleAttr = '';
+                if (isSent && sentDate) {
+                    const date = new Date(sentDate);
+                    const formattedDate = `${date.toLocaleDateString('es-ES')} ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+                    titleAttr = `title="Enviado el: ${formattedDate}"`;
+                }
+
+                return `<button data-action="send-email" data-email-type="${type}" class="flex items-center justify-center px-3 py-1 rounded-md text-xs transition-colors ${buttonClass}" ${isDisabled ? 'disabled' : ''} ${titleAttr}>${icon} <span>${buttonText}</span></button>`;
+            };
 
             row.innerHTML = `
                 <td class="py-3 px-6 text-left whitespace-nowrap">${datosPaciente.nombre || 'N/A'}</td>
                 <td class="py-3 px-6 text-left">${datosPaciente.id_paciente || 'N/A'}</td>
                 <td class="py-3 px-6 text-center">${protocoloEstudio.fecha_estudio || 'N/A'}</td>
                 <td class="py-3 px-6 text-center">
-                    <span class="${statusColor} py-1 px-3 rounded-full text-xs">${status}</span>
+                    <select data-action="change-status" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 capitalize">
+                        <option value="creado" ${reportStatus.toLowerCase() === 'creado' ? 'selected' : ''}>Creado</option>
+                        <option value="en proceso" ${reportStatus.toLowerCase() === 'en proceso' ? 'selected' : ''}>En Proceso</option>
+                        <option value="finalizado" ${reportStatus === 'finalizado' ? 'selected' : ''}>Finalizado</option>
+                    </select>
                 </td>
                 <td class="py-3 px-6 text-left">${protocoloEstudio.medico_interpreta || 'N/A'}</td>
                 <td class="py-3 px-6 text-center">
-                    <div class="flex item-center justify-center gap-4">
+                    ${getEmailButton('patient', patientEmailStatus, patientEmail, study.datePAtienteEmailSent)}
+                </td>
+                <td class="py-3 px-6 text-center">
+                    ${getEmailButton('doctor', doctorEmailStatus, doctorEmail, study.dateDoctorEmailSent)}
+                </td>
+                <td class="py-3 px-6 text-center">
+                    <div class="flex item-center justify-center gap-2">
                         <a href="angioForm.html?studyId=${study.id}" class="w-6 h-6 text-yellow-600 hover:text-yellow-800 transform hover:scale-110" title="Editar">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 5.232z" />
@@ -76,6 +115,60 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
 
             tableBody.appendChild(row);
+        });
+
+        // Add event listeners for new actions
+        document.querySelectorAll('[data-action="change-status"]').forEach(select => {
+            select.addEventListener('change', async (e) => {
+                const studyId = e.target.closest('tr').dataset.studyId;
+                const previousStatus = allStudies.find(s => s.id === studyId)?.reportStatus;
+                const newStatus = e.target.value;
+                const study = allStudies.find(s => s.id === studyId);
+                if (study) {
+                    study.reportStatus = newStatus;
+                    try {
+                        await updateStudy(studyId, { reportStatus: newStatus });
+                        notyf.success(`Estudio de "${study.datos_paciente?.nombre || 'ID: '+studyId}" actualizado a "${newStatus}".`);
+                    } catch (error) {
+                        console.error('Error al actualizar el estado:', error);
+                        notyf.error('Error al actualizar el estado.');
+                        e.target.value = previousStatus; // Revert UI change on failure
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-action="send-email"]').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const studyId = e.target.closest('tr').dataset.studyId;
+                const emailType = e.currentTarget.dataset.emailType;
+                const study = allStudies.find(s => s.id === studyId);
+
+                if (study) {
+                    const fieldToUpdate = emailType === 'patient' ? 'patientEmailStatus' : 'doctorEmailStatus';
+                    const dateFieldToUpdate = emailType === 'patient' ? 'datePAtienteEmailSent' : 'dateDoctorEmailSent';
+                    
+                    // Simulate sending email
+                    console.log(`Simulando envío de email a ${emailType} para el estudio ${studyId}`);
+                    
+                    try {
+                        await updateStudy(studyId, { 
+                            [fieldToUpdate]: 'enviado',
+                            [dateFieldToUpdate]: new Date().toISOString()
+                        });
+                        notyf.success(`Email para ${emailType} marcado como enviado.`);
+                        const buttonTextSpan = e.currentTarget.querySelector('span');
+                        if (buttonTextSpan) {
+                            buttonTextSpan.textContent = 'Enviado';
+                        }
+                        e.currentTarget.classList.replace('bg-blue-500', 'bg-green-500');
+                        e.currentTarget.disabled = true;
+                    } catch (error) {
+                        console.error(`Error al actualizar estado de email para ${emailType}:`, error);
+                        notyf.error('Error al actualizar el estado del email.');
+                    }
+                }
+            });
         });
 
         document.querySelectorAll('.delete-btn').forEach(button => {
@@ -113,10 +206,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const searchTerm = searchInput.value.toLowerCase();
         const filteredStudies = sortedStudies.filter(study => {
             const datosPaciente = study.datos_paciente || {};
-            const protocoloEstudio = study.protocolo_estudio || {};
             const patientName = (datosPaciente.nombre || '').toLowerCase();
             const patientId = (datosPaciente.id_paciente || '').toLowerCase();
-            const studyDate = (protocoloEstudio.fecha_estudio || '').toLowerCase();
+            const studyDate = (study.protocolo_estudio?.fecha_estudio || '').toLowerCase();
+            const reportStatus = (study.reportStatus || '').toLowerCase();
+            const medico = (study.protocolo_estudio?.medico_interpreta || '').toLowerCase();
+
             return patientName.includes(searchTerm) || patientId.includes(searchTerm) || studyDate.includes(searchTerm);
         });
 
@@ -141,12 +236,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial Load
     try {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Cargando estudios...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Cargando estudios...</td></tr>';
         allStudies = await getStudies();
         sortAndRender();
     } catch (error) {
         console.error('Error al obtener los estudios:', error);
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Error al cargar los estudios.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-red-500">Error al cargar los estudios.</td></tr>';
         notyf.error('No se pudieron cargar los estudios.');
     }
 });
