@@ -70,7 +70,7 @@ export const posicionesCodominancia = [
 ];
 
 export const dominanciaData = {
-  derecha: { positions: posicionesDerecha, image: "../../img/DomDerechConNumeros.png" },
-  izquierda: { positions: posicionesIzquierda, image: "../../img/DomIzqConNumeros.png" },
-  codominancia: { positions: posicionesCodominancia, image: "../../img/corazonSinetiquetas.png" }
+  derecha: { positions: posicionesDerecha, image: "../../img/DomDerechConNumero.png" },
+  izquierda: { positions: posicionesIzquierda, image: "../../img/DomIzqConNumero.png" },
+  codominancia: { positions: posicionesCodominancia, image: "../../img/corazonSinetiqueta.png" }
 };
