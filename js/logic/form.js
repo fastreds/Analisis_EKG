@@ -601,7 +601,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         });
                     } else if (fieldDef?.type === 'radio') {
-                        const radio = document.querySelector(`input[name="${elId}"][value="${value.replace(/"/g, '\"')}"]`);
+                        const radio = document.querySelector(`input[name="${elId}"][value="${value.replace(/"/g, '\\"')}"]`);
                         if (radio) {
                             radio.checked = true;
                             radio.dispatchEvent(new Event('change', { bubbles: true }));
