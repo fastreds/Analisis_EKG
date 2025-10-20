@@ -36,6 +36,14 @@ export const reportStructure = [{
         type: 'number',
         placeholder: '(170) cm',
         detail: 'cm'
+    }, {
+        id: 'area_sc',
+        label: 'Área SC',
+        type: 'number',
+        placeholder: 'Calculado automáticamente',
+        detail: 'm²',
+        readonly: true,
+        reportAvoid: false
     },{
         id: 'paciente_email',
         label: 'Email del Paciente',
@@ -408,10 +416,11 @@ export const reportStructure = [{
         {
             id: 'anomalo_details',
             type: 'conditional_group',
+            label: 'Detalles de Anomalía Coronaria',
             fields: [
                 {
                     id: 'tipo_anomalia',
-                    label: 'Tipo de Anomalía (selección múltiple)',
+                    label: 'Tipo de Anomalía: ',
                     type: 'checkbox',
                     options: ['Origen alto (supracomisural)', 'Origen en seno coronario opuesto', 'Arteria coronaria única', 'Origen desde la arteria pulmonar (ALCAPA/ARCAPA)', 'Ostia múltiples'],
                     triggers: {
@@ -517,6 +526,30 @@ export const reportStructure = [{
                         label: 'Composición',
                         type: 'radio',
                         options: ['No calcificada (blanda)', 'Parcialmente calcificada (mixta)', 'Calcificada']
+                    }, {
+                        id: 'fosfolipidica',
+                        label: 'Fosfolipídica (%)',
+                        type: 'number',
+                        placeholder: '30',
+                        detail: '%'
+                    }, {
+                        id: 'mixta',
+                        label: 'Mixta (%)',
+                        type: 'number',
+                        placeholder: '40',
+                        detail: '%'
+                    }, {
+                        id: 'fibrosa',
+                        label: 'Fibrosa (%)',
+                        type: 'number',
+                        placeholder: '15',
+                        detail: '%'
+                    }, {
+                        id: 'calcificada',
+                        label: 'Calcificada (%)',
+                        type: 'number',
+                        placeholder: '15',
+                        detail: '%'
                     }, {
                         id: 'estenosis',
                         label: 'Grado de Estenosis',

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Composición de Placa (Diseño de Proyecto)</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'azul-vivit': '#004AAD',
+                        'azul-acento': '#3B82F6',
+                        'verde': '#10B981',
+                        'amarillo': '#F59E0B',
+                        'naranja-riesgo': '#F97316',
+                        'rojo-riesgo': '#EF4444',
+                        'gris-fondo': '#F9FAFB',
+                        'gris-borde': '#E5E7EB',
+                        'texto-principal': '#1F2937',
+                        'texto-secundario': '#6B7280',
+                    },
+                    boxShadow: {
+                        'sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+                        'lg': '0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07)',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '3xl': '1.5rem', // 24px
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gris-fondo flex items-center justify-center min-h-screen p-4 font-sans">
+
+    <div class="bg-white rounded-3xl shadow-lg border border-gris-borde p-6 md:p-8 max-w-4xl w-full mx-auto text-center">
+        
+        <h1 class="text-2xl font-bold text-azul-vivit mb-8 uppercase tracking-wide">
+            Composición de la Placa de Ateroma
+        </h1>
+
+        <div class="flex flex-col md:flex-row justify-around items-center md:items-start gap-8 mb-8">
+            
+            <div class="flex-1 flex flex-col items-center w-full max-w-sm">
+                <div class="text-lg font-semibold text-texto-principal mb-4">
+                    VOLUMEN TOTAL PLACA: <span id="totalPlaqueVolume" class="font-bold text-azul-vivit">85%</span>
+                </div>
+                <div class="relative w-64 h-64 md:w-72 md:h-72">
+                    <canvas id="plaqueChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-sm font-bold text-texto-principal">
+                        <span class="lipid-label" style="color: #F59E0B;">30% Fosfolipídica</span>
+                        <span class="mixed-label" style="color: #F97316;">40% Mixta</span>
+                        <span class="fibrous-label" style="color: #3B82F6;">15% Fibrosa</span>
+                        <span class="calcified-label" style="color: #6B7280;">15% Calcificada</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center gap-6 w-full max-w-sm mt-8 md:mt-0">
+                <div class="bg-white border-2 border-gris-borde rounded-xl p-4 w-full text-center">
+                    <div class="w-full h-20 mb-2 flex justify-center items-center">
+                        <svg width="100%" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 20 C30 0, 130 0, 150 20 L150 60 C130 80, 30 80, 10 60 L10 20 Z" fill="#F3F4F6" stroke="#D1D5DB" stroke-width="2"/>
+                            <path d="M40 30 C50 25, 110 25, 120 30 L120 50 C110 55, 50 55, 40 50 L40 30 Z" fill="#FFFFFF" stroke="#D1D5DB" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="text-base font-bold text-texto-principal leading-tight">
+                        ÁREA LUMINAL MÍNIMA (MLA): <br> <span id="mlaValue" class="text-rojo-riesgo text-xl font-black">1.5 mm²</span>
+                    </div>
+                </div>
+                  </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const plaqueData = {
+                lipid: 30,
+                mixed: 40,
+                fibrous: 15,
+                calcified: 15
+            };
+
+            const ctx = document.getElementById('plaqueChart').getContext('2d');
+
+            const plaqueChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Fosfolipídica', 'Mixta', 'Fibrosa', 'Calcificada'],
+                    datasets: [{
+                        data: [plaqueData.lipid, plaqueData.mixed, plaqueData.fibrous, plaqueData.calcified],
+                        backgroundColor: [
+                            '#F59E0B', // --amarillo (Fosfolipídica)
+                            '#F97316', // --color-stenosis-3 (Mixta)
+                            '#3B82F6', // --azul-acento (Fibrosa)
+                            '#6B7280'  // --texto-secundario (Calcificada)
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 5,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%', // Agujero más grande para el texto
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed !== null) label += context.parsed + '%';
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                }
+            });
+        });
+    </script>
+</body>
+</html>

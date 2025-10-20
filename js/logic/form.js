@@ -114,133 +114,128 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
-        let data = gatherData();
+        const data = gatherData();
         updateCalciumScore();
         if (!cadRadsManualOverride) {
             const calculatedScore = calculateCadRads(data);
             const cadRadsSelect = document.getElementById('cad_rads-score');
             if (cadRadsSelect) {
                 cadRadsSelect.value = calculatedScore;
-                if (data.cad_rads) {
-                    data.cad_rads.score = calculatedScore;
-                }
             }
         }
         updateCaseControlsTitle();
 
         let html = '';
         let hasContent = false;
+
         reportStructure.forEach(section => {
             const sectionData = data[section.id];
             let sectionHtml = '';
             let sectionHasContent = false;
-            if (section.type === 'repeatableGroup') {
-                if (sectionData && sectionData.items) {
-                    sectionData.items.forEach(item => {
-                        let itemHtml = `<h4>${item.nombre}</h4><ul>`;
-                        let itemHasContentInThisItem = false;
-                        Object.entries(item).forEach(([key, value]) => {
-                            if (key !== 'nombre' && key !== 'placas' && value) {
-                                const fieldLabel = section.template.find(f => f.id === key)?.label;
-                                if (fieldLabel) {
-                                    itemHtml += `<li><strong>${fieldLabel}:</strong> ${value}</li>`;
-                                    itemHasContentInThisItem = true;
-                                }
-                            }
-                        });
-                        if (item.placas && item.placas.length > 0) {
-                            itemHtml += `<h5>Placas Ateromatosas:</h5>`;
-                            item.placas.forEach((plaque, index) => {
-                                let plaqueHasContent = false;
-                                let plaqueHtml = `<div class="plaque-report"><strong>Placa #${index + 1}:</strong><ul>`;
-                                Object.entries(plaque).forEach(([key, value]) => {
-                                    if (value) {
-                                        const fieldLabel = section.plaqueTemplate.find(f => f.id === key)?.label;
-                                        plaqueHtml += `<li><strong>${fieldLabel}:</strong> ${value}</li>`;
-                                        plaqueHasContent = true;
-                                    }
-                                });
-                                plaqueHtml += `</ul></div>`;
-                                if (plaqueHasContent) {
-                                    itemHtml += plaqueHtml;
-                                    itemHasContentInThisItem = true;
-                                }
-                            });
-                        }
-                        itemHtml += `</ul>`;
-                        if (itemHasContentInThisItem) {
-                            sectionHtml += itemHtml;
-                            sectionHasContent = true;
-                        }
-                    });
-                }
-            } else if (section.type === 'segmented_group') {
+
+            if (section.type === 'segmented_group') {
                 const segmentData = data.evaluacion_segmento?.segments;
                 if (segmentData) {
                     const segmentSection = reportStructure.find(s => s.id === 'evaluacion_segmento');
                     if (segmentSection) {
-                        let segmentText = `<h3 class="report-title-clickable" data-scroll-to="form-section-${segmentSection.id}">${segmentSection.title}</h3>`;
+                        let segmentText = '';
                         let findingsFound = false;
                         segmentSection.segments.forEach(segmentInfo => {
                             const segmentId = segmentInfo.id;
                             const segment = segmentData[segmentId];
-                            if (segment && segment.estado_general === 'Con hallazgos patológicos' && segment.findings) {
-                                let findingsList = [];
-                                if (segment.findings.placas && segment.findings.placas.length > 0) {
-                                    segment.findings.placas.forEach(p => {
-                                        let estenosisText = p.estenosis_porcentaje ? `${p.estenosis_porcentaje}%` : p.estenosis;
-                                        let placaText = `Placa ${p.composicion || ''} que produce estenosis ${estenosisText || 'no especificada'}`;
-                                        if (p.has_hrp && p.has_hrp.length > 0) {
-                                            placaText += ` con características de alto riesgo (${p.has_hrp.join(', ')})`;
-                                        }
-                                        findingsList.push(placaText);
-                                    });
+                            if (!segment || segment.estado_general === 'Sin hallazgos patológicos significativos') return;
+
+                            let findingsList = [];
+                            if (segment.estado_general === 'No valorable') {
+                                findingsList.push('Segmento no valorable.');
+                            } else if (segment.findings) {
+                                if (segment.findings.placas?.length > 0) {
+                                    findingsList.push(`<strong>Placas:</strong> ${segment.findings.placas.map(p => `placa ${p.composicion || ''} con estenosis ${p.estenosis || 'indef.'}`).join(', ')}`);
                                 }
-                                if (segment.findings.stents && segment.findings.stents.length > 0) {
-                                    segment.findings.stents.forEach(s => {
-                                        let stentText = 'Stent preexistente';
-                                        if (s.evaluacion === 'Con reestenosis intra-stent' && s.reestenosis_details) {
-                                            stentText += ` con reestenosis ${s.reestenosis_details.grado || 'no especificada'}`;
-                                        } else {
-                                            stentText += ` (${s.evaluacion || 'permeable'})`;
-                                        }
-                                        findingsList.push(stentText);
-                                    });
+                                if (segment.findings.stents?.length > 0) {
+                                    findingsList.push(`<strong>Stents:</strong> ${segment.findings.stents.map(s => s.evaluacion).join(', ')}`);
                                 }
-                                if (segment.findings.has_puente && segment.findings.puente_details) {
-                                    findingsList.push(`Puente miocárdico con compresión sistólica ${segment.findings.puente_details.compresion || 'no especificada'}`);
+                                if (segment.findings.has_puente) {
+                                    findingsList.push(`<strong>Puente miocárdico</strong> presente`);
                                 }
-                                if (segment.findings.has_aneurisma && segment.findings.aneurisma_details) {
-                                    findingsList.push(`Aneurisma/ectasia con diámetro de ${segment.findings.aneurisma_details.diametro || 'N/A'} mm`);
-                                }
-                                if (findingsList.length > 0) {
-                                    segmentText += `<p><strong>${segmentInfo.name}:</strong> ${findingsList.join('. ')}.</p>`;
-                                    findingsFound = true;
+                                if (segment.findings.has_aneurisma) {
+                                    findingsList.push(`<strong>Aneurisma/Ectasia</strong> presente`);
                                 }
                             }
+
+                            if (findingsList.length > 0) {
+                                segmentText += `<div class="report-item"><p class="font-semibold">${segmentInfo.name}</p><ul class="list-disc pl-5 text-sm">${findingsList.map(f => `<li>${f}</li>`).join('')}</ul></div>`;
+                                findingsFound = true;
+                            }
                         });
+
                         if (!findingsFound) {
-                            segmentText += "<p>No se encontraron hallazgos patológicos significativos en los segmentos evaluados.</p>";
+                            segmentText += "<p>No se reportaron hallazgos patológicos en los segmentos coronarios.</p>";
                         }
-                        html += segmentText;
-                        hasContent = true;
+                        sectionHtml = segmentText;
+                        sectionHasContent = true;
                     }
                 }
             } else {
                 if (sectionData) {
+                    let itemsHtml = [];
                     Object.entries(sectionData).forEach(([key, value]) => {
-                        if ((value && value.length !== 0) || (key === 'total' && value !== '')) {
-                            const field = section.fields.find(f => f.id === key);
-                            if (field && !field.reportAvoid) {
-                                if (Array.isArray(value)) {
-                                    sectionHtml += `<p><strong>${field.label}:</strong> ${value.join(', ')}</p>`;
-                                } else {
-                                    sectionHtml += `<p><strong>${field.label}:</strong> ${value}${field.detail ? ` ${field.detail}` : ''}</p>`;
-                                }
-                                sectionHasContent = true;
-                            }
+                        const field = section.fields.find(f => f.id === key);
+                        if (!field || field.reportAvoid) return;
+
+                        let displayValue = '';
+                        let hasValue = false;
+
+                        if (Array.isArray(value) && value.length > 0) {
+                            // Ignorar valores por defecto en checkboxes
+                            if (value.length === 1 && value[0].toLowerCase().includes('sin hallazgos')) return;
+                            displayValue = value.join(', ');
+                            hasValue = true;
+                        } else if (typeof value === 'string' && value.trim() !== '') {
+                            // Ignorar valores por defecto en selects/radios
+                            if (value.toLowerCase().includes('normal') || value.toLowerCase().includes('sin hallazgos') || value.toLowerCase().includes('no presenta')) return;
+                            displayValue = `${value}${field.detail || ''}`;
+                            hasValue = true;
+                        } else if (typeof value === 'number' || (typeof value === 'string' && value.trim() !== '' && !isNaN(value))) {
+                            displayValue = `${value}${field.detail || ''}`;
+                            hasValue = true;
+                        } else if (typeof value === 'object' && value !== null) {
+                            // Para grupos condicionales (anidados)
+                            const processObject = (obj, fields) => {
+                                if (!obj || !fields) return [];
+                                const result = [];
+                                Object.entries(obj).forEach(([k, v]) => {
+                                    const f = fields.find(field => field.id === k);
+                                    if (!f || !v || (Array.isArray(v) && v.length === 0)) return;
+
+                                    if (f.type === 'conditional_group' && typeof v === 'object') {
+                                        result.push(...processObject(v, f.fields));
+                                    } else {
+                                        const displayVal = Array.isArray(v) ? v.join(', ') : v;
+                                        result.push(`<strong>${f.label}:</strong> ${displayVal}`);
+                                    }
+                                });
+                                return result;
+                            };
+
+                            // Para el caso especial de anomalo_details
+                            const fieldDef = section.fields.find(f => f.id === key);
+                            const processedParts = processObject(value, fieldDef?.fields);
+                           
+                             if (processedParts.length > 0) {
+                                 displayValue = processedParts.join('<br>');
+                                 hasValue = true;
+                             }
+                        }
+
+                        if (hasValue) {
+                            itemsHtml.push(`<div class="report-item"><p class="font-semibold">${field.label}</p><p class="text-sm">${displayValue}</p></div>`);
+                            sectionHasContent = true;
                         }
                     });
+                    if (itemsHtml.length > 0) {
+                        sectionHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${itemsHtml.join('')}</div>`;
+                    }
                 }
             }
             if (sectionHasContent) {
@@ -394,7 +389,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         formContainer.innerHTML = formHtml;
     };
 
+    const setupAutomaticCalculations = () => {
+        const pesoInput = document.getElementById('datos_paciente-peso');
+        const tallaInput = document.getElementById('datos_paciente-talla');
+        const areaScInput = document.getElementById('datos_paciente-area_sc');
+
+        if (!pesoInput || !tallaInput || !areaScInput) return;
+
+        const calculateAndUpdateBSA = () => {
+            const peso = parseFloat(pesoInput.value);
+            const talla = parseFloat(tallaInput.value);
+
+            if (peso > 0 && talla > 0) {
+                // Fórmula de Mosteller para el Área de Superficie Corporal (BSA)
+                const bsa = Math.sqrt((peso * talla) / 3600);
+                areaScInput.value = bsa.toFixed(2); // Mostrar con 2 decimales
+            } else {
+                areaScInput.value = '';
+            }
+        };
+
+        pesoInput.addEventListener('input', calculateAndUpdateBSA);
+        tallaInput.addEventListener('input', calculateAndUpdateBSA);
+    };
+
     buildForm();
+    setupAutomaticCalculations();
     initCoronarySketch();
 
     const autogenerateBtn = document.getElementById('conclusion-autogenerate_conclusion');
@@ -460,42 +480,84 @@ document.addEventListener('DOMContentLoaded', async () => {
         return items;
     };
 
-    const getConditionalGroupData = (groupNode) => {
-        if (!groupNode || groupNode.classList.contains('hidden')) return null;
+    const getConditionalGroupData = (groupNode, fields) => {
+        if (!groupNode || groupNode.classList.contains('hidden') || !fields) {
+            return null;
+        }
         const data = {};
-        groupNode.querySelectorAll('input, select, textarea').forEach(input => {
-            const key = input.id.split('-').pop();
-            if (input.type === 'radio') {
-                if (input.checked) data[key] = input.value;
-            } else if (input.type === 'checkbox') {
-                if (!data[key]) data[key] = [];
-                if (input.checked) data[key].push(input.value);
-            } else {
-                data[key] = input.value;
+        fields.forEach(field => {
+            const elId = `${groupNode.id}-${field.id}`;
+            const el = document.getElementById(elId);
+
+            if (field.type === 'conditional_group') {
+                const nestedData = getConditionalGroupData(el, field.fields);
+                if (nestedData !== null) {
+                    data[field.id] = nestedData;
+                }
+            } else if (field.type === 'radio') {
+                const checkedRadio = document.querySelector(`input[name="${elId}"]:checked`);
+                if (checkedRadio) {
+                    data[field.id] = checkedRadio.value;
+                }
+            } else if (field.type === 'checkbox') {
+                const values = [];
+                document.querySelectorAll(`input[name="${elId}"]:checked`).forEach(cb => {
+                    values.push(cb.value);
+                });
+                if (values.length > 0) {
+                    data[field.id] = values;
+                }
+            } else if (el && typeof el.value !== 'undefined' && el.value !== '') {
+                data[field.id] = el.value;
             }
         });
+
         return data;
     };
 
     const getSegmentFindingsData = (findingsContainer, fields) => {
         if (!findingsContainer || findingsContainer.classList.contains('hidden')) return null;
-        const findingsData = {};
+        const data = {};
         fields.forEach(field => {
-            const elId = findingsContainer.id + '-' + field.id;
-            if (field.type === 'repeatable_block') {
-                findingsData[field.id] = getRepeatableBlockData(`repeat-container-${elId}`);
+            const elId = `${findingsContainer.id}-${field.id}`;
+            const el = document.getElementById(elId);
+    
+            if (field.type === 'conditional_group') {
+                const nestedData = getConditionalGroupData(el, field.fields);
+                if (nestedData) {
+                    data[field.id] = nestedData;
+                }
+            } else if (field.type === 'repeatable_block') {
+                data[field.id] = getRepeatableBlockData(`repeat-container-${elId}`);
             } else if (field.type === 'master_checkbox') {
                 const masterCheckbox = document.getElementById(elId);
-                findingsData[field.id] = masterCheckbox ? masterCheckbox.checked : false;
+                data[field.id] = masterCheckbox ? masterCheckbox.checked : false;
                 if (masterCheckbox && masterCheckbox.checked) {
                     const detailsContainer = document.getElementById(elId.replace(field.id, field.id + '_details'));
-                    if (detailsContainer) {
-                        findingsData[field.id + '_details'] = getConditionalGroupData(detailsContainer);
+                    const detailFieldDef = fields.find(f => f.id === field.id + '_details');
+                    if (detailsContainer && detailFieldDef) {
+                        data[field.id + '_details'] = getConditionalGroupData(detailsContainer, detailFieldDef.fields);
                     }
                 }
+            } else if (field.type === 'radio') {
+                const checkedRadio = document.querySelector(`input[name="${elId}"]:checked`);
+                if (checkedRadio) {
+                    data[field.id] = checkedRadio.value;
+                }
+            } else if (field.type === 'checkbox') {
+                const values = [];
+                document.querySelectorAll(`input[name="${elId}"]:checked`).forEach(cb => {
+                    values.push(cb.value);
+                });
+                if (values.length > 0) {
+                    data[field.id] = values;
+                }
+            } else if (el && typeof el.value !== 'undefined' && el.value !== '') {
+                data[field.id] = el.value;
             }
         });
-        return findingsData;
+    
+        return Object.keys(data).length > 0 ? data : null;
     };
 
     const gatherData = () => {
@@ -527,7 +589,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             } else if (field.type === 'conditional_group' && field.id === 'findings') {
                                 segmentData[field.id] = getSegmentFindingsData(el, field.fields);
                             } else if (field.type === 'conditional_group') {
-                                segmentData[field.id] = getConditionalGroupData(el);
+                                segmentData[field.id] = getConditionalGroupData(el, field.fields);
                             }
                         });
                         formData[section.id].segments[segment.id] = segmentData;
@@ -550,7 +612,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else if (field.type === 'repeatable_block') {
                         formData[section.id][field.id] = getRepeatableBlockData(`repeat-container-${elId}`);
                     } else if (field.type === 'conditional_group') {
-                        formData[section.id][field.id] = getConditionalGroupData(document.getElementById(elId));
+                        formData[section.id][field.id] = getConditionalGroupData(document.getElementById(elId), field.fields);
                     } else if (field.type !== 'button') {
                         const el = document.getElementById(elId);
                         if (el) formData[section.id][field.id] = el.value;
@@ -928,7 +990,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateReport();
     });
 
-    formContainer.addEventListener('change', updateReport);
+    const handleTriggers = (element) => {
+        const triggers = element.dataset.triggers;
+        if (!triggers) return;
+
+        // Para radio buttons, primero ocultamos todos los targets del grupo
+        if (element.type === 'radio') {
+            const groupName = element.name;
+            const radiosInGroup = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
+            radiosInGroup.forEach(radio => {
+                const otherTriggerId = radio.dataset.triggers;
+                if (otherTriggerId) {
+                    const otherTargetIdSuffix = otherTriggerId.replace('show_', '');
+                    // Buscamos el target relativo al radio button actual
+                    const otherParentContainer = radio.closest('.mb-4, .conditional_group');
+                    if (otherParentContainer) {
+                        const otherTargetElement = otherParentContainer.parentElement.querySelector(`[id$="-${otherTargetIdSuffix}"]`);
+                        if (otherTargetElement) {
+                            otherTargetElement.classList.add('hidden');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Ahora mostramos el target del elemento actual si está 'checked'
+        const targetIdSuffix = triggers.replace('show_', '');
+        const parentContainer = element.closest('.mb-4, .conditional_group');
+        const targetElement = parentContainer?.parentElement.querySelector(`[id$="-${targetIdSuffix}"]`);
+
+        if (targetElement) {
+            targetElement.classList.toggle('hidden', !element.checked);
+        }
+    };
+    formContainer.addEventListener('change', (e) => {
+        if (e.target.matches('input[type="radio"], input[type="checkbox"]')) {
+            handleTriggers(e.target);
+        }
+        updateReport(e);
+    });
 
     const croquisTabBtn = document.getElementById('tab-btn-croquis');
     const reporteTabBtn = document.getElementById('tab-btn-reporte');

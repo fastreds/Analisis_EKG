@@ -36,12 +36,33 @@ export const generateConclusion = (data, reportStructure) => {
             anatomyText += `${anatomiaGeneral.dominancia.toLowerCase()}`;
         }
         if (anatomiaGeneral.origen_arterias === 'Anómalo' && anatomiaGeneral.anomalo_details) {
-            const anomalia = anatomiaGeneral.anomalo_details.seno_opuesto_details?.vaso_anomalo || anatomiaGeneral.anomalo_details.tipo_anomalia[0];
-            anatomyText += `, con origen anómalo de ${anomalia}`;
+            let anomalia = '';
+            // Prioritize the specific vessel anomaly if it exists
+            if (anatomiaGeneral.anomalo_details.seno_opuesto_details && anatomiaGeneral.anomalo_details.seno_opuesto_details.vaso_anomalo) {
+                anomalia = anatomiaGeneral.anomalo_details.seno_opuesto_details.vaso_anomalo;
+            } 
+            // Fallback to the general anomaly type if the specific one isn't present
+            else if (Array.isArray(anatomiaGeneral.anomalo_details.tipo_anomalia) && anatomiaGeneral.anomalo_details.tipo_anomalia.length > 0) {
+                anomalia = anatomiaGeneral.anomalo_details.tipo_anomalia.join(', ');
+            }
+            
+            if (anomalia) {
+                anatomyText += `, con origen anómalo de ${anomalia}`;
+            } else {
+                anatomyText += `, con origen anómalo no especificado`;
+            }
         } else {
             anatomyText += ", con origen normal de las arterias coronarias";
         }
-        anatomyText += ` desde los senos de Valsalva. ${anatomiaGeneral.ramificacion_tci || ''}.\n`;
+        // Solo añadir "desde los senos de Valsalva" si el origen es normal o no se especifica un origen fuera de ellos.
+        if (anatomiaGeneral.origen_arterias !== 'Anómalo' || (anatomiaGeneral.anomalo_details && !anatomiaGeneral.anomalo_details.tipo_anomalia.includes('Origen desde la arteria pulmonar (ALCAPA/ARCAPA)'))) {
+            anatomyText += " desde los senos de Valsalva";
+        }
+        // Añadir la ramificación del TCI solo si se ha especificado.
+        if (anatomiaGeneral.ramificacion_tci) {
+            anatomyText += `. ${anatomiaGeneral.ramificacion_tci}.`;
+        }
+        anatomyText += '\n';
         conclusion += anatomyText;
     }
 
